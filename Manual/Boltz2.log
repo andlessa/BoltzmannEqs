@@ -1,0 +1,185 @@
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (TeX Live 2012/Debian) (format=latex 2013.4.15)  14 APR 2014 18:13
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**Boltz2.tex
+(./Boltz2.tex
+LaTeX2e <2011/06/27>
+Babel <v3.8m> and hyphenation patterns for english, dumylang, nohyphenation, lo
+aded.
+(./JHEP3.cls
+Document Class: JHEP3 2005/09/26 v3.1.4 LaTeX document class - F.N.
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2009/06/22 v3.00
+
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2009/06/22 v3.00 Basic AMSFonts support
+\@emptytoks=\toks14
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 96.
+))
+(/usr/share/texlive/texmf-dist/tex/latex/base/size11.clo
+File: size11.clo 2007/10/19 v1.4h Standard LaTeX file (size option)
+)
+\titlesk@pa=\skip41
+\titlesk@ja=\skip42
+\titlesk@pb=\skip43
+\titlesk@jb=\skip44
+\titlesk@pc=\skip45
+\titlesk@jc=\skip46
+\titlesk@pd=\skip47
+\c@part=\count79
+\c@section=\count80
+\c@subsection=\count81
+\c@subsubsection=\count82
+\c@paragraph=\count83
+\c@subparagraph=\count84
+\prev@t=\toks15
+\cur@t=\toks16
+\@firstaubox=\box26
+\addr@skip=\skip48
+\auth@skip=\skip49
+\conf@box=\box27
+\Jcopy@date=\box28
+\Jspecial@url=\box29
+\Jacce@month=\box30
+\Jacce@year=\count85
+\Jacce@number=\box31
+\c@figure=\count86
+\c@table=\count87
+\c@OptionTest=\count88
+\@tmpbox=\box32
+\figbox=\box33
+\tabbox=\box34
+\pagebox=\box35
+\ffigcount=\count89
+\ftabcount=\count90
+\hangcount=\count91
+\nosuccesstryfig=\count92
+\nosuccesstrytab=\count93
+\figgutter=\dimen102
+\tabgutter=\dimen103
+\fl@wd=\dimen104
+\fl@ht=\dimen105
+\htdone=\dimen106
+\pageht=\dimen107
+\startpageht=\dimen108
+\floatfltwidth=\dimen109
+\fltitemwidth=\dimen110
+\outputpretest=\toks17
+\abovecaptionskip=\skip50
+\belowcaptionskip=\skip51
+\bibindent=\dimen111
+)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/epsfig.sty
+Package: epsfig 1999/02/16 v1.7a (e)psfig emulation (SPQR)
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks18
+)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2009/02/05 v1.0o Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/usr/share/texlive/texmf-dist/tex/latex/latexconfig/graphics.cfg
+File: graphics.cfg 2010/04/23 v1.9 graphics configuration of TeX Live
+)
+Package graphics Info: Driver file: dvips.def on input line 91.
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/dvips.def
+File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+))
+\Gin@req@height=\dimen112
+\Gin@req@width=\dimen113
+)
+\epsfxsize=\dimen114
+\epsfysize=\dimen115
+)
+
+LaTeX Warning: Unused global option(s):
+    [preprint].
+
+(./Boltz2.aux
+
+LaTeX Warning: Label `eq:decfin' multiply defined.
+
+)
+\openout1 = `Boltz2.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 65.
+LaTeX Font Info:    ... okay on input line 65.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 65.
+LaTeX Font Info:    ... okay on input line 65.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 65.
+LaTeX Font Info:    ... okay on input line 65.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 65.
+LaTeX Font Info:    ... okay on input line 65.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 65.
+LaTeX Font Info:    ... okay on input line 65.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 65.
+LaTeX Font Info:    ... okay on input line 65.
+
+
+Class JHEP Warning: \keywords{...} should appear before \begin{document}.
+
+
+Class JHEP Warning: \preprint{...} should appear before \begin{document}.
+
+LaTeX Font Info:    Try loading font information for U+msa on input line 65.
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2009/06/22 v3.00 AMS symbols A
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 65.
+
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2009/06/22 v3.00 AMS symbols B
+) [0
+
+] [1] [2] [3]
+[4] [5] [6]
+Overfull \hbox (1.182pt too wide) in alignment at lines 478--489
+ [][][] []
+ []
+
+[7] [8] [9]
+Overfull \hbox (11.82043pt too wide) in paragraph at lines 637--640
+[]\OT1/cmr/m/n/10.95 Set ini-tial con-di-tions at $\OML/cmm/m/it/10.95 T \OT1/c
+mr/m/n/10.95 = \OML/cmm/m/it/10.95 TRH$\OT1/cmr/m/n/10.95 : check which ther-ma
+l par-ti-cles are cou-pled/decoupled
+ []
+
+
+Overfull \hbox (2.16714pt too wide) in paragraph at lines 637--640
+\OT1/cmr/m/n/10.95 to the ther-mal bath and if co-her-ent os-cil-lat-ing flu-id
+s are al-ready os-cil-lat-ing at T=TRH.
+ []
+
+[10] [11] [12]
+Overfull \hbox (15.45668pt too wide) in paragraph at lines 756--760
+\OT1/cmr/m/n/10.95 UNIT=ABS(INDATA) for fu-ture ex-trap-o-la-tion and set IN-DA
+TA = ABS(INDATA).
+ []
+
+[13] [14] [15] [16] (./Boltz2.aux)
+
+LaTeX Warning: There were multiply-defined labels.
+
+ ) 
+Here is how much of TeX's memory you used:
+ 1334 strings out of 495060
+ 13546 string characters out of 3182053
+ 78731 words of memory out of 3000000
+ 4544 multiletter control sequences out of 15000+200000
+ 13885 words of font info for 52 fonts, out of 3000000 for 9000
+ 14 hyphenation exceptions out of 8191
+ 32i,14n,26p,218b,187s stack positions out of 5000i,500n,10000p,200000b,50000s
+
+Output written on Boltz2.dvi (17 pages, 77932 bytes).
