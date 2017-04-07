@@ -8,6 +8,8 @@ Boltzmann Code Docs
 
 Basic documentation for the python version of Boltzmann code.
 
+A description of the formalism and approximations used can be found :download:`here <Manual/Boltz2.pdf>`
+
 Last update: |today|
 
 :ref:`Code Files <modindex>`
