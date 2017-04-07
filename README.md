@@ -1,29 +1,12 @@
-# README #
+# Boltzmann Code #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+A basic description of the formalism and approximations used in the code
+can be found [here](Manual/Boltz2.pdf).
 
-### What is this repository for? ###
+## Manual ##
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+For a detailed documentation (currently under construction), [read the docs](http://axionboltzmann.readthedocs.io)
 
-### How do I get set up? ###
+### Contact ###
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
-
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+For questions, comments and bug reports, contact Andre Lessa at andre.lessa@ufabc.edu.br
