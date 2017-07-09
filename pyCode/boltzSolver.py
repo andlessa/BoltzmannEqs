@@ -12,12 +12,11 @@
 
 from boltzEqs import BoltzEqs
 from assimulo.solvers import CVode
-from parameters import Pi
 from AuxFuncs import gSTARS, getTemperature
-from math import log,exp
+from math import log,exp,pi
 import logging
-import random
-logging.basicConfig(level=logging.INFO)
+import random, time
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 random.seed('myseed')
 
@@ -32,15 +31,19 @@ def Evolve(compList,T0,TF,omegaErr=0.01):
 
 #Sanity checks
     if not goodCompList(compList,T0): return False
-            
+    
+    t0 = time.time()
 #Compute initial conditions    
-    for comp in compList: comp.setInitialCond(T0)
+    for comp in compList:
+        comp.setInitialCond(T0)
     x0 = 0.      # Initial condition for log(R/R0)
     y0 = [comp.evolveVars["N"] for comp in compList]  #Initial conditions for log(n/s0)
     y0 += [comp.evolveVars["R"] for comp in compList] #Initial conditions for log(rho/n)
-    S = (2*Pi**2/45)*gSTARS(T0)*T0**3
+    S = (2*pi**2/45)*gSTARS(T0)*T0**3
     y0.append(log(S))  #Initial condition for log(S/S0)
     sw = [comp.active for comp in compList]
+    logger.info("Initial conditions computed in %s s" %(time.time()-t0))
+    t0 = time.time()
     
 #Solve differential equations:
 #First call with large errors to estimate the size of the solution
@@ -49,6 +52,8 @@ def Evolve(compList,T0,TF,omegaErr=0.01):
     atol = [omegaErr]*len(y0)    
     boltz_eqs = BoltzEqs(compList,x0,y0,sw) #Define equations and set initial conditions
     y = mySolve(xf,boltz_eqs,rtol,atol)[1]
+    logger.info("First pass at solving Boltzmann equations done in %s s" %(time.time()-t0))
+    t0 = time.time()
 #Second call with proper relative/absolute errors
     maxy = max([abs(yy) for yy in y[-1][:len(compList)]])
     rtol = omegaErr/(2.*maxy)  #Re-scale error to obtain relic densities with precision omegaErr
@@ -56,7 +61,7 @@ def Evolve(compList,T0,TF,omegaErr=0.01):
     atol = [max(xx,0.005) for xx in atol]
     boltz_eqs = BoltzEqs(compList,x0,y0,sw) #Define equations and set initial conditions
     x,y = mySolve(xf,boltz_eqs,rtol,atol,verbosity=50)
-
+    logger.info("Second pass at solving Boltzmann equations done in %s s" %(time.time()-t0))
 #Store the solutions:    
     for comp in compList: comp.evolveVars = {'T' : [], 'R' : [], 'rho' : [], 'n' : []}
     for ipt,ypt in enumerate(y):
@@ -128,9 +133,9 @@ def goodCompList(compList,T0):
         BRs1 = comp1.getBRs(T0)
         for comp2 in compList:            
             if comp1 == comp2: continue
-            if not comp2.ID in BRs1.getAllFinalStates(): continue
+            if not comp2.label in BRs1.getAllFinalStates(): continue
             if comp1.width(T0) < comp2.width(T0):
-                logger.error("Improper decay from %s to %s" %(comp1.ID,comp2.ID))
+                logger.error("Improper decay from %s to %s" %(comp1.label,comp2.label))
                 return False
 
     return True

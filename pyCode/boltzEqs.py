@@ -11,14 +11,15 @@
 """
 
 from AuxFuncs import Hfunc, getTemperature, getPressure
-from math import exp, log, isnan
-from parameters import Pi, Zeta3
+from math import exp, log, isnan, pi
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 from assimulo.problem import Explicit_Problem
 import numpy
 import decimal
+from scipy.special import zetac
+Zeta3 = zetac(3.) + 1.
 decimal.getcontext().prec = 28
 
 
@@ -52,7 +53,7 @@ class BoltzEqs(Explicit_Problem):
         self.sw0 = sw
 
 
-    #The right-hand-side function (rhs)  
+    #The right-hand-side function (rhs)
     def rhs(self,x,y,sw):
         """
         Defines the derivatives of the y variables at point x = log(R/R0).
@@ -62,28 +63,32 @@ class BoltzEqs(Explicit_Problem):
         For simplicity we set  R0 = s0 = 1 (with respect to the notes).
         """
 
+        logger.debug('Calling RHS with arguments:\n   x=%s,\n   y=%s\n and switches %s' %(x,y,sw))
         n = []
         neq = []
         rho = []
         R = []
         nratio = {'radiation' : 1.}   #n/neq ratio dictionary
         NS = y[-1]
-        T = getTemperature(x,NS)        
+        T = getTemperature(x,NS)
         for i,comp in enumerate(self.components):
+            logger.debug('RHS: Computing component %s' %comp)
             ni = exp(y[i])
             Ri = y[i + len(self.components)]
             if comp.Type == 'CO': rhoi = comp.mass(T)*ni
             else: rhoi = Ri*ni
             n.append(ni)
-            neq.append(comp.nEQ(T))
+            neq.append(comp.nEQ(T))            
             rho.append(rhoi)
             R.append(Ri)
-            if neq[-1] > 0.: nratio[comp.ID] = ni/neq[-1]
-            else: nratio[comp.ID] = 0.
-        H = Hfunc(x,n,rho,NS,sw)
+            if neq[-1] > 0.: nratio[comp.label] = ni/neq[-1]
+            else: nratio[comp.label] = 0.
+            logger.debug('RHS: Done computing component %s.\n   rho = %s and n = %s' %(comp,rhoi,ni))
+        H = Hfunc(T,rho,sw)
        
              
-#Auxiliary weights:           
+#Auxiliary weights:
+        logger.debug('Computing weights')     
         N1th = [0.]*len(self.components)
         N2th = [0.]*len(self.components)
         Beff = [0.]*len(self.components)
@@ -93,18 +98,20 @@ class BoltzEqs(Explicit_Problem):
         for i,comp in enumerate(self.components):
             N1th[i] = comp.getNTh(T,nratio)
             for a,compA in enumerate(self.components):                                
-                if a == i or not sw[a]: continue 
+                if a == i or not sw[a]: continue
                 N2th[a][i] = compA.getNTh(T,nratio,comp)
                 Beff[a][i] = compA.getTotalBRTo(T,comp)
-
-# Derivative for entropy:        
+        logger.debug('Done computing weights')
+# Derivative for entropy:
+        logger.debug('Computing entropy derivative')     
         dNS = 0.        
         for i,comp in enumerate(self.components):
             if not sw[i]: continue
             dNS += comp.getBRX(T)*comp.width(T)*comp.mass(T)*(n[i]-N1th[i])*exp(3.*x - NS)/(H*T)
-
+        logger.debug('Done computing entropy derivative')
              
-#Derivatives for the Ni=log(ni/s0) variables:   
+#Derivatives for the Ni=log(ni/s0) variables:
+        logger.debug('Computing Ni derivatives')
         dN = [0.]*len(self.components)        
         for i,comp in enumerate(self.components):
             if not sw[i]: continue
@@ -114,16 +121,16 @@ class BoltzEqs(Explicit_Problem):
             RHS += -width*mass*(n[i] - N1th[i])/(H*R[i])    #Decay term
             RHS += comp.getSource(T)/H  #Source term
             if comp.Type == 'weakthermal':                
-                nrel = Zeta3*T**3/Pi**2
+                nrel = Zeta3*T**3/pi**2
                 RHS += comp.getSIGV(T)*nrel*(neq[i] - n[i])/H
-            else: RHS += comp.getSIGV(T)*(neq[i]**2 - n[i]**2)/H  #Annihilation term      
+            else:
+                RHS += comp.getSIGV(T)*(neq[i]**2 - n[i]**2)/H  #Annihilation term      
             for a, compA in enumerate(self.components):
                 if not sw[a]: continue
                 if a == i: continue                                
                 massA = compA.mass(T)
-                widthA = compA.width(T)         
+                widthA = compA.width(T)
                 RHS += widthA*Beff[a][i]*massA*(n[a] - N2th[a][i])/(H*R[a])  #Injection term                       
-            
             dN[i] = RHS/n[i]    #Log equations
         
 
@@ -153,7 +160,7 @@ class BoltzEqs(Explicit_Problem):
 #             os._exit(0)
             if bigerror == 1:  logger.warning("Right-hand called with NaN values.")
             if bigerror == 2:  logger.warning("Right-hand side evaluated to NaN.")
-          
+        
         return numpy.array(dN + dR + [dNS])
     
     
@@ -183,7 +190,7 @@ class BoltzEqs(Explicit_Problem):
 #Check if a CO component started oscillating
         for icomp,comp in enumerate(self.components):
             if comp.Type != 'CO': continue
-            else: transition[icomp] = Hfunc(x,n,rho,NS,sw)*3. - comp.mass(T)
+            else: transition[icomp] = Hfunc(T,rho,sw)*3. - comp.mass(T)
             
 #Check if any of the ni components is reaching zero:
         for icomp,comp in enumerate(self.components):
@@ -215,7 +222,7 @@ class BoltzEqs(Explicit_Problem):
             if event == 0: continue
             if iev < len(self.components):   #Discontinuities due to coherent oscillations
                 if self.components[iev].Type != 'CO':
-                    logger.error("Discontinuity found for a non-CO component ("+self.components[iev].ID
+                    logger.error("Discontinuity found for a non-CO component ("+self.components[iev].label
                                      +"). Should not happen.")
                     return False
                 else:
@@ -229,7 +236,7 @@ class BoltzEqs(Explicit_Problem):
             else:    #Discontinuities due to component decay                
                 icomp = iev-len(self.components)
                 if self.components[icomp].width(T) == 0.:
-                    logger.error("Discontinuity found for a stable component ("+self.components[icomp].ID
+                    logger.error("Discontinuity found for a stable component ("+self.components[icomp].label
                                       +"). Should not happen.")
                     return False
                 self.components[icomp].Tdecay = T

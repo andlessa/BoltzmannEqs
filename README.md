@@ -1,11 +1,37 @@
 # Boltzmann Code #
 
-A basic description of the formalism and approximations used in the code
-can be found [here](Manual/Boltz2.pdf).
+## Installation ##
+
+The code is written in Python and requires Python version 2.6 or later (but not Python 3)
+with the following *external* Python libraries:
+
+ * `numpy <https://pypi.python.org/pypi/numpy>`_
+ * `scipy <https://pypi.python.org/pypi/scipy>`_
+ * `Assimulo <https://pypi.python.org/pypi/Assimulo>`_ >=2.9
+
+In addition, some of the plotting functions may require:
+
+ * `matplotlib <https://pypi.python.org/pypi/matplotlib>`_
+ * `pyROOT <https://root.cern.ch/pyroot>`_
+
+For a successful installation of Assilumo, `SUNDIALS <https://computation.llnl.gov/projects/sundials>`_ must also be installed.
+
+
+## Running BoltzmannCode ##
+
+A basic example of how to run the code is provided
+by Example.py. If all dependencies have been
+successfully installed, this code can be run as: ::
+
+   Example.py -p parameters.ini -o output.dat -P
+
+The resulting output will be written to the output file output.dat.
+If the flag -P is set, a simple plot showing the evolution of the energy
+densities will also be displayed.
 
 ## Manual ##
 
-For a detailed documentation (currently under construction), [read the docs](http://axionboltzmann.readthedocs.io)
+For a detailed documentation (currently under construction), [read the docs](http://boltzmanncode.readthedocs.io)
 
 ### Contact ###
 

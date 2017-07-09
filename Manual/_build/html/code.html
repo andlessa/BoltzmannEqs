@@ -13,6 +13,8 @@
 
   
   
+  
+  
 
   
 
@@ -31,7 +33,7 @@
 
   
     <link rel="top" title="Boltzmann Code 2.0.0 documentation" href="index.html"/>
-        <link rel="prev" title="Running the code" href="basic.html"/> 
+        <link rel="prev" title="Running the code" href="running.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -40,6 +42,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -80,25 +83,21 @@
           
             
             
-                <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="basic.html">Running the code</a></li>
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="boltzEquations.html">Boltzmann Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation and Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running.html">Running the code</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Code Documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#component-file"><code class="docutils literal"><span class="pre">component</span></code> File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#boltzsolver-file"><code class="docutils literal"><span class="pre">boltzSolver</span></code> File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#boltzeqs-file"><code class="docutils literal"><span class="pre">boltzEqs</span></code> File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-component"><code class="docutils literal"><span class="pre">Example</span></code> File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-component"><code class="docutils literal"><span class="pre">modelDefinitions</span></code> File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-component"><code class="docutils literal"><span class="pre">component</span></code> File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-boltzSolver"><code class="docutils literal"><span class="pre">boltzSolver</span></code> File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-boltzEqs"><code class="docutils literal"><span class="pre">boltzEqs</span></code> File</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-AuxFuncs"><code class="docutils literal"><span class="pre">AuxFuncs</span></code> File</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-AuxDecays"><code class="docutils literal"><span class="pre">AuxDecays</span></code> File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-parameters"><code class="docutils literal"><span class="pre">parameters</span></code> File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#brs-file"><code class="docutils literal"><span class="pre">BRs</span></code> File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-Mass"><code class="docutils literal"><span class="pre">Mass</span></code> File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-COsc"><code class="docutils literal"><span class="pre">COsc</span></code> File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-SIGVs"><code class="docutils literal"><span class="pre">SIGVs</span></code> File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-Sources"><code class="docutils literal"><span class="pre">Sources</span></code> File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-modelParameters"><code class="docutils literal"><span class="pre">modelParameters</span></code> File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-saxionDecays"><code class="docutils literal"><span class="pre">saxionDecays</span></code> File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-axinoDecays"><code class="docutils literal"><span class="pre">axinoDecays</span></code> File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-n1Decays"><code class="docutils literal"><span class="pre">n1Decays</span></code> File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-gravitinoDecays"><code class="docutils literal"><span class="pre">gravitinoDecays</span></code> File</a></li>
 </ul>
 </li>
 </ul>
@@ -113,8 +112,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">Boltzmann Code</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Boltzmann Code</a>
+        
       </nav>
 
 
@@ -123,23 +124,40 @@
         <div class="rst-content">
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
-    <li>Code Documentation</li>
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Code Documentation</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
             <a href="_sources/code.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -147,14 +165,523 @@
             
   <div class="section" id="code-documentation">
 <h1>Code Documentation<a class="headerlink" href="#code-documentation" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="component-file">
-<h2><code class="xref py py-mod docutils literal"><span class="pre">component</span></code> File<a class="headerlink" href="#component-file" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-component">
+<span id="example-file"></span><h2><code class="xref py py-mod docutils literal"><span class="pre">Example</span></code> File<a class="headerlink" href="#module-component" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-component"></span><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">This module defines the component class, which describe common properties for    particle/field components</td>
+</tr>
+</tbody>
+</table>
+<p>:author:: Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</p>
+<dl class="class">
+<dt id="component.Component">
+<em class="property">class </em><code class="descclassname">component.</code><code class="descname">Component</code><span class="sig-paren">(</span><em>label</em>, <em>Type</em>, <em>dof</em>, <em>mass</em>, <em>decays=&lt;AuxDecays.DecayList object&gt;</em>, <em>sigmav=0.0</em>, <em>source=0.0</em>, <em>coherentAmplitute=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Main class to hold component properties.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>label</strong> &#8211; label for the component (can be anything)</li>
+<li><strong>ID</strong> &#8211; a proper name for defining the component (must belong to IDs)</li>
+<li><strong>Type</strong> &#8211; must be weakthermal, thermal or CO (weakly coupled thermal, thermal or coherent oscillating field)</li>
+<li><strong>active</strong> &#8211; if component is active or not (True/False)</li>
+<li><strong>dof</strong> &#8211; +/- Number of degrees of freedom (must be negative for fermions and positive for bosons)</li>
+<li><strong>Tdecay</strong> &#8211; stores the temperature at which the particle starts to decay (approximate)</li>
+<li><strong>Tosc</strong> &#8211; stores the temperature at which the particle starts to oscillate (if Type = CO)</li>
+<li><strong>Tdecouple</strong> &#8211; stores the temperature at which the particle decouples (if Type = thermal/weakthermal)</li>
+<li><strong>evolveVars</strong> &#8211; Stores the values of the variables used for evolution</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="component.Component.getBRX">
+<code class="descname">getBRX</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getBRX"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component.getBRX" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the fraction of energy injected in the thermal bath by the component decay at temperature T</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="component.Component.getBRs">
+<code class="descname">getBRs</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getBRs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component.getBRs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the decays for a given temperature T</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="component.Component.getNTh">
+<code class="descname">getNTh</code><span class="sig-paren">(</span><em>T</em>, <em>nratio</em>, <em>comp=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getNTh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component.getNTh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the effective thermal number density at temperature T:
+If comp = None:</p>
+<blockquote>
+<div>Nth = neq[self]*sum_{decays} BR(self-&gt;a + b +...)*(n[a]/neq[a])*(n[b]/neq[b])* ...</div></blockquote>
+<dl class="docutils">
+<dt>If comp = component:</dt>
+<dd>Nth = (neq[self]/Norm)*sum_{decays} N_component BR(self-&gt; component + b +...)*(n[a]/neq[a])*(n[b]/neq[b])*...</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>T</strong> &#8211; temperature (allows for T-dependent BRs)</li>
+<li><strong>nratio</strong> &#8211; Dictionary with ratios of number density to the equilibrium number density.</li>
+<li><strong>comp</strong> &#8211; Component (if needed) to compute the weight X-&gt;Y+...</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="component.Component.getOscAmplitute">
+<code class="descname">getOscAmplitute</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getOscAmplitute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component.getOscAmplitute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the oscillation amplitude for the component at temperature T.
+If the component is of Type thermal, returns None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="component.Component.getSIGV">
+<code class="descname">getSIGV</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getSIGV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component.getSIGV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the thermally averaged annihilation cross-section
+at temperature T</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="component.Component.getSource">
+<code class="descname">getSource</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component.getSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the source term (C) at temperature T</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="component.Component.getTotalBRTo">
+<code class="descname">getTotalBRTo</code><span class="sig-paren">(</span><em>T</em>, <em>comp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getTotalBRTo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component.getTotalBRTo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the total branching ratio to compoenent comp (sum BR(self -&gt; comp + X..)*comp_multiplicity),
+including the multiplicity factor</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="component.Component.hasDecayed">
+<code class="descname">hasDecayed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.hasDecayed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component.hasDecayed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the component has fully decayed</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="component.Component.isOscillating">
+<code class="descname">isOscillating</code><span class="sig-paren">(</span><em>T</em>, <em>H</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.isOscillating"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component.isOscillating" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the component is coherent oscillating. If it is a thermal field,
+it returns False. If it is a CO oscillating field and if
+self.active AND 3*H(T) &lt; self.mass, returns True.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="component.Component.nEQ">
+<code class="descname">nEQ</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.nEQ"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component.nEQ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the equilibrium number density at temperature T. Returns zero for non-thermal components</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="component.Component.rEQ">
+<code class="descname">rEQ</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.rEQ"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component.rEQ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the ratio of equilibrium energy and number densities at temperature T,        assuming chemical potential = 0.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="component.Component.setInitialCond">
+<code class="descname">setInitialCond</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.setInitialCond"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component.setInitialCond" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set initial conditions for component at temperature T, assuming the energy        density is dominated by radiation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="component.Component.width">
+<code class="descname">width</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.width"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#component.Component.width" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the component width at temperature T.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="boltzsolver-file">
-<h2><code class="xref py py-mod docutils literal"><span class="pre">boltzSolver</span></code> File<a class="headerlink" href="#boltzsolver-file" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-component">
+<span id="modeldefinitions-file"></span><h2><code class="xref py py-mod docutils literal"><span class="pre">modelDefinitions</span></code> File<a class="headerlink" href="#module-component" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-component"></span><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">This module defines the component class, which describe common properties for    particle/field components</td>
+</tr>
+</tbody>
+</table>
+<p>:author:: Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</p>
+<dl class="class">
+<dt>
+<em class="property">class </em><code class="descclassname">component.</code><code class="descname">Component</code><span class="sig-paren">(</span><em>label</em>, <em>Type</em>, <em>dof</em>, <em>mass</em>, <em>decays=&lt;AuxDecays.DecayList object&gt;</em>, <em>sigmav=0.0</em>, <em>source=0.0</em>, <em>coherentAmplitute=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Main class to hold component properties.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>label</strong> &#8211; label for the component (can be anything)</li>
+<li><strong>ID</strong> &#8211; a proper name for defining the component (must belong to IDs)</li>
+<li><strong>Type</strong> &#8211; must be weakthermal, thermal or CO (weakly coupled thermal, thermal or coherent oscillating field)</li>
+<li><strong>active</strong> &#8211; if component is active or not (True/False)</li>
+<li><strong>dof</strong> &#8211; +/- Number of degrees of freedom (must be negative for fermions and positive for bosons)</li>
+<li><strong>Tdecay</strong> &#8211; stores the temperature at which the particle starts to decay (approximate)</li>
+<li><strong>Tosc</strong> &#8211; stores the temperature at which the particle starts to oscillate (if Type = CO)</li>
+<li><strong>Tdecouple</strong> &#8211; stores the temperature at which the particle decouples (if Type = thermal/weakthermal)</li>
+<li><strong>evolveVars</strong> &#8211; Stores the values of the variables used for evolution</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt>
+<code class="descname">getBRX</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getBRX"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Returns the fraction of energy injected in the thermal bath by the component decay at temperature T</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getBRs</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getBRs"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Get the decays for a given temperature T</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getNTh</code><span class="sig-paren">(</span><em>T</em>, <em>nratio</em>, <em>comp=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getNTh"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Computes the effective thermal number density at temperature T:
+If comp = None:</p>
+<blockquote>
+<div>Nth = neq[self]*sum_{decays} BR(self-&gt;a + b +...)*(n[a]/neq[a])*(n[b]/neq[b])* ...</div></blockquote>
+<dl class="docutils">
+<dt>If comp = component:</dt>
+<dd>Nth = (neq[self]/Norm)*sum_{decays} N_component BR(self-&gt; component + b +...)*(n[a]/neq[a])*(n[b]/neq[b])*...</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>T</strong> &#8211; temperature (allows for T-dependent BRs)</li>
+<li><strong>nratio</strong> &#8211; Dictionary with ratios of number density to the equilibrium number density.</li>
+<li><strong>comp</strong> &#8211; Component (if needed) to compute the weight X-&gt;Y+...</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getOscAmplitute</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getOscAmplitute"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Computes the oscillation amplitude for the component at temperature T.
+If the component is of Type thermal, returns None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getSIGV</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getSIGV"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Returns the thermally averaged annihilation cross-section
+at temperature T</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getSource</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getSource"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Computes the source term (C) at temperature T</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getTotalBRTo</code><span class="sig-paren">(</span><em>T</em>, <em>comp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getTotalBRTo"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Computes the total branching ratio to compoenent comp (sum BR(self -&gt; comp + X..)*comp_multiplicity),
+including the multiplicity factor</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">hasDecayed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.hasDecayed"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Checks if the component has fully decayed</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">isOscillating</code><span class="sig-paren">(</span><em>T</em>, <em>H</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.isOscillating"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Checks if the component is coherent oscillating. If it is a thermal field,
+it returns False. If it is a CO oscillating field and if
+self.active AND 3*H(T) &lt; self.mass, returns True.</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">nEQ</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.nEQ"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Returns the equilibrium number density at temperature T. Returns zero for non-thermal components</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">rEQ</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.rEQ"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Returns the ratio of equilibrium energy and number densities at temperature T,        assuming chemical potential = 0.</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">setInitialCond</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.setInitialCond"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Set initial conditions for component at temperature T, assuming the energy        density is dominated by radiation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">width</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.width"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Returns the component width at temperature T.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="boltzeqs-file">
-<h2><code class="xref py py-mod docutils literal"><span class="pre">boltzEqs</span></code> File<a class="headerlink" href="#boltzeqs-file" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-component">
+<span id="component-file"></span><h2><a class="reference internal" href="#module-component" title="component: This module defines the component class, which describe common properties for    particle/field components "><code class="xref py py-mod docutils literal"><span class="pre">component</span></code></a> File<a class="headerlink" href="#module-component" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-component"></span><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">This module defines the component class, which describe common properties for    particle/field components</td>
+</tr>
+</tbody>
+</table>
+<p>:author:: Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</p>
+<dl class="class">
+<dt>
+<em class="property">class </em><code class="descclassname">component.</code><code class="descname">Component</code><span class="sig-paren">(</span><em>label</em>, <em>Type</em>, <em>dof</em>, <em>mass</em>, <em>decays=&lt;AuxDecays.DecayList object&gt;</em>, <em>sigmav=0.0</em>, <em>source=0.0</em>, <em>coherentAmplitute=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Main class to hold component properties.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>label</strong> &#8211; label for the component (can be anything)</li>
+<li><strong>ID</strong> &#8211; a proper name for defining the component (must belong to IDs)</li>
+<li><strong>Type</strong> &#8211; must be weakthermal, thermal or CO (weakly coupled thermal, thermal or coherent oscillating field)</li>
+<li><strong>active</strong> &#8211; if component is active or not (True/False)</li>
+<li><strong>dof</strong> &#8211; +/- Number of degrees of freedom (must be negative for fermions and positive for bosons)</li>
+<li><strong>Tdecay</strong> &#8211; stores the temperature at which the particle starts to decay (approximate)</li>
+<li><strong>Tosc</strong> &#8211; stores the temperature at which the particle starts to oscillate (if Type = CO)</li>
+<li><strong>Tdecouple</strong> &#8211; stores the temperature at which the particle decouples (if Type = thermal/weakthermal)</li>
+<li><strong>evolveVars</strong> &#8211; Stores the values of the variables used for evolution</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt>
+<code class="descname">getBRX</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getBRX"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Returns the fraction of energy injected in the thermal bath by the component decay at temperature T</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getBRs</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getBRs"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Get the decays for a given temperature T</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getNTh</code><span class="sig-paren">(</span><em>T</em>, <em>nratio</em>, <em>comp=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getNTh"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Computes the effective thermal number density at temperature T:
+If comp = None:</p>
+<blockquote>
+<div>Nth = neq[self]*sum_{decays} BR(self-&gt;a + b +...)*(n[a]/neq[a])*(n[b]/neq[b])* ...</div></blockquote>
+<dl class="docutils">
+<dt>If comp = component:</dt>
+<dd>Nth = (neq[self]/Norm)*sum_{decays} N_component BR(self-&gt; component + b +...)*(n[a]/neq[a])*(n[b]/neq[b])*...</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>T</strong> &#8211; temperature (allows for T-dependent BRs)</li>
+<li><strong>nratio</strong> &#8211; Dictionary with ratios of number density to the equilibrium number density.</li>
+<li><strong>comp</strong> &#8211; Component (if needed) to compute the weight X-&gt;Y+...</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getOscAmplitute</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getOscAmplitute"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Computes the oscillation amplitude for the component at temperature T.
+If the component is of Type thermal, returns None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getSIGV</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getSIGV"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Returns the thermally averaged annihilation cross-section
+at temperature T</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getSource</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getSource"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Computes the source term (C) at temperature T</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getTotalBRTo</code><span class="sig-paren">(</span><em>T</em>, <em>comp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.getTotalBRTo"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Computes the total branching ratio to compoenent comp (sum BR(self -&gt; comp + X..)*comp_multiplicity),
+including the multiplicity factor</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">hasDecayed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.hasDecayed"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Checks if the component has fully decayed</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">isOscillating</code><span class="sig-paren">(</span><em>T</em>, <em>H</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.isOscillating"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Checks if the component is coherent oscillating. If it is a thermal field,
+it returns False. If it is a CO oscillating field and if
+self.active AND 3*H(T) &lt; self.mass, returns True.</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">nEQ</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.nEQ"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Returns the equilibrium number density at temperature T. Returns zero for non-thermal components</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">rEQ</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.rEQ"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Returns the ratio of equilibrium energy and number densities at temperature T,        assuming chemical potential = 0.</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">setInitialCond</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.setInitialCond"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Set initial conditions for component at temperature T, assuming the energy        density is dominated by radiation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">width</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/component.html#Component.width"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Returns the component width at temperature T.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-boltzSolver">
+<span id="boltzsolver-file"></span><h2><a class="reference internal" href="#module-boltzSolver" title="boltzSolver: This module contains the main methods for solving the Boltzmann equations "><code class="xref py py-mod docutils literal"><span class="pre">boltzSolver</span></code></a> File<a class="headerlink" href="#module-boltzSolver" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-boltzSolver"></span><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">This module contains the main methods for solving the Boltzmann equations</td>
+</tr>
+<tr class="field-even field"><th class="field-name">author:</th><td class="field-body">Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</td>
+</tr>
+</tbody>
+</table>
+<dl class="function">
+<dt id="boltzSolver.Evolve">
+<code class="descclassname">boltzSolver.</code><code class="descname">Evolve</code><span class="sig-paren">(</span><em>compList</em>, <em>T0</em>, <em>TF</em>, <em>omegaErr=0.01</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/boltzSolver.html#Evolve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#boltzSolver.Evolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evolve the components in component list from the re-heat temperature T0 to TF
+For simplicity we set  R0 = s0 = 1 (with respect to the notes).
+Returns a list with components, where the evolveVars hold the evolution of each component.
+The last element of the list is a simple array with the evolution of NS.
+omegaErr is the approximate relative error for Omega h^2.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="boltzSolver.goodCompList">
+<code class="descclassname">boltzSolver.</code><code class="descname">goodCompList</code><span class="sig-paren">(</span><em>compList</em>, <em>T0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/boltzSolver.html#goodCompList"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#boltzSolver.goodCompList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the list of components satisfies the minimum requirements</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="boltzSolver.mySolve">
+<code class="descclassname">boltzSolver.</code><code class="descname">mySolve</code><span class="sig-paren">(</span><em>xf</em>, <em>boltz_eqs</em>, <em>rtol</em>, <em>atol</em>, <em>verbosity=50</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/boltzSolver.html#mySolve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#boltzSolver.mySolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the main options for the ODE solver and solve the equations. Returns the
+array of x,y points for all components.
+If numerical instabilities are found, re-do the problematic part of the evolution with smaller steps</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-boltzEqs">
+<span id="boltzeqs-file"></span><h2><a class="reference internal" href="#module-boltzEqs" title="boltzEqs: This module defines the Boltzmann equations "><code class="xref py py-mod docutils literal"><span class="pre">boltzEqs</span></code></a> File<a class="headerlink" href="#module-boltzEqs" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-boltzEqs"></span><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">This module defines the Boltzmann equations</td>
+</tr>
+<tr class="field-even field"><th class="field-name">author:</th><td class="field-body">Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</td>
+</tr>
+</tbody>
+</table>
+<dl class="class">
+<dt id="boltzEqs.BoltzEqs">
+<em class="property">class </em><code class="descclassname">boltzEqs.</code><code class="descname">BoltzEqs</code><span class="sig-paren">(</span><em>compList</em>, <em>x0=None</em>, <em>y0=None</em>, <em>sw=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/boltzEqs.html#BoltzEqs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#boltzEqs.BoltzEqs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">assimulo.problem.Explicit_Problem</span></code></p>
+<p>Class to hold the Boltzmann equations</p>
+<dl class="method">
+<dt id="boltzEqs.BoltzEqs.handle_event">
+<code class="descname">handle_event</code><span class="sig-paren">(</span><em>solver</em>, <em>event_info</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/boltzEqs.html#BoltzEqs.handle_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#boltzEqs.BoltzEqs.handle_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>Activate/de-activate components when a discontinuous transition happens        and sets the new initial conditions.            
+Possible discontinuities are: a CO component starts to oscillate.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="boltzEqs.BoltzEqs.rhs">
+<code class="descname">rhs</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>sw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/boltzEqs.html#BoltzEqs.rhs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#boltzEqs.BoltzEqs.rhs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the derivatives of the y variables at point x = log(R/R0).
+sw = [True/False,...] is a list of switches to activate/deactivate components
+If a component is not active it does not evolve and its decay and
+energy density does not contribute to the other components.
+For simplicity we set  R0 = s0 = 1 (with respect to the notes).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="boltzEqs.BoltzEqs.state_events">
+<code class="descname">state_events</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>sw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/boltzEqs.html#BoltzEqs.state_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#boltzEqs.BoltzEqs.state_events" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Checks for a discontinuous transition happened.        Possible discontinuities are: </dt>
+<dd><ul class="first last simple">
+<li>a CO component starts to oscillate          * a particle has decayed and its number density is effectively zero</li>
+</ul>
+</dd>
+</dl>
+<p>The transition vector must be zero when such a transition occurs.
+Also updates the absolute tolerance of the solver, if the variable&#8217;s
+values go below it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="boltzEqs.BoltzEqs.updateValues">
+<code class="descname">updateValues</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>sw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/boltzEqs.html#BoltzEqs.updateValues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#boltzEqs.BoltzEqs.updateValues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace the variables in self.components and set the new initial conditions.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="module-AuxFuncs">
 <span id="auxfuncs-file"></span><h2><a class="reference internal" href="#module-AuxFuncs" title="AuxFuncs: This module provides auxiliary functions "><code class="xref py py-mod docutils literal"><span class="pre">AuxFuncs</span></code></a> File<a class="headerlink" href="#module-AuxFuncs" title="Permalink to this headline">¶</a></h2>
@@ -170,33 +697,22 @@
 </table>
 <dl class="function">
 <dt id="AuxFuncs.Hfunc">
-<code class="descclassname">AuxFuncs.</code><code class="descname">Hfunc</code><span class="sig-paren">(</span><em>x</em>, <em>nv</em>, <em>rhov</em>, <em>NS</em>, <em>sw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#Hfunc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.Hfunc" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">AuxFuncs.</code><code class="descname">Hfunc</code><span class="sig-paren">(</span><em>T</em>, <em>rhov</em>, <em>sw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#Hfunc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.Hfunc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the Hubble parameter, given the variables x=log(R/R0) and ni, rhoi and NS=log(S/S0)</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="AuxFuncs.PSlamb">
-<code class="descclassname">AuxFuncs.</code><code class="descname">PSlamb</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>z</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#PSlamb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.PSlamb" title="Permalink to this definition">¶</a></dt>
-<dd><p>Simple 3-body phase factor auxiliary function</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="AuxFuncs.gSTAR">
-<code class="descclassname">AuxFuncs.</code><code class="descname">gSTAR</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#gSTAR"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.gSTAR" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes the number of relativistic degrees of freedom in thermal equilibrium with the thermal    bath, including the full MSSM spectrum, except for the lightest neutralino.    To save time, for the first call generates exact data points describing well the function
-and store them in gSTARdata. For all subsequent calls, interpolate between the data points.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="AuxFuncs.gSTARS">
-<code class="descclassname">AuxFuncs.</code><code class="descname">gSTARS</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#gSTARS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.gSTARS" title="Permalink to this definition">¶</a></dt>
+<dt id="AuxFuncs.gSTARSexact">
+<code class="descclassname">AuxFuncs.</code><code class="descname">gSTARSexact</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#gSTARSexact"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.gSTARSexact" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the number of relativistic degrees of freedom for computing the entropy density,    including the full MSSM spectrum, except for the lightest neutralino.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="AuxFuncs.gSTARexact">
-<code class="descclassname">AuxFuncs.</code><code class="descname">gSTARexact</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#gSTARexact"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.gSTARexact" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes exactly the number of relativistic degrees of freedom in thermal equilibrium with the thermal    bath, including the full MSSM spectrum, except for the lightest neutralino.    interpol turns on/off the interpolation around the QCD phase trasition region.</p>
+<code class="descclassname">AuxFuncs.</code><code class="descname">gSTARexact</code><span class="sig-paren">(</span><em>T</em>, <em>interpol=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#gSTARexact"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.gSTARexact" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes exactly the number of relativistic degrees of freedom in thermal equilibrium with the thermal
+bath.
+interpol turns on/off the interpolation around the QCD phase trasition region.</p>
 </dd></dl>
 
 <dl class="function">
@@ -208,18 +724,24 @@ Gives zero if T &gt; 1 MeV (where neutrinos are still coupled).</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="AuxFuncs.getOmega">
-<code class="descclassname">AuxFuncs.</code><code class="descname">getOmega</code><span class="sig-paren">(</span><em>comp</em>, <em>rho</em>, <em>n</em>, <em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#getOmega"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.getOmega" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute relic density today, given the component, number density and energy density    at temperature T.</p>
+<dt id="AuxFuncs.getDataFrom">
+<code class="descclassname">AuxFuncs.</code><code class="descname">getDataFrom</code><span class="sig-paren">(</span><em>dataFile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#getDataFrom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.getDataFrom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads a datafile generated by printData, printSummary and printParameters
+and returns a dictionary with the information.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="AuxFuncs.getParsAt">
-<code class="descclassname">AuxFuncs.</code><code class="descname">getParsAt</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#getParsAt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.getParsAt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Try to obtain soft parameters and gauge couplings at temperature T from
-the RGE function defined in modelParameters.rgeFunc.
-If the RGE function does not contain the running of a parameter, use its (default) SUSY scale
-value from the SLHA input data</p>
+<dt id="AuxFuncs.getFunctions">
+<code class="descclassname">AuxFuncs.</code><code class="descname">getFunctions</code><span class="sig-paren">(</span><em>pclFile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#getFunctions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.getFunctions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the g*(T), g*s(T) and temperature functions and saves
+them to a pickle file. Ignores all BSM effects to these functions
+:param pclFile: Name of pickle file to dump the functions</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="AuxFuncs.getOmega">
+<code class="descclassname">AuxFuncs.</code><code class="descname">getOmega</code><span class="sig-paren">(</span><em>comp</em>, <em>rho</em>, <em>n</em>, <em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#getOmega"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.getOmega" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute relic density today, given the component, number density and energy density    at temperature T.</p>
 </dd></dl>
 
 <dl class="function">
@@ -230,28 +752,51 @@ value from the SLHA input data</p>
 
 <dl class="function">
 <dt id="AuxFuncs.getTemperature">
-<code class="descclassname">AuxFuncs.</code><code class="descname">getTemperature</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#getTemperature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.getTemperature" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">AuxFuncs.</code><code class="descname">getTemperature</code><span class="sig-paren">(</span><em>x</em>, <em>NS</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#getTemperature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.getTemperature" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="AuxFuncs.getTexact">
+<code class="descclassname">AuxFuncs.</code><code class="descname">getTexact</code><span class="sig-paren">(</span><em>x</em>, <em>NS</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#getTexact"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.getTexact" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the temperature for the thermal bath from xeff = NS - 3*x, where
 x = log(R) and NS = log(S).</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="AuxFuncs.memoize">
-<code class="descclassname">AuxFuncs.</code><code class="descname">memoize</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#memoize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.memoize" title="Permalink to this definition">¶</a></dt>
-<dd><p>A wrapping to store in cache the results of a function, for expensive functions.
-Ignores all but the first argument of the function.</p>
+<dt id="AuxFuncs.gstarFunc">
+<code class="descclassname">AuxFuncs.</code><code class="descname">gstarFunc</code><span class="sig-paren">(</span><em>x</em>, <em>dof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#gstarFunc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.gstarFunc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Auxiliary function to compute the contribution from a single particle to gSTAR.    x = mass/T, dof = number of degrees of freedom (positive/negative for bosons/fermions)</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="AuxFuncs.interp1d_picklable">
+<em class="property">class </em><code class="descclassname">AuxFuncs.</code><code class="descname">interp1d_picklable</code><span class="sig-paren">(</span><em>xi</em>, <em>yi</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#interp1d_picklable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.interp1d_picklable" title="Permalink to this definition">¶</a></dt>
+<dd><p>class wrapper for piecewise linear function. Required for pickling a interp1d result.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="AuxFuncs.plainmemoize">
-<code class="descclassname">AuxFuncs.</code><code class="descname">plainmemoize</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#plainmemoize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.plainmemoize" title="Permalink to this definition">¶</a></dt>
-<dd><p>A wrapping to store in cache the results of a function, for expensive functions.
-Ignores all the inputs of the function and returns always the same result.</p>
+<dt id="AuxFuncs.printData">
+<code class="descclassname">AuxFuncs.</code><code class="descname">printData</code><span class="sig-paren">(</span><em>compList</em>, <em>outputFile=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#printData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.printData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints the evolution of number and energy densities of the species to the outputFile</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="AuxFuncs.printParameters">
+<code class="descclassname">AuxFuncs.</code><code class="descname">printParameters</code><span class="sig-paren">(</span><em>parameters</em>, <em>outFile=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#printParameters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.printParameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints input parameters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parameters</strong> &#8211; dictionary with parameters labels and their values</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
 <dt id="AuxFuncs.printSummary">
-<code class="descclassname">AuxFuncs.</code><code class="descname">printSummary</code><span class="sig-paren">(</span><em>compList</em>, <em>TF</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#printSummary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.printSummary" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">AuxFuncs.</code><code class="descname">printSummary</code><span class="sig-paren">(</span><em>compList</em>, <em>TF</em>, <em>outFile=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AuxFuncs.html#printSummary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AuxFuncs.printSummary" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prints basic summary of solutions.</p>
 </dd></dl>
 
@@ -325,419 +870,12 @@ Ignores all the inputs of the function and returns always the same result.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-parameters">
-<span id="parameters-file"></span><h2><a class="reference internal" href="#module-parameters" title="parameters: defines useful numerical parameters"><code class="xref py py-mod docutils literal"><span class="pre">parameters</span></code></a> File<a class="headerlink" href="#module-parameters" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-parameters"></span><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">defines useful numerical parameters</td>
-</tr>
-<tr class="field-even field"><th class="field-name">author:</th><td class="field-body">Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="brs-file">
-<h2><code class="xref py py-mod docutils literal"><span class="pre">BRs</span></code> File<a class="headerlink" href="#brs-file" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="module-Mass">
-<span id="mass-file"></span><h2><a class="reference internal" href="#module-Mass" title="Mass: This module defines all the mass functions for the relevant components    It imports the model parameters from modelParameters.    The function names must match the particle IDs"><code class="xref py py-mod docutils literal"><span class="pre">Mass</span></code></a> File<a class="headerlink" href="#module-Mass" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-Mass"></span><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">This module defines all the mass functions for the relevant components    It imports the model parameters from modelParameters.    The function names must match the particle IDs</td>
-</tr>
-<tr class="field-even field"><th class="field-name">author:</th><td class="field-body">Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</td>
-</tr>
-</tbody>
-</table>
-<dl class="function">
-<dt id="Mass.axino">
-<code class="descclassname">Mass.</code><code class="descname">axino</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Mass.html#axino"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Mass.axino" title="Permalink to this definition">¶</a></dt>
-<dd><p>Axino mass as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Mass.axion">
-<code class="descclassname">Mass.</code><code class="descname">axion</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Mass.html#axion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Mass.axion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Axion mass as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Mass.axionCO">
-<code class="descclassname">Mass.</code><code class="descname">axionCO</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Mass.html#axionCO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Mass.axionCO" title="Permalink to this definition">¶</a></dt>
-<dd><p>Axion mass as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Mass.gravitino">
-<code class="descclassname">Mass.</code><code class="descname">gravitino</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Mass.html#gravitino"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Mass.gravitino" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gravitino mass as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Mass.neutralino">
-<code class="descclassname">Mass.</code><code class="descname">neutralino</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Mass.html#neutralino"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Mass.neutralino" title="Permalink to this definition">¶</a></dt>
-<dd><p>Neutralino1 mass as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Mass.saxion">
-<code class="descclassname">Mass.</code><code class="descname">saxion</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Mass.html#saxion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Mass.saxion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Saxion mass as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Mass.saxionCO">
-<code class="descclassname">Mass.</code><code class="descname">saxionCO</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Mass.html#saxionCO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Mass.saxionCO" title="Permalink to this definition">¶</a></dt>
-<dd><p>Saxion mass as a function of temperature</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-COsc">
-<span id="cosc-file"></span><h2><a class="reference internal" href="#module-COsc" title="COsc: This module defines all the oscillation amplitudes for the components at temperature T"><code class="xref py py-mod docutils literal"><span class="pre">COsc</span></code></a> File<a class="headerlink" href="#module-COsc" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-COsc"></span><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">This module defines all the oscillation amplitudes for the components at temperature T</td>
-</tr>
-<tr class="field-even field"><th class="field-name">author:</th><td class="field-body">Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</td>
-</tr>
-</tbody>
-</table>
-<dl class="function">
-<dt id="COsc.axino">
-<code class="descclassname">COsc.</code><code class="descname">axino</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/COsc.html#axino"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#COsc.axino" title="Permalink to this definition">¶</a></dt>
-<dd><p>Axino coherent oscillation amplitude as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="COsc.axion">
-<code class="descclassname">COsc.</code><code class="descname">axion</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/COsc.html#axion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#COsc.axion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Axion coherent oscillation amplitude as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="COsc.axionCO">
-<code class="descclassname">COsc.</code><code class="descname">axionCO</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/COsc.html#axionCO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#COsc.axionCO" title="Permalink to this definition">¶</a></dt>
-<dd><p>Axion coherent oscillation amplitude as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="COsc.gravitino">
-<code class="descclassname">COsc.</code><code class="descname">gravitino</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/COsc.html#gravitino"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#COsc.gravitino" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gravitino coherent oscillation amplitude as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="COsc.neutralino">
-<code class="descclassname">COsc.</code><code class="descname">neutralino</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/COsc.html#neutralino"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#COsc.neutralino" title="Permalink to this definition">¶</a></dt>
-<dd><p>Neutralino1 coherent oscillation amplitude as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="COsc.saxion">
-<code class="descclassname">COsc.</code><code class="descname">saxion</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/COsc.html#saxion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#COsc.saxion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Saxion coherent oscillation amplitude as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="COsc.saxionCO">
-<code class="descclassname">COsc.</code><code class="descname">saxionCO</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/COsc.html#saxionCO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#COsc.saxionCO" title="Permalink to this definition">¶</a></dt>
-<dd><p>Saxion coherent oscillation amplitude as a function of temperature</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-SIGVs">
-<span id="sigvs-file"></span><h2><a class="reference internal" href="#module-SIGVs" title="SIGVs: This module defines all the annihilation cross-sections*v for the components at temperature T"><code class="xref py py-mod docutils literal"><span class="pre">SIGVs</span></code></a> File<a class="headerlink" href="#module-SIGVs" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-SIGVs"></span><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">This module defines all the annihilation cross-sections*v for the components at temperature T</td>
-</tr>
-<tr class="field-even field"><th class="field-name">author:</th><td class="field-body">Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</td>
-</tr>
-</tbody>
-</table>
-<dl class="function">
-<dt id="SIGVs.axino">
-<code class="descclassname">SIGVs.</code><code class="descname">axino</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SIGVs.html#axino"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SIGVs.axino" title="Permalink to this definition">¶</a></dt>
-<dd><p>Axino sigma.v as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="SIGVs.axion">
-<code class="descclassname">SIGVs.</code><code class="descname">axion</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SIGVs.html#axion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SIGVs.axion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Axion sigma.v as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="SIGVs.axionCO">
-<code class="descclassname">SIGVs.</code><code class="descname">axionCO</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SIGVs.html#axionCO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SIGVs.axionCO" title="Permalink to this definition">¶</a></dt>
-<dd><p>Axion sigma.v as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="SIGVs.gravitino">
-<code class="descclassname">SIGVs.</code><code class="descname">gravitino</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SIGVs.html#gravitino"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SIGVs.gravitino" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gravitino sigma.v as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="SIGVs.neutralino">
-<code class="descclassname">SIGVs.</code><code class="descname">neutralino</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SIGVs.html#neutralino"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SIGVs.neutralino" title="Permalink to this definition">¶</a></dt>
-<dd><p>Neutralino1 sigma.v as a function of temperature.
-Uses the function generated by modelParameters.getIsajetData()</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="SIGVs.saxion">
-<code class="descclassname">SIGVs.</code><code class="descname">saxion</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SIGVs.html#saxion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SIGVs.saxion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Saxion sigma.v as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="SIGVs.saxionCO">
-<code class="descclassname">SIGVs.</code><code class="descname">saxionCO</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SIGVs.html#saxionCO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SIGVs.saxionCO" title="Permalink to this definition">¶</a></dt>
-<dd><p>Saxion sigma.v as a function of temperature</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-Sources">
-<span id="sources-file"></span><h2><a class="reference internal" href="#module-Sources" title="Sources: This module defines all the sources for the components at temperature T"><code class="xref py py-mod docutils literal"><span class="pre">Sources</span></code></a> File<a class="headerlink" href="#module-Sources" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-Sources"></span><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">This module defines all the sources for the components at temperature T</td>
-</tr>
-</tbody>
-</table>
-<p>:author:: Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</p>
-<dl class="function">
-<dt id="Sources.axino">
-<code class="descclassname">Sources.</code><code class="descname">axino</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Sources.html#axino"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Sources.axino" title="Permalink to this definition">¶</a></dt>
-<dd><p>Axino source as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Sources.axion">
-<code class="descclassname">Sources.</code><code class="descname">axion</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Sources.html#axion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Sources.axion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Axion source as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Sources.axionCO">
-<code class="descclassname">Sources.</code><code class="descname">axionCO</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Sources.html#axionCO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Sources.axionCO" title="Permalink to this definition">¶</a></dt>
-<dd><p>Axion source as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Sources.gravitino">
-<code class="descclassname">Sources.</code><code class="descname">gravitino</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Sources.html#gravitino"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Sources.gravitino" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gravitino source as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Sources.neutralino">
-<code class="descclassname">Sources.</code><code class="descname">neutralino</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Sources.html#neutralino"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Sources.neutralino" title="Permalink to this definition">¶</a></dt>
-<dd><p>Neutralino1 source as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Sources.saxion">
-<code class="descclassname">Sources.</code><code class="descname">saxion</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Sources.html#saxion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Sources.saxion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Saxion source as a function of temperature</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="Sources.saxionCO">
-<code class="descclassname">Sources.</code><code class="descname">saxionCO</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Sources.html#saxionCO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Sources.saxionCO" title="Permalink to this definition">¶</a></dt>
-<dd><p>Saxion source as a function of temperature</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-modelParameters">
-<span id="modelparameters-file"></span><h2><a class="reference internal" href="#module-modelParameters" title="modelParameters: This module defines all relevant input parameters for the model and some methods to obtain     other relevant information (SUSY spectrum and parameters, neutralino sigma.v, etc)"><code class="xref py py-mod docutils literal"><span class="pre">modelParameters</span></code></a> File<a class="headerlink" href="#module-modelParameters" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-modelParameters"></span><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">This module defines all relevant input parameters for the model and some methods to obtain     other relevant information (SUSY spectrum and parameters, neutralino sigma.v, etc)</td>
-</tr>
-<tr class="field-even field"><th class="field-name">author:</th><td class="field-body">Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</td>
-</tr>
-</tbody>
-</table>
-<dl class="function">
-<dt id="modelParameters.getDataFrom">
-<code class="descclassname">modelParameters.</code><code class="descname">getDataFrom</code><span class="sig-paren">(</span><em>fname</em>, <em>x</em>, <em>y</em>, <em>sort=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modelParameters.html#getDataFrom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modelParameters.getDataFrom" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reads fname and returns a dictionary with a list of values for each entry in y. The
-number of labels in x+y  must match the number of columns in the file</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="modelParameters.getIsajetData">
-<code class="descclassname">modelParameters.</code><code class="descname">getIsajetData</code><span class="sig-paren">(</span><em>codeDir</em>, <em>sigmav_datafile</em>, <em>slhafile</em>, <em>rge_datafile</em>, <em>isajet_inputfile=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/modelParameters.html#getIsajetData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modelParameters.getIsajetData" title="Permalink to this definition">¶</a></dt>
-<dd><p>Obtains additional model specific data.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>codeDir</strong> &#8211; location of the code folder (where getIsajetData.x is)</li>
-<li><strong>sigmav_datafile</strong> &#8211; File containing T,sigma.v(T) points to be interpolated and compute the neutralino annihilation cross-section</li>
-<li><strong>slhafile</strong> &#8211; File containing the MSSM spectrum and parameters</li>
-<li><strong>rge_datafile</strong> &#8211; File containing T,M1(T),M2(T),M3(T),g&#8217;(T),gSU2(T),gSU3(T)</li>
-<li><strong>isajet_inputfile</strong> &#8211; File containing isasugra type input to run isajet, isared and compute the relevant data</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<p>If sigmav_datafile, slhafile and/or rge_datafile does not exist, run isajet and isared with isajet_input
-and compute the missing data. Save the missing data to the respective file.
-If sigmav_datafile, slhafile and/or rge_datafile = None, run isajet and isared with isajet_input
-but does not save the missing data to file.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="modelParameters.gettempfile">
-<code class="descclassname">modelParameters.</code><code class="descname">gettempfile</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/modelParameters.html#gettempfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#modelParameters.gettempfile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Simple method to create a tempfile in the current folder. Returns the tempfile name.</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-saxionDecays">
-<span id="saxiondecays-file"></span><h2><a class="reference internal" href="#module-saxionDecays" title="saxionDecays: Computes saxion BRs and width "><code class="xref py py-mod docutils literal"><span class="pre">saxionDecays</span></code></a> File<a class="headerlink" href="#module-saxionDecays" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-saxionDecays"></span><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">Computes the axino decays</td>
-</tr>
-<tr class="field-even field"><th class="field-name">author:</th><td class="field-body">Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</td>
-</tr>
-</tbody>
-</table>
-<dl class="function">
-<dt id="saxionDecays.cot">
-<code class="descclassname">saxionDecays.</code><code class="descname">cot</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/saxionDecays.html#cot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#saxionDecays.cot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Cotangent function</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="saxionDecays.getSaxionBRs">
-<code class="descclassname">saxionDecays.</code><code class="descname">getSaxionBRs</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/saxionDecays.html#getSaxionBRs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#saxionDecays.getSaxionBRs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute axino BRs at temperature T, given the parameters defined in modelParameters.
-Assumes all saxion decay energy goes to radiation except for the decays to axions, axinos or direct decay
-to a pair of lightest neutralinos.</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-axinoDecays">
-<span id="axinodecays-file"></span><h2><a class="reference internal" href="#module-axinoDecays" title="axinoDecays: Computes axino BRs and width "><code class="xref py py-mod docutils literal"><span class="pre">axinoDecays</span></code></a> File<a class="headerlink" href="#module-axinoDecays" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-axinoDecays"></span><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">Computes the axino decays</td>
-</tr>
-<tr class="field-even field"><th class="field-name">author:</th><td class="field-body">Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;, Hasan Baris</td>
-</tr>
-</tbody>
-</table>
-<dl class="function">
-<dt id="axinoDecays.getAxinoBRs">
-<code class="descclassname">axinoDecays.</code><code class="descname">getAxinoBRs</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/axinoDecays.html#getAxinoBRs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#axinoDecays.getAxinoBRs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute axino BRs at temperature T, given the parameters defined in modelParameters.    Assumes all axino decay energy goes into radiation.</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-n1Decays">
-<span id="n1decays-file"></span><h2><a class="reference internal" href="#module-n1Decays" title="n1Decays: Computes the neutralino1 BRs and width (if unstable) "><code class="xref py py-mod docutils literal"><span class="pre">n1Decays</span></code></a> File<a class="headerlink" href="#module-n1Decays" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-n1Decays"></span><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">Computes the lightest neutralino decays</td>
-</tr>
-<tr class="field-even field"><th class="field-name">author:</th><td class="field-body">Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;, Hasan Baris</td>
-</tr>
-</tbody>
-</table>
-<dl class="function">
-<dt id="n1Decays.acot">
-<code class="descclassname">n1Decays.</code><code class="descname">acot</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/n1Decays.html#acot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#n1Decays.acot" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="n1Decays.getN1BRs">
-<code class="descclassname">n1Decays.</code><code class="descname">getN1BRs</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/n1Decays.html#getN1BRs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#n1Decays.getN1BRs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute neutralino1 BRs at temperature T, given the parameters defined in modelParameters.
-Assumes the neutralino is the MSSM LSP (but might be heavier than axino).
-Assumes all neutralino decay energy goes into radiation.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="n1Decays.n1DiffRate">
-<code class="descclassname">n1Decays.</code><code class="descname">n1DiffRate</code><span class="sig-paren">(</span><em>x1</em>, <em>mn1</em>, <em>maxino</em>, <em>gammaz</em>, <em>mf</em>, <em>ga</em>, <em>gv</em>, <em>gg</em>, <em>gz</em>, <em>qe</em>, <em>sgz</em>, <em>dia=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/n1Decays.html#n1DiffRate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#n1Decays.n1DiffRate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Differential decay rate for neutralino1 -&gt; fermion+fermion + axino, as a function of the fermion momentum</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-gravitinoDecays">
-<span id="gravitinodecays-file"></span><h2><a class="reference internal" href="#module-gravitinoDecays" title="gravitinoDecays: Computes gravitino BRs and width "><code class="xref py py-mod docutils literal"><span class="pre">gravitinoDecays</span></code></a> File<a class="headerlink" href="#module-gravitinoDecays" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-gravitinoDecays"></span><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">synopsis:</th><td class="field-body">Computes the gravitino decays</td>
-</tr>
-<tr class="field-even field"><th class="field-name">author:</th><td class="field-body">Andre Lessa &lt;<a class="reference external" href="mailto:lessa&#46;a&#46;p&#37;&#52;&#48;gmail&#46;com">lessa<span>&#46;</span>a<span>&#46;</span>p<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;, Hasan Baris</td>
-</tr>
-</tbody>
-</table>
-<dl class="function">
-<dt id="gravitinoDecays.conjg">
-<code class="descclassname">gravitinoDecays.</code><code class="descname">conjg</code><span class="sig-paren">(</span><em>a</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gravitinoDecays.html#conjg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gravitinoDecays.conjg" title="Permalink to this definition">¶</a></dt>
-<dd><p>Simple function to return the conjugate value of a complex number.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="gravitinoDecays.decayToFS">
-<code class="descclassname">gravitinoDecays.</code><code class="descname">decayToFS</code><span class="sig-paren">(</span><em>mgt</em>, <em>mf</em>, <em>ms</em>, <em>cc1</em>, <em>cc2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gravitinoDecays.html#decayToFS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gravitinoDecays.decayToFS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Master function for computing the decay width for g(mgt) -&gt; fermion(mf) + scalar(ms),     where fermion = any gaugino/higgsino mixture or lepton,quark and scalar = higgs bosons or slepton,squarks
-:param cc1: real coefficient for the ll+rr term
-:param cc2: real coefficient for the lr+rl term</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="gravitinoDecays.decayToFV">
-<code class="descclassname">gravitinoDecays.</code><code class="descname">decayToFV</code><span class="sig-paren">(</span><em>mgt</em>, <em>mf</em>, <em>mv</em>, <em>cgg1</em>, <em>cgg2</em>, <em>cgh1</em>, <em>cgh2</em>, <em>chh1</em>, <em>chh2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gravitinoDecays.html#decayToFV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gravitinoDecays.decayToFV" title="Permalink to this definition">¶</a></dt>
-<dd><p>Master function for computing the decay width for g(mgt) -&gt; fermion(mf) + gauge boson(mv),     where fermion = any gaugino/higgsino mixture.
-:param cgg1: real coefficient for the gaugino-gaugino(ll+rr) term
-:param cgg2: real coefficient for the gaugino-gaugino(lr+rl) term
-:param cgh1: real coefficient for the gaugino-higgsino(ll+rr) term
-:param cgh2: real coefficient for the gaugino-higgsino(lr+rl) term
-:param chh1: real coefficient for the higgsino-higgsino(ll+rr) term
-:param chh2: real coefficient for the higgsino-higgsino(lr+rl) term</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="gravitinoDecays.getGravitinoBRs">
-<code class="descclassname">gravitinoDecays.</code><code class="descname">getGravitinoBRs</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gravitinoDecays.html#getGravitinoBRs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gravitinoDecays.getGravitinoBRs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute gravitino BRs at temperature T, given the parameters defined in modelParameters.    Assumes all gravitino decay energy goes into radiation.</p>
-</dd></dl>
-
-</div>
 </div>
 
 
+           </div>
+           <div class="articleComments">
+            
            </div>
           </div>
           <footer>
@@ -745,7 +883,7 @@ Assumes all neutralino decay energy goes into radiation.</p>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="basic.html" class="btn btn-neutral" title="Running the code" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="running.html" class="btn btn-neutral" title="Running the code" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -779,12 +917,14 @@ Assumes all neutralino decay energy goes into radiation.</p>
             VERSION:'2.0.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: ''
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 

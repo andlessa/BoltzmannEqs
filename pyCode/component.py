@@ -12,15 +12,18 @@
 
 """
 
-from math import exp,log,sqrt
-from scipy.special import kn
-import BRs, SIGVs, Sources, AuxFuncs, Mass, COsc
-from parameters import Zeta3, Pi, MP
-import logging,sys
+from math import exp,log,sqrt,pi
+from AuxDecays import DecayList
+from scipy.special import kn,zetac
+import AuxFuncs
+from types import FunctionType
+import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-IDs = ['axino', 'saxion', 'saxionCO', 'axion', 'axionCO', 'gravitino', 'neutralino','radiation']
+MP = 1.22*10**19
+Zeta3 = zetac(3.) + 1.
+
 Types = ['thermal','CO', 'weakthermal']
 
 class Component(object):
@@ -38,69 +41,101 @@ class Component(object):
     
     """
     
-    def __init__(self,label,ID,Type,dof):
+    def __init__(self,label,Type,dof,mass,decays=DecayList(),sigmav=0.,source=0.,coherentAmplitute=0.):
         self.label = label
-        self.ID = None
-        self.Type = None
+        self.Type = Type
         self.active = True
         self.dof = dof
         self.Tdecay = None
         self.Tosc = None
         self.Tdecouple = None
         self.evolveVars = {"R" : None, "N": None, "x" : None}
-        
-        if not ID or type(ID) != type(str()) or not ID in IDs:            
-            logger.error("Please define proper particle ID (not "+str(ID)+"). \n Possible IDs are: "+str(IDs))
-            return False
-        else: self.ID = ID
+
         if not Type or type(Type) != type(str()) or not Type in Types:
             logger.error("Please define proper particle Type (not "+str(Type)+"). \n Possible Types are: "+str(Types))
             return False
-        else: self.Type = Type
-        
-        if 'ino' in self.ID:
-            if self.dof > 0.:
-                logger.error("Fermions must have negative dof")
-                return False
-        elif self.dof < 0.:
-            logger.error("Bosons must have positive dof")
-            return False
-        
-        
-    def mass(self,T):
-        """Compute particle mass at temperature T"""
-        
-        return abs(eval("Mass."+self.ID+"(T)"))
-  
-    def getBRs(self,T):
-        """Calls the BRs module to obtain the component branching ratios at temperature T"""
-                
-        BRs = eval("BRs."+self.ID+"BRs(T)")
-        if BRs.width > 0.:
-            brTot = sum([decay.br for decay in BRs])
-            if abs(brTot - 1.) > 0.001:
-                logger.error("BRs for "+self.ID+" do not add up to 1 ("+str(brTot)+") \n "+str(BRs))
-                sys.exit()                
-        return BRs 
 
-    def getBRX(self,T=None):
-        """Returns the fraction of energy injected in the thermal bath by the component decay at temperature T""" 
+        #Check if given mass already is a function: 
+        if isinstance(mass,FunctionType):
+            self.mass = mass #Use function given
+        elif isinstance(mass,int) or isinstance(mass,float):
+            self.mass = lambda T: float(mass)  #Use value given for all T
+        else:
+            logger.error("Mass must be a number or a function of T")
+            return False
+
+        #Check if given decays already is a function: 
+        if isinstance(decays,FunctionType):
+            self.decays = decays #Use function given
+        elif isinstance(decays,DecayList):
+            self.decays = lambda T: decays  #Use value given for all T
+        else:
+            logger.error("Decays must be a DecayList object or a function of T")
+            return False
+
+
+        #Check if given sigmaV already is a function: 
+        if isinstance(sigmav,FunctionType):
+            self.sigmav = sigmav #Use function given
+        elif isinstance(sigmav,int) or isinstance(sigmav,float):
+            self.sigmav = lambda T: float(sigmav)  #Use value given for all T
+        else:
+            logger.error("sigmav must be a number or a function of T")
+            return False
+
+        #Check if given source already is a function: 
+        if isinstance(source,FunctionType):
+            self.source = source #Use function given
+        elif isinstance(source,int) or isinstance(source,float):
+            self.source = lambda T: float(source)  #Use value given for all T
+        else:
+            logger.error("source must be a number or a function of T")
+            return False
+
+        #Check if given coherent amplitude already is a function: 
+        if isinstance(coherentAmplitute,FunctionType):
+            self.coherentAmplitute = coherentAmplitute #Use function given
+        elif isinstance(coherentAmplitute,int) or isinstance(coherentAmplitute,float):
+            self.coherentAmplitute = lambda T: float(coherentAmplitute)  #Use value given for all T
+        else:
+            logger.error("coherentAmplitute must be a number or a function of T")
+            return False
+
+    def __str__(self):
+        
+        return self.label
+
+    def getBRs(self,T):
+        """
+        Get the decays for a given temperature T
+        """
+
+        return self.decays(T) 
+
+    def getBRX(self,T):
+        """
+        Returns the fraction of energy injected in the thermal bath by the component decay at temperature T
+        """ 
        
         return self.getBRs(T).Xfraction
     
-    def width(self,T=None):
-        """Returns the component width """
+    def width(self,T):
+        """
+        Returns the component width at temperature T.
+        """
           
         return self.getBRs(T).width
     
     def getTotalBRTo(self,T,comp):
-        """Computes the total branching ratio to compoenent comp (sum BR(self -> comp + X..)*comp_multiplicity),
-        including the multiplicity factor"""
+        """
+        Computes the total branching ratio to compoenent comp (sum BR(self -> comp + X..)*comp_multiplicity),
+        including the multiplicity factor
+        """
         
         brTot = 0.
         for decay in self.getBRs(T):
-            if not comp.ID in decay.fstateIDs: continue
-            brTot += decay.fstateIDs.count(comp.ID)*decay.br
+            if not comp.label in decay.fstateIDs: continue
+            brTot += decay.fstateIDs.count(comp.label)*decay.br
         return brTot
             
 
@@ -122,52 +157,49 @@ class Component(object):
         for decay in BRs:
             if not set(decay.fstateIDs).issubset(set(nratio.keys())): continue #Ignore particles not defined
             if not decay.br: continue  #Ignore decays with zero BRs            
-            if comp and not comp.ID in decay.fstateIDs: continue
+            if comp and not comp.label in decay.fstateIDs: continue
             nprod = neq
-            for ID in decay.fstateIDs:
-                if ID in nratio: nprod *= nratio[ID]
-            if comp: Nth += decay.fstateIDs.count(comp.ID)*nprod*decay.br
+            for label in decay.fstateIDs:
+                if label in nratio: nprod *= nratio[label]
+            if comp: Nth += decay.fstateIDs.count(comp.label)*nprod*decay.br
             else: Nth += nprod*decay.br
-            
-        if comp and Nth > 0.:
-            norm = self.getTotalBRTo(T,comp)
+        
+        if comp and Nth > 0.:            
+            norm = self.getTotalBRTo(T,comp)            
             return Nth/norm
         else: return Nth
 
 
     def getSIGV(self,T):
-        """Computes the annihilation cross-section at temperature T"""
+        """
+        Returns the thermally averaged annihilation cross-section
+        at temperature T
+        """
         
-        if not T or type(T) != type(float()):
-            logger.error("Wrong temperature input.")
-            sys.exit()
-            return False
-        
-        return eval("SIGVs."+self.ID+"(T)")
+        return self.sigmav(T)
 
         
     def getSource(self,T):
-        """Computes the source term (C) at temperature T"""
+        """
+        Computes the source term (C) at temperature T
+        """
         
-        if not T or type(T) != type(float()):
-            logger.error("Wrong temperature input.")
-            return False
-        
-        return eval("Sources."+self.ID+"(T)")
+        return self.source(T)
         
     def nEQ(self,T):
         """Returns the equilibrium number density at temperature T. Returns zero for non-thermal components"""
         
-        if not 'thermal' in self.Type: return 0.
+        if not 'thermal' in self.Type:
+            return 0.
         
         x = T/self.mass(T)       
         if x < 0.1:
-            neq = self.mass(T)**3*(x/(2*Pi))**(3./2.)*exp(-1/x)*(1. + (15./8.)*x + (105./128.)*x**2) #Non-relativistic
+            neq = self.mass(T)**3*(x/(2*pi))**(3./2.)*exp(-1/x)*(1. + (15./8.)*x + (105./128.)*x**2) #Non-relativistic
         elif x < 1.5:            
-            neq = self.mass(T)**3*x*kn(2,1/x)/(2*Pi**2) #Non-relativistic/relativistic
+            neq = self.mass(T)**3*x*kn(2,1/x)/(2*pi**2) #Non-relativistic/relativistic
         else:
-            if self.dof > 0: neq = Zeta3*T**3/Pi**2   #Relativistic Bosons
-            if self.dof < 0: neq = (3./4.)*Zeta3*T**3/Pi**2   #Relativistic Fermions
+            if self.dof > 0: neq = Zeta3*T**3/pi**2   #Relativistic Bosons
+            if self.dof < 0: neq = (3./4.)*Zeta3*T**3/pi**2   #Relativistic Fermions
             
         neq = neq*abs(self.dof)
         return neq
@@ -178,8 +210,8 @@ class Component(object):
 
         x = T/self.mass(T)
         if x > 1.675:   #Ultra relativistic
-            if self.dof < 0: return (7./6.)*Pi**4*T/(30.*Zeta3)  #Fermions
-            else: return Pi**4*T/(30.*Zeta3)    #Bosons
+            if self.dof < 0: return (7./6.)*pi**4*T/(30.*Zeta3)  #Fermions
+            else: return pi**4*T/(30.*Zeta3)    #Bosons
         else:                                                   #Non-relativistic/relativistic
             return (kn(1,1/x)/kn(2,1/x))*self.mass(T) + 3.*T
     
@@ -204,13 +236,13 @@ class Component(object):
         If the component is of Type thermal, returns None."""
         
         if self.Type != 'CO': return None
-        else: return eval("COsc."+self.ID+"(T)")
+        else: return self.coherentAmplitute(T)
         
     def setInitialCond(self,T):
         """Set initial conditions for component at temperature T, assuming the energy\
         density is dominated by radiation."""
         
-        H = sqrt(8.*Pi**3*AuxFuncs.gSTAR(T)/90.)*T**2/MP
+        H = sqrt(8.*pi**3*AuxFuncs.gSTAR(T)/90.)*T**2/MP
                 
         self.evolveVars["N"] = None
         self.evolveVars["R"] = None

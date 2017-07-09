@@ -13,6 +13,8 @@
 
   
   
+  
+  
 
   
 
@@ -40,6 +42,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -80,8 +83,13 @@
           
             
             
-                <ul>
-<li class="toctree-l1"><a class="reference internal" href="../basic.html">Running the code</a></li>
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../boltzEquations.html">Boltzmann Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation and Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running.html">Running the code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../code.html">Code Documentation</a></li>
 </ul>
 
@@ -95,8 +103,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../index.html">Boltzmann Code</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Boltzmann Code</a>
+        
       </nav>
 
 
@@ -109,19 +119,36 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="../index.html">Docs</a> &raquo;</li>
-      
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
           <li><a href="index.html">Module code</a> &raquo;</li>
-      
-    <li>AuxFuncs</li>
+        
+      <li>AuxFuncs</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -140,46 +167,67 @@
 
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">optimize</span><span class="p">,</span> <span class="n">integrate</span><span class="p">,</span> <span class="n">interpolate</span>
-<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">exp</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">log10</span><span class="p">,</span> <span class="n">log</span>
-<span class="kn">from</span> <span class="nn">parameters</span> <span class="kn">import</span> <span class="n">Pi</span><span class="p">,</span> <span class="n">MP</span>
-<span class="kn">import</span> <span class="nn">modelParameters</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">integrate</span><span class="p">,</span> <span class="n">interpolate</span><span class="p">,</span> <span class="n">optimize</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">arange</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">exp</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">log</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">log10</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="n">Tmin</span><span class="p">,</span><span class="n">Tmax</span> <span class="o">=</span> <span class="mf">1e-15</span><span class="p">,</span><span class="mf">1e5</span> <span class="c1">#min and max values for evaluating gSTAR</span>
 
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="memoize"><a class="viewcode-back" href="../code.html#AuxFuncs.memoize">[docs]</a><span class="k">def</span> <span class="nf">memoize</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; A wrapping to store in cache the results of a function, for expensive functions.</span>
-<span class="sd">    Ignores all but the first argument of the function.&quot;&quot;&quot;</span>
-    
-    <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">wrap</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">:</span> <span class="n">cache</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">cache</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
-    <span class="k">return</span> <span class="n">wrap</span></div>
 
+<div class="viewcode-block" id="interp1d_picklable"><a class="viewcode-back" href="../code.html#AuxFuncs.interp1d_picklable">[docs]</a><span class="k">class</span> <span class="nc">interp1d_picklable</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    class wrapper for piecewise linear function. Required for pickling a interp1d result.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xi</span> <span class="o">=</span> <span class="n">xi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yi</span> <span class="o">=</span> <span class="n">yi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="plainmemoize"><a class="viewcode-back" href="../code.html#AuxFuncs.plainmemoize">[docs]</a><span class="k">def</span> <span class="nf">plainmemoize</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; A wrapping to store in cache the results of a function, for expensive functions.</span>
-<span class="sd">    Ignores all the inputs of the function and returns always the same result.&quot;&quot;&quot;</span>
-    
-    <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">wrap</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">cache</span><span class="p">:</span> <span class="n">cache</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">cache</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">wrap</span></div>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xnew</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">xnew</span><span class="p">)</span>
 
-<div class="viewcode-block" id="printSummary"><a class="viewcode-back" href="../code.html#AuxFuncs.printSummary">[docs]</a><span class="k">def</span> <span class="nf">printSummary</span><span class="p">(</span><span class="n">compList</span><span class="p">,</span><span class="n">TF</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Prints basic summary of solutions.&quot;&quot;&quot;</span>
-<span class="c1">#Solution summary:</span>
-    <span class="k">print</span> <span class="s1">&#39;----Summary----&#39;</span>
-    <span class="k">print</span> <span class="s1">&#39;TF=&#39;</span><span class="p">,</span><span class="n">TF</span>
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">yi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">state</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span></div>
+        
+<div class="viewcode-block" id="printParameters"><a class="viewcode-back" href="../code.html#AuxFuncs.printParameters">[docs]</a><span class="k">def</span> <span class="nf">printParameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span><span class="n">outFile</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prints input parameters.</span>
+<span class="sd">    </span>
+<span class="sd">    :param parameters: dictionary with parameters labels and their values</span>
+<span class="sd">    &quot;&quot;&quot;</span>        
+    <span class="k">if</span> <span class="n">outFile</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">outFile</span><span class="p">,</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#-------------</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;# Parameters:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">par</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">parameters</span><span class="p">):</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;# </span><span class="si">%s</span><span class="s1"> = </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span><span class="p">(</span><span class="n">par</span><span class="p">,</span><span class="n">val</span><span class="p">))</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#-------------</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>            
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>        </div>
+        
+<div class="viewcode-block" id="printSummary"><a class="viewcode-back" href="../code.html#AuxFuncs.printSummary">[docs]</a><span class="k">def</span> <span class="nf">printSummary</span><span class="p">(</span><span class="n">compList</span><span class="p">,</span><span class="n">TF</span><span class="p">,</span><span class="n">outFile</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prints basic summary of solutions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#Solution summary:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outFile</span><span class="p">,</span><span class="nb">file</span><span class="p">):</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">outFile</span>    
+    <span class="k">else</span><span class="p">:</span>    
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">outFile</span><span class="p">,</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+        
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#-------------</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;# Summary</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;# TF=</span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span><span class="n">TF</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">compList</span><span class="p">:</span>         
         <span class="n">mindelta</span><span class="p">,</span> <span class="n">Tlast</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">TF</span>
         <span class="k">if</span> <span class="n">comp</span><span class="o">.</span><span class="n">Tdecay</span><span class="p">:</span> <span class="n">Tlast</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">comp</span><span class="o">.</span><span class="n">Tdecay</span><span class="p">,</span><span class="n">TF</span><span class="p">)</span>    
@@ -191,33 +239,113 @@
         <span class="n">omega</span> <span class="o">=</span> <span class="n">getOmega</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span><span class="n">rhoF</span><span class="p">,</span><span class="n">nF</span><span class="p">,</span><span class="n">Tfinal</span><span class="p">)</span>        
         <span class="k">if</span> <span class="ow">not</span> <span class="n">comp</span><span class="o">.</span><span class="n">Tdecay</span><span class="p">:</span> <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;(@TF)&#39;</span>
         <span class="k">else</span><span class="p">:</span> <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;(@decay)&#39;</span>
-        <span class="k">print</span> <span class="n">comp</span><span class="o">.</span><span class="n">label</span><span class="o">+</span><span class="s1">&#39;:&#39;</span><span class="p">,</span><span class="s1">&#39;T(osc)=&#39;</span><span class="p">,</span><span class="n">comp</span><span class="o">.</span><span class="n">Tosc</span><span class="p">,</span><span class="s1">&#39; | T(decay)=&#39;</span><span class="p">,</span><span class="n">comp</span><span class="o">.</span><span class="n">Tdecay</span><span class="p">,</span><span class="s1">&#39; | Omega h^2&#39;</span><span class="p">,</span><span class="n">tag</span><span class="p">,</span><span class="s1">&#39;=&#39;</span><span class="p">,</span><span class="n">omega</span>
-        <span class="k">print</span> <span class="s1">&#39;-&#39;</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">comp</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;# </span><span class="si">%s</span><span class="s1">: T(osc)= </span><span class="si">%s</span><span class="s1"> | T(decouple)= </span><span class="si">%s</span><span class="s1"> | T(decay)= </span><span class="si">%s</span><span class="s1"> | Omega h^2 </span><span class="si">%s</span><span class="s1"> = </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span><span class="p">(</span><span class="n">comp</span><span class="o">.</span><span class="n">label</span><span class="p">,</span><span class="n">comp</span><span class="o">.</span><span class="n">Tosc</span><span class="p">,</span>
+                                                                                      <span class="n">comp</span><span class="o">.</span><span class="n">Tdecouple</span><span class="p">,</span><span class="n">comp</span><span class="o">.</span><span class="n">Tdecay</span><span class="p">,</span><span class="n">tag</span><span class="p">,</span><span class="n">omega</span><span class="p">))</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;# </span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
     
-    <span class="k">print</span> <span class="s1">&#39;Delta Neff (@TF) =&#39;</span><span class="p">,</span><span class="nb">sum</span><span class="p">([</span><span class="n">getDNeff</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span><span class="n">TF</span><span class="p">)</span> <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">compList</span><span class="p">])</span></div>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;# Delta Neff (@TF) = </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span><span class="nb">sum</span><span class="p">([</span><span class="n">getDNeff</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span><span class="n">TF</span><span class="p">)</span> <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">compList</span><span class="p">]))</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#-------------</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
-
-
-<div class="viewcode-block" id="getParsAt"><a class="viewcode-back" href="../code.html#AuxFuncs.getParsAt">[docs]</a><span class="k">def</span> <span class="nf">getParsAt</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Try to obtain soft parameters and gauge couplings at temperature T from</span>
-<span class="sd">    the RGE function defined in modelParameters.rgeFunc.</span>
-<span class="sd">    If the RGE function does not contain the running of a parameter, use its (default) SUSY scale</span>
-<span class="sd">    value from the SLHA input data&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="printData"><a class="viewcode-back" href="../code.html#AuxFuncs.printData">[docs]</a><span class="k">def</span> <span class="nf">printData</span><span class="p">(</span><span class="n">compList</span><span class="p">,</span><span class="n">outputFile</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prints the evolution of number and energy densities of the species to the outputFile </span>
+<span class="sd">    &quot;&quot;&quot;</span>
     
-    <span class="n">slhadata</span> <span class="o">=</span> <span class="n">modelParameters</span><span class="o">.</span><span class="n">slhadata</span>
-    <span class="n">allPars</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;gPr&#39;</span> <span class="p">:</span> <span class="n">slhadata</span><span class="p">[</span><span class="s2">&quot;GAUGE&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span><span class="s1">&#39;gSU2&#39;</span> <span class="p">:</span> <span class="n">slhadata</span><span class="p">[</span><span class="s2">&quot;GAUGE&quot;</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span><span class="s1">&#39;gSU3&#39;</span> <span class="p">:</span> <span class="n">slhadata</span><span class="p">[</span><span class="s2">&quot;GAUGE&quot;</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span>
-               <span class="p">,</span><span class="s1">&#39;M1&#39;</span> <span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">slhadata</span><span class="p">[</span><span class="s2">&quot;MSOFT&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span><span class="s1">&#39;M2&#39;</span> <span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">slhadata</span><span class="p">[</span><span class="s2">&quot;MSOFT&quot;</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span>
-               <span class="p">,</span><span class="s1">&#39;M3&#39;</span> <span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">slhadata</span><span class="p">[</span><span class="s2">&quot;MSOFT&quot;</span><span class="p">][</span><span class="mi">3</span><span class="p">]),</span><span class="s1">&#39;mu&#39;</span> <span class="p">:</span> <span class="n">slhadata</span><span class="p">[</span><span class="s2">&quot;HMIX&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;tanb&#39;</span> <span class="p">:</span>  <span class="n">slhadata</span><span class="p">[</span><span class="s2">&quot;HMIX&quot;</span><span class="p">][</span><span class="mi">2</span><span class="p">]}</span>
+    <span class="k">if</span> <span class="n">outputFile</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">outputFile</span><span class="p">,</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#-------------</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;# Header:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;R&#39;</span><span class="p">,</span><span class="s1">&#39;T (GeV)&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">compList</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;n_{</span><span class="si">%s</span><span class="s1">} (GeV^{3})&#39;</span><span class="o">%</span><span class="n">comp</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="s1">&#39;#rho_{</span><span class="si">%s</span><span class="s1">} (GeV^{2})&#39;</span> <span class="o">%</span><span class="n">comp</span><span class="o">.</span><span class="n">label</span><span class="p">]</span>
+        <span class="n">maxLength</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">header</span><span class="p">])</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">center</span><span class="p">(</span><span class="n">maxLength</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">header</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;# &#39;</span><span class="o">+</span><span class="n">line</span><span class="o">+</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">R</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">compList</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">evolveVars</span><span class="p">[</span><span class="s1">&#39;R&#39;</span><span class="p">]):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">R</span><span class="p">,</span><span class="n">compList</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">evolveVars</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">compList</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="p">[</span><span class="n">comp</span><span class="o">.</span><span class="n">evolveVars</span><span class="p">[</span><span class="s1">&#39;n&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">],</span><span class="n">comp</span><span class="o">.</span><span class="n">evolveVars</span><span class="p">[</span><span class="s1">&#39;rho&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]]</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%.4E</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">center</span><span class="p">(</span><span class="n">maxLength</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="o">+</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#-------------</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">modelParameters</span><span class="o">.</span><span class="n">useRGE</span><span class="p">:</span> <span class="k">return</span> <span class="n">allPars</span>    
-    <span class="n">rgePars</span> <span class="o">=</span> <span class="n">modelParameters</span><span class="o">.</span><span class="n">rgeFunc</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
-    <span class="n">parsT</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">allPars</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">rgePars</span><span class="p">:</span> <span class="n">parsT</span><span class="p">[</span><span class="n">par</span><span class="p">]</span> <span class="o">=</span> <span class="n">rgePars</span><span class="p">[</span><span class="n">par</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span> <span class="n">parsT</span><span class="p">[</span><span class="n">par</span><span class="p">]</span> <span class="o">=</span> <span class="n">allPars</span><span class="p">[</span><span class="n">par</span><span class="p">]</span>
-        
-    <span class="k">return</span> <span class="n">parsT</span></div>
+<div class="viewcode-block" id="getDataFrom"><a class="viewcode-back" href="../code.html#AuxFuncs.getDataFrom">[docs]</a><span class="k">def</span> <span class="nf">getDataFrom</span><span class="p">(</span><span class="n">dataFile</span><span class="p">):</span>    
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads a datafile generated by printData, printSummary and printParameters</span>
+<span class="sd">    and returns a dictionary with the information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">dataFile</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;File </span><span class="si">%s</span><span class="s1"> not found&#39;</span> <span class="o">%</span><span class="n">dataFile</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span>
+    
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">dataFile</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    
+    <span class="c1">#Get parameters</span>
+    <span class="n">parDict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="s1">&#39;Parameters&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">ipar</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;Parameters&#39;</span><span class="p">)</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">ipar</span><span class="p">:</span><span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;---&#39;</span><span class="p">,</span><span class="n">ipar</span><span class="p">)]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>        
+        <span class="k">for</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;=&#39;</span> <span class="ow">in</span> <span class="n">par</span><span class="p">:</span> <span class="k">continue</span>
+            <span class="n">parameter</span><span class="p">,</span><span class="n">val</span> <span class="o">=</span> <span class="n">par</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">)</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span> <span class="k">pass</span>
+            <span class="n">parameter</span> <span class="o">=</span> <span class="n">parameter</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">parDict</span><span class="p">[</span><span class="n">parameter</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+            
+    <span class="c1">#Get Summary</span>
+    <span class="n">summaryDict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="s1">&#39;Summary&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">ipar</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;Summary&#39;</span><span class="p">)</span>
+        <span class="n">summaryData</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">ipar</span><span class="p">:</span><span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;---&#39;</span><span class="p">,</span><span class="n">ipar</span><span class="p">)]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>        
+        <span class="k">for</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">summaryData</span><span class="p">:</span>
+            <span class="n">par</span> <span class="o">=</span> <span class="n">par</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;=&#39;</span> <span class="ow">in</span> <span class="n">par</span><span class="p">:</span> <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">par</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">par</span> <span class="o">=</span> <span class="n">par</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">)</span>
+                <span class="n">summaryDict</span><span class="p">[</span><span class="n">par</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="s1">&#39;|&#39;</span> <span class="ow">in</span> <span class="n">par</span> <span class="ow">and</span> <span class="s1">&#39;:&#39;</span> <span class="ow">in</span> <span class="n">par</span><span class="p">:</span>
+                <span class="n">compLabel</span> <span class="o">=</span> <span class="n">par</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">summaryDict</span><span class="p">[</span><span class="n">compLabel</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">vals</span> <span class="o">=</span> <span class="n">par</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">:</span>
+                    <span class="n">label</span><span class="p">,</span><span class="n">val</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">)</span>
+                    <span class="n">label</span> <span class="o">=</span> <span class="n">label</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">val</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                    <span class="k">except</span><span class="p">:</span>
+                        <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                    <span class="n">summaryDict</span><span class="p">[</span><span class="n">compLabel</span><span class="p">][</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>            
 
+    <span class="c1">#Get data</span>
+    <span class="n">dataDict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="s1">&#39;Header&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">ipar</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;Header&#39;</span><span class="p">)</span>
+        <span class="n">dataPts</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">ipar</span><span class="p">:</span><span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;---&#39;</span><span class="p">,</span><span class="n">ipar</span><span class="p">)]</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="n">dataPts</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;  &#39;</span><span class="p">)</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">header</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+        <span class="n">dataDict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([[</span><span class="n">h</span><span class="p">,[]]</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">header</span><span class="p">])</span>
+    
+        <span class="c1">#Get data points    </span>
+        <span class="n">pts</span> <span class="o">=</span> <span class="n">dataPts</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)[</span><span class="mi">2</span><span class="p">:]</span>
+    
+        <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">pts</span><span class="p">:</span>
+            <span class="n">pt</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">pt</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="k">continue</span>
+            <span class="n">pt</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+            <span class="n">pt</span> <span class="o">=</span> <span class="p">[</span><span class="nb">eval</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pt</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pt</span><span class="p">):</span>
+                <span class="n">dataDict</span><span class="p">[</span><span class="n">header</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">parDict</span><span class="p">,</span><span class="n">summaryDict</span><span class="p">,</span><span class="n">dataDict</span></div>
 
 
 <div class="viewcode-block" id="getOmega"><a class="viewcode-back" href="../code.html#AuxFuncs.getOmega">[docs]</a><span class="k">def</span> <span class="nf">getOmega</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span><span class="n">rho</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">T</span><span class="p">):</span>
@@ -230,7 +358,7 @@
     <span class="n">rhoh2</span> <span class="o">=</span> <span class="mf">8.0992</span><span class="o">*</span><span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">47</span><span class="p">)</span>   <span class="c1"># value of rho critic divided by h^2</span>
     <span class="n">dx</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)</span><span class="o">*</span><span class="n">log</span><span class="p">(</span><span class="n">gSTARS</span><span class="p">(</span><span class="n">T</span><span class="p">)</span><span class="o">/</span><span class="n">gSTARS</span><span class="p">(</span><span class="n">Ttoday</span><span class="p">))</span> <span class="o">+</span> <span class="n">log</span><span class="p">(</span><span class="n">T</span><span class="o">/</span><span class="n">Ttoday</span><span class="p">)</span>   <span class="c1">#dx = log(R/R_today), where R is the scale factor</span>
     <span class="n">nToday</span> <span class="o">=</span> <span class="n">n</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">3.</span><span class="o">*</span><span class="n">dx</span><span class="p">)</span>
-    <span class="n">ns</span> <span class="o">=</span> <span class="n">log</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">Pi</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">45</span><span class="p">)</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>  <span class="c1">#entropy (constant) </span>
+    <span class="n">ns</span> <span class="o">=</span> <span class="n">log</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">45</span><span class="p">)</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>  <span class="c1">#entropy (constant) </span>
     
     <span class="k">if</span> <span class="n">comp</span><span class="o">.</span><span class="n">Type</span> <span class="o">==</span> <span class="s1">&#39;CO&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="n">nToday</span><span class="o">*</span><span class="n">comp</span><span class="o">.</span><span class="n">mass</span><span class="p">(</span><span class="n">Ttoday</span><span class="p">)</span><span class="o">/</span><span class="n">rhoh2</span>  <span class="c1">#CO components have trivial (non-relativistic) solution </span>
                
@@ -250,7 +378,6 @@
    
     <span class="k">return</span> <span class="n">RToday</span><span class="o">*</span><span class="n">nToday</span><span class="o">/</span><span class="n">rhoh2</span></div>
 
-
 <div class="viewcode-block" id="getDNeff"><a class="viewcode-back" href="../code.html#AuxFuncs.getDNeff">[docs]</a><span class="k">def</span> <span class="nf">getDNeff</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span><span class="n">TF</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Computes the contribution from component comp to the number of effective neutrinos at temperature TF.</span>
 <span class="sd">    Can only be used after the Boltzmann equations have been solved and the solutions stored in comp.evolveVars.</span>
@@ -269,45 +396,66 @@
     <span class="k">if</span> <span class="n">T</span> <span class="o">&gt;</span> <span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">):</span> <span class="k">return</span> <span class="mf">0.</span>    
     <span class="k">if</span> <span class="n">mass</span> <span class="o">==</span> <span class="mf">0.</span> <span class="ow">or</span> <span class="p">(</span><span class="n">n</span> <span class="ow">and</span> <span class="n">rho</span> <span class="ow">and</span> <span class="n">rho</span><span class="o">/</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="n">mass</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">2.</span><span class="p">):</span> <span class="n">rhoRel</span> <span class="o">=</span> <span class="n">rho</span>    
     <span class="k">else</span><span class="p">:</span> <span class="n">rhoRel</span> <span class="o">=</span> <span class="mf">0.</span>
-    <span class="n">DNeff</span> <span class="o">=</span> <span class="n">rhoRel</span><span class="o">/</span><span class="p">(((</span><span class="n">Pi</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">15</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mf">7.</span><span class="o">/</span><span class="mf">8.</span><span class="p">)</span><span class="o">*</span><span class="p">((</span><span class="mf">4.</span><span class="o">/</span><span class="mf">11.</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">4.</span><span class="o">/</span><span class="mf">3.</span><span class="p">))</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">DNeff</span> <span class="o">=</span> <span class="n">rhoRel</span><span class="o">/</span><span class="p">(((</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">15</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mf">7.</span><span class="o">/</span><span class="mf">8.</span><span class="p">)</span><span class="o">*</span><span class="p">((</span><span class="mf">4.</span><span class="o">/</span><span class="mf">11.</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">4.</span><span class="o">/</span><span class="mf">3.</span><span class="p">))</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">4</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">DNeff</span></div>
 
-
-<div class="viewcode-block" id="Hfunc"><a class="viewcode-back" href="../code.html#AuxFuncs.Hfunc">[docs]</a><span class="k">def</span> <span class="nf">Hfunc</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">nv</span><span class="p">,</span> <span class="n">rhov</span><span class="p">,</span> <span class="n">NS</span><span class="p">,</span> <span class="n">sw</span><span class="p">):</span>
+<div class="viewcode-block" id="Hfunc"><a class="viewcode-back" href="../code.html#AuxFuncs.Hfunc">[docs]</a><span class="k">def</span> <span class="nf">Hfunc</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">rhov</span><span class="p">,</span> <span class="n">sw</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Compute the Hubble parameter, given the variables x=log(R/R0) and ni, rhoi and NS=log(S/S0) &quot;&quot;&quot;</span>
     
-    <span class="n">T</span> <span class="o">=</span> <span class="n">getTemperature</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">NS</span><span class="p">)</span>
+    <span class="n">MP</span> <span class="o">=</span> <span class="mf">1.22</span><span class="o">*</span><span class="mi">10</span><span class="o">**</span><span class="mi">19</span>
     
     <span class="n">rhoActive</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">rho</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rhov</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">sw</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="k">continue</span>
         <span class="n">rhoActive</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>  <span class="c1"># energy density of each active component     </span>
-    <span class="n">rhoRad</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">30</span><span class="p">)</span><span class="o">*</span><span class="n">gSTAR</span><span class="p">(</span><span class="n">T</span><span class="p">)</span><span class="o">*</span><span class="n">T</span><span class="o">**</span> <span class="mi">4</span>  <span class="c1"># thermal bath&#39;s energy density    </span>
+    <span class="n">rhoRad</span> <span class="o">=</span> <span class="p">(</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">30</span><span class="p">)</span><span class="o">*</span><span class="n">gSTAR</span><span class="p">(</span><span class="n">T</span><span class="p">)</span><span class="o">*</span><span class="n">T</span><span class="o">**</span> <span class="mi">4</span>  <span class="c1"># thermal bath&#39;s energy density    </span>
     <span class="n">rhoActive</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rhoRad</span><span class="p">)</span>
     <span class="n">rhoTot</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">rhoActive</span><span class="p">)</span>  <span class="c1"># Total energy density    </span>
-    <span class="n">H</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">8</span><span class="o">*</span><span class="n">Pi</span><span class="o">*</span><span class="n">rhoTot</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="n">MP</span>
+    <span class="n">H</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">8</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="n">rhoTot</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="n">MP</span>
     
     <span class="k">return</span> <span class="n">H</span></div>
 
 
-<span class="nd">@memoize</span>
+<div class="viewcode-block" id="getFunctions"><a class="viewcode-back" href="../code.html#AuxFuncs.getFunctions">[docs]</a><span class="k">def</span> <span class="nf">getFunctions</span><span class="p">(</span><span class="n">pclFile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the g*(T), g*s(T) and temperature functions and saves</span>
+<span class="sd">    them to a pickle file. Ignores all BSM effects to these functions</span>
+<span class="sd">    :param pclFile: Name of pickle file to dump the functions</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Computing auxiliary functions. This calculation is done only once and the results will be stored in </span><span class="si">%s</span><span class="s2">.</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">pclFile</span><span class="p">)</span>
+    
+    <span class="c1">#Get points to evaluate gSTAR</span>
+    <span class="n">Tpts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="o">**</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="n">log10</span><span class="p">(</span><span class="n">Tmin</span><span class="p">),</span><span class="n">log10</span><span class="p">(</span><span class="n">Tmax</span><span class="p">),</span><span class="mf">0.01</span><span class="p">)]</span>
+    <span class="c1">#Evaluate gSTAR and gSTARS at these points</span>
+    <span class="n">gSTARpts</span> <span class="o">=</span> <span class="p">[</span><span class="n">gSTARexact</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="k">for</span> <span class="n">T</span> <span class="ow">in</span> <span class="n">Tpts</span><span class="p">]</span>
+    <span class="n">gSTARSpts</span> <span class="o">=</span> <span class="p">[</span><span class="n">gSTARSexact</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="k">for</span> <span class="n">T</span> <span class="ow">in</span> <span class="n">Tpts</span><span class="p">]</span>
+    <span class="c1">#Get interpolating functions:</span>
+    <span class="n">gSTAR</span> <span class="o">=</span> <span class="n">interp1d_picklable</span><span class="p">(</span><span class="n">Tpts</span><span class="p">,</span><span class="n">gSTARpts</span><span class="p">,</span><span class="n">fill_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">gSTARpts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">gSTARpts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+                               <span class="n">bounds_error</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">gSTARS</span> <span class="o">=</span> <span class="n">interp1d_picklable</span><span class="p">(</span><span class="n">Tpts</span><span class="p">,</span><span class="n">gSTARSpts</span><span class="p">,</span><span class="n">fill_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">gSTARSpts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">gSTARSpts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+                               <span class="n">bounds_error</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="c1">#Evaluate (2*pi^2/45)*gstarS(T)*T^3 at these points:</span>
+    <span class="n">fpts</span> <span class="o">=</span> <span class="p">[</span><span class="n">log</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mf">45.</span><span class="p">)</span><span class="o">*</span><span class="n">gSTARS</span><span class="p">(</span><span class="n">T</span><span class="p">)</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">T</span> <span class="ow">in</span> <span class="n">Tpts</span><span class="p">]</span>
+    <span class="c1">#Get inverse function to compute temperature from </span>
+    <span class="n">Tfunc</span> <span class="o">=</span>  <span class="n">interp1d_picklable</span><span class="p">(</span><span class="n">fpts</span><span class="p">,</span><span class="n">Tpts</span><span class="p">,</span><span class="n">fill_value</span><span class="o">=</span><span class="s1">&#39;extrapolate&#39;</span><span class="p">)</span>    
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">pclFile</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">gSTAR</span><span class="p">,</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">gSTARS</span><span class="p">,</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">Tfunc</span><span class="p">,</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
 <div class="viewcode-block" id="getTemperature"><a class="viewcode-back" href="../code.html#AuxFuncs.getTemperature">[docs]</a><span class="k">def</span> <span class="nf">getTemperature</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">NS</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Computes the temperature for the thermal bath from xeff = NS - 3*x, where</span>
-<span class="sd">    x = log(R) and NS = log(S).&quot;&quot;&quot;</span>
-
-    <span class="n">xeff</span> <span class="o">=</span> <span class="n">NS</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">x</span>
     
-    <span class="k">def</span> <span class="nf">Tfunc</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Auxiliary function, its zero implicitly determines T&quot;&quot;&quot;</span>        
-        <span class="k">return</span> <span class="p">((</span><span class="mf">2.</span><span class="o">*</span><span class="n">Pi</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">45</span><span class="p">)</span><span class="o">*</span><span class="n">gSTARS</span><span class="p">(</span><span class="n">T</span><span class="p">)</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="n">exp</span><span class="p">(</span><span class="n">xeff</span><span class="p">)</span>
-
-    <span class="n">Tmax</span> <span class="o">=</span> <span class="p">(</span><span class="mf">45.</span><span class="o">/</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">Pi</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="n">xeff</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span>  <span class="c1"># Upper limit on T (since gSTARS &gt; 1 always)</span>
-    <span class="n">Tmin</span> <span class="o">=</span> <span class="p">(</span><span class="mf">45.</span><span class="o">/</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">Pi</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="mf">230.</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="n">xeff</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span>  <span class="c1"># Lower limit on T (since gSTARS &lt; 225 always)</span>
-    
-    <span class="k">if</span> <span class="n">gSTARS</span><span class="p">(</span><span class="n">Tmin</span><span class="p">)</span> <span class="o">==</span> <span class="n">gSTARS</span><span class="p">(</span><span class="n">Tmax</span><span class="p">):</span> <span class="k">return</span> <span class="p">(((</span><span class="mf">2.</span><span class="o">*</span><span class="n">Pi</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">45</span><span class="p">)</span><span class="o">*</span><span class="n">gSTARS</span><span class="p">(</span><span class="n">Tmin</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="n">xeff</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span>
-        
-    <span class="k">return</span> <span class="n">optimize</span><span class="o">.</span><span class="n">brenth</span><span class="p">(</span><span class="n">Tfunc</span><span class="p">,</span> <span class="n">Tmin</span><span class="p">,</span> <span class="n">Tmax</span><span class="p">)</span></div>
-
+    <span class="n">xmin</span> <span class="o">=</span> <span class="n">log</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mf">45.</span><span class="p">)</span><span class="o">*</span><span class="n">gSTARS</span><span class="p">(</span><span class="n">Tmin</span><span class="p">)</span><span class="o">*</span><span class="n">Tmin</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">xmax</span> <span class="o">=</span> <span class="n">log</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mf">45.</span><span class="p">)</span><span class="o">*</span><span class="n">gSTARS</span><span class="p">(</span><span class="n">Tmax</span><span class="p">)</span><span class="o">*</span><span class="n">Tmax</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">xeff</span> <span class="o">=</span> <span class="n">NS</span> <span class="o">-</span> <span class="mf">3.</span><span class="o">*</span><span class="n">x</span>
+    <span class="k">if</span> <span class="n">xeff</span> <span class="o">&lt;</span> <span class="n">xmin</span><span class="p">:</span>  <span class="c1">#For T &lt; Tmin, g* is constant</span>
+        <span class="k">return</span> <span class="p">((</span><span class="mf">45.</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="n">xeff</span><span class="p">)</span><span class="o">/</span><span class="n">gSTARS</span><span class="p">(</span><span class="n">Tmin</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">xeff</span> <span class="o">&gt;</span> <span class="n">xmax</span><span class="p">:</span> <span class="c1">#For T &gt; Tmax, g* is constant</span>
+        <span class="k">return</span> <span class="p">((</span><span class="mf">45.</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="n">xeff</span><span class="p">)</span><span class="o">/</span><span class="n">gSTARS</span><span class="p">(</span><span class="n">Tmax</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>    
+        <span class="k">return</span> <span class="n">Tfunc</span><span class="p">(</span><span class="n">xeff</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="getPressure"><a class="viewcode-back" href="../code.html#AuxFuncs.getPressure">[docs]</a><span class="k">def</span> <span class="nf">getPressure</span><span class="p">(</span><span class="n">mass</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Computes the pressure for a component, given its mass, its energy density and its number density&quot;&quot;&quot;</span>
@@ -324,98 +472,35 @@
     <span class="n">Pnonrel</span> <span class="o">*=</span> <span class="n">n</span>
         
     <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">Prel</span><span class="p">,</span> <span class="n">Pnonrel</span><span class="p">)</span>  <span class="c1"># If P2 &gt; P1, it means ultra relativistic limit applies -&gt; use P1</span></div>
-    
-<div class="viewcode-block" id="gSTAR"><a class="viewcode-back" href="../code.html#AuxFuncs.gSTAR">[docs]</a><span class="k">def</span> <span class="nf">gSTAR</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Computes the number of relativistic degrees of freedom in thermal equilibrium with the thermal\</span>
-<span class="sd">    bath, including the full MSSM spectrum, except for the lightest neutralino.\</span>
-<span class="sd">    To save time, for the first call generates exact data points describing well the function</span>
-<span class="sd">    and store them in gSTARdata. For all subsequent calls, interpolate between the data points.</span>
+
+<div class="viewcode-block" id="gstarFunc"><a class="viewcode-back" href="../code.html#AuxFuncs.gstarFunc">[docs]</a><span class="k">def</span> <span class="nf">gstarFunc</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dof</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Auxiliary function to compute the contribution from a single particle to gSTAR.\</span>
+<span class="sd">    x = mass/T, dof = number of degrees of freedom (positive/negative for bosons/fermions)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    
-    <span class="k">global</span> <span class="n">gSTARdata</span><span class="p">,</span> <span class="n">interpF</span>
+            
+    <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mf">20.</span><span class="p">:</span> <span class="n">res</span> <span class="o">=</span> <span class="mf">0.</span>  <span class="c1"># Particle has decoupled</span>
+    <span class="k">elif</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">):</span>  <span class="c1"># Near decoupling</span>
+        <span class="n">ep</span> <span class="o">=</span> <span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="n">dof</span> <span class="o">/</span> <span class="nb">abs</span><span class="p">(</span><span class="n">dof</span><span class="p">))</span>
+        <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">0.01</span>  <span class="c1"># To avoid limits on end points</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="mf">0.</span> <span class="o">+</span> <span class="n">epsilon</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="n">epsilon</span> <span class="o">/</span> <span class="mf">100.</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">romberg</span><span class="p">(</span><span class="k">lambda</span> <span class="n">y</span><span class="p">:</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="n">y</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">y</span> <span class="o">**</span> <span class="mi">5</span> <span class="o">*</span> <span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="n">ep</span><span class="p">)),</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span>
+                                <span class="n">tol</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">divmax</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">vec_func</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dof</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span> <span class="n">res</span> <span class="o">=</span> <span class="mf">5.6822</span>  <span class="c1"># Fully relativistic/coupled</span>
+        <span class="k">elif</span> <span class="n">dof</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="n">res</span> <span class="o">=</span> <span class="mf">6.49394</span>
+                        
+    <span class="k">return</span> <span class="n">res</span><span class="o">*</span><span class="nb">abs</span><span class="p">(</span><span class="n">dof</span><span class="p">)</span><span class="o">*</span><span class="mf">0.15399</span>  <span class="c1"># Result</span></div>
 
-<span class="c1"># If data already exists, use it    </span>
-    <span class="k">try</span><span class="p">:</span>        
-        <span class="n">gSTARdata</span>          
-<span class="c1"># If not, generate data points    </span>
-    <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">Masses</span> <span class="o">=</span> <span class="n">modelParameters</span><span class="o">.</span><span class="n">Masses</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="n">Masses</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">Masses</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;A MSSM spectrum must be defined in modelParameters&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="n">gSTARdata</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">maxMass</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">Masses</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>  <span class="c1"># Use maximum mass value to get maximum relevant temperature</span>
-        <span class="n">Tmax</span> <span class="o">=</span> <span class="mf">10.</span><span class="o">*</span><span class="n">maxMass</span>  <span class="c1"># Get maximum T value (gSTAR is constant above this values)</span>
-        <span class="n">Tmin</span> <span class="o">=</span> <span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">)</span>  <span class="c1"># gSTAR is constant below 10 keV</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">31</span><span class="p">):</span>
-            <span class="n">T</span> <span class="o">=</span> <span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="n">log10</span><span class="p">(</span><span class="n">Tmin</span><span class="p">)</span> <span class="o">+</span> <span class="n">log10</span><span class="p">(</span><span class="n">Tmax</span> <span class="o">/</span> <span class="n">Tmin</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">/</span> <span class="mf">30.</span><span class="p">))</span>
-            <span class="n">gSTARdata</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">T</span><span class="p">,</span> <span class="n">gSTARexact</span><span class="p">(</span><span class="n">T</span><span class="p">)])</span>
-        <span class="n">done</span> <span class="o">=</span> <span class="bp">False</span>
-<span class="c1"># Generate enough points until the linear interpolation of points describes gSTAR with a better than 10% accuracy     </span>
-        <span class="k">while</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
-            <span class="n">done</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="n">Tpts</span> <span class="o">=</span> <span class="p">[</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">gSTARdata</span><span class="p">]</span>
-            <span class="n">gSTARpts</span> <span class="o">=</span> <span class="p">[</span><span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">gSTARdata</span><span class="p">]</span>
-            <span class="n">gFunc</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">Tpts</span><span class="p">,</span> <span class="n">gSTARpts</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">ipt</span><span class="p">,</span> <span class="n">pt</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">Tpts</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>                
-                <span class="n">Tnew</span> <span class="o">=</span> <span class="p">(</span><span class="n">Tpts</span><span class="p">[</span><span class="n">ipt</span><span class="p">]</span> <span class="o">+</span> <span class="n">Tpts</span><span class="p">[</span><span class="n">ipt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
-                <span class="n">gnew</span> <span class="o">=</span> <span class="n">gSTARexact</span><span class="p">(</span><span class="n">Tnew</span><span class="p">)</span>
-                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">gnew</span> <span class="o">-</span> <span class="n">gFunc</span><span class="p">(</span><span class="n">Tnew</span><span class="p">))</span> <span class="o">/</span> <span class="n">gnew</span> <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">:</span>  <span class="c1"># If the interpolation is not good, add the point and try again</span>
-                    <span class="n">gSTARdata</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">ipt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="n">Tnew</span><span class="p">,</span> <span class="n">gnew</span><span class="p">])</span>
-                    <span class="n">done</span> <span class="o">=</span> <span class="bp">False</span>
-            <span class="n">gSTARdata</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">gSTARdata</span><span class="p">)</span>
-            <span class="n">Tpts</span> <span class="o">=</span> <span class="p">[</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">gSTARdata</span><span class="p">]</span>
-            <span class="n">gSTARpts</span> <span class="o">=</span> <span class="p">[</span><span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">gSTARdata</span><span class="p">]</span>
-            <span class="n">interpF</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">Tpts</span><span class="p">,</span> <span class="n">gSTARpts</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">T</span> <span class="o">&gt;=</span> <span class="n">gSTARdata</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span> <span class="k">return</span> <span class="n">gSTARdata</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># gSTAR should be constant above Tmax and below Tmin</span>
-    <span class="k">elif</span> <span class="n">T</span> <span class="o">&lt;=</span> <span class="n">gSTARdata</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span> <span class="k">return</span> <span class="n">gSTARdata</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span> <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">interpF</span><span class="p">(</span><span class="n">T</span><span class="p">))</span></div>
-
-
-
-<span class="nd">@memoize</span>
 <div class="viewcode-block" id="gSTARexact"><a class="viewcode-back" href="../code.html#AuxFuncs.gSTARexact">[docs]</a><span class="k">def</span> <span class="nf">gSTARexact</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">interpol</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Computes exactly the number of relativistic degrees of freedom in thermal equilibrium with the thermal\</span>
-<span class="sd">    bath, including the full MSSM spectrum, except for the lightest neutralino.\</span>
-<span class="sd">    interpol turns on/off the interpolation around the QCD phase trasition region.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes exactly the number of relativistic degrees of freedom in thermal equilibrium with the thermal</span>
+<span class="sd">    bath.</span>
+<span class="sd">    interpol turns on/off the interpolation around the QCD phase trasition region.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">gstarFunc</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dof</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Auxiliary function to compute the contribution from a single particle to gSTAR.\</span>
-<span class="sd">        x = mass/T, dof = number of degrees of freedom (positive/negative for bosons/fermions)&quot;&quot;&quot;</span>
-                
-        <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mf">20.</span><span class="p">:</span> <span class="n">res</span> <span class="o">=</span> <span class="mf">0.</span>  <span class="c1"># Particle has decoupled</span>
-        <span class="k">elif</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">):</span>  <span class="c1"># Near decoupling</span>
-            <span class="n">ep</span> <span class="o">=</span> <span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="n">dof</span> <span class="o">/</span> <span class="nb">abs</span><span class="p">(</span><span class="n">dof</span><span class="p">))</span>
-            <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">0.01</span>  <span class="c1"># To avoid limits on end points</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="mf">0.</span> <span class="o">+</span> <span class="n">epsilon</span>
-            <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="n">epsilon</span> <span class="o">/</span> <span class="mf">100.</span><span class="p">)</span>
-            <span class="n">res</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">romberg</span><span class="p">(</span><span class="k">lambda</span> <span class="n">y</span><span class="p">:</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="n">y</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">y</span> <span class="o">**</span> <span class="mi">5</span> <span class="o">*</span> <span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="n">ep</span><span class="p">)),</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span>
-                                    <span class="n">tol</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">divmax</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">vec_func</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">dof</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span> <span class="n">res</span> <span class="o">=</span> <span class="mf">5.6822</span>  <span class="c1"># Fully relativistic/coupled</span>
-            <span class="k">elif</span> <span class="n">dof</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="n">res</span> <span class="o">=</span> <span class="mf">6.49394</span>
-                            
-        <span class="k">return</span> <span class="n">res</span><span class="o">*</span><span class="nb">abs</span><span class="p">(</span><span class="n">dof</span><span class="p">)</span><span class="o">*</span><span class="mf">0.15399</span>  <span class="c1"># Result</span>
-
-    <span class="n">Masses</span> <span class="o">=</span> <span class="n">modelParameters</span><span class="o">.</span><span class="n">Masses</span>
-    <span class="n">MSSMparticles</span> <span class="o">=</span> <span class="n">modelParameters</span><span class="o">.</span><span class="n">MSSMparticles</span>
-    
-<span class="c1"># Define fermi/bose statistics for each state and number of degrees of freedom:</span>
-    <span class="n">DoF</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;squark&quot;</span> <span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="s2">&quot;slepton&quot;</span> <span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;sneutrino&quot;</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;gluino&quot;</span> <span class="p">:</span><span class="o">-</span><span class="mi">16</span><span class="p">,</span> <span class="s2">&quot;neutralino&quot;</span> <span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;chargino&quot;</span> <span class="p">:</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span>
-           <span class="s2">&quot;higgs0&quot;</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;higgs+&quot;</span> <span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
     <span class="n">gstar</span> <span class="o">=</span> <span class="mf">0.</span>
-<span class="c1"># Add up MSSM degrees of freedom (except for neutralino1)    </span>
-    <span class="k">for</span> <span class="n">pid</span> <span class="ow">in</span> <span class="n">Masses</span><span class="p">:</span>        
-        <span class="k">if</span> <span class="n">pid</span> <span class="o">==</span> <span class="mi">1000022</span> <span class="ow">or</span> <span class="n">pid</span> <span class="o">==</span> <span class="mi">1000039</span><span class="p">:</span> <span class="k">continue</span> <span class="c1"># Skip neutralino1 and gravitino </span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">pid</span> <span class="ow">in</span> <span class="n">MSSMparticles</span><span class="p">:</span> <span class="k">continue</span>  <span class="c1"># Skip SM particles (except Higgs)</span>
-        <span class="n">spart</span> <span class="o">=</span> <span class="n">MSSMparticles</span><span class="p">[</span><span class="n">pid</span><span class="p">]</span>  <span class="c1"># Sparticle name</span>
-        <span class="n">gstar</span> <span class="o">+=</span> <span class="n">gstarFunc</span><span class="p">(</span><span class="n">Masses</span><span class="p">[</span><span class="n">pid</span><span class="p">]</span> <span class="o">/</span> <span class="n">T</span><span class="p">,</span> <span class="n">DoF</span><span class="p">[</span><span class="n">spart</span><span class="p">])</span>
-
 <span class="c1"># Define SM masses and degrees of freedom</span>
     <span class="n">MassesGauge</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;W&quot;</span> <span class="p">:</span> <span class="mf">80.</span><span class="p">,</span> <span class="s2">&quot;Z&quot;</span> <span class="p">:</span> <span class="mf">91.</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span> <span class="p">:</span> <span class="mf">0.</span><span class="p">}</span>
     <span class="n">DoFGauge</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;W&quot;</span> <span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="s2">&quot;Z&quot;</span> <span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span> <span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
@@ -431,7 +516,8 @@
     <span class="n">MassesSM</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">MassesGauge</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="o">+</span> <span class="n">MassesLeptons</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="o">+</span> <span class="n">MassesHadrons</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
     <span class="n">DoFSM</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">DoFGauge</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="o">+</span> <span class="n">DoFLeptons</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="o">+</span> <span class="n">DoFHadrons</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
 <span class="c1"># Add up SM degrees of freedom     </span>
-    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">MassesSM</span><span class="p">:</span> <span class="n">gstar</span> <span class="o">+=</span> <span class="n">gstarFunc</span><span class="p">(</span><span class="n">MassesSM</span><span class="p">[</span><span class="n">part</span><span class="p">]</span> <span class="o">/</span> <span class="n">T</span><span class="p">,</span> <span class="n">DoFSM</span><span class="p">[</span><span class="n">part</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">MassesSM</span><span class="p">:</span>
+        <span class="n">gstar</span> <span class="o">+=</span> <span class="n">gstarFunc</span><span class="p">(</span><span class="n">MassesSM</span><span class="p">[</span><span class="n">part</span><span class="p">]</span> <span class="o">/</span> <span class="n">T</span><span class="p">,</span> <span class="n">DoFSM</span><span class="p">[</span><span class="n">part</span><span class="p">])</span>
 
 <span class="c1"># Correct for neutrino decoupling:</span>
     <span class="k">if</span> <span class="n">T</span> <span class="o">&lt;=</span> <span class="mf">5.</span><span class="o">*</span><span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">):</span>
@@ -441,35 +527,68 @@
     <span class="k">if</span> <span class="n">interpol</span><span class="p">:</span>
 <span class="c1"># QCD phase transition:</span>
         <span class="n">finter</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="k">if</span> <span class="n">T</span> <span class="o">&lt;</span> <span class="mf">0.3</span> <span class="ow">and</span> <span class="n">T</span> <span class="o">&gt;</span> <span class="mf">0.15</span> <span class="ow">and</span> <span class="n">interpol</span><span class="p">:</span>
+        <span class="k">if</span> <span class="mf">0.15</span> <span class="o">&lt;</span> <span class="n">T</span> <span class="o">&lt;</span> <span class="mf">0.3</span> <span class="ow">and</span> <span class="n">interpol</span><span class="p">:</span>
             <span class="n">Tpts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">]</span>
             <span class="n">gpts</span> <span class="o">=</span> <span class="p">[</span><span class="n">gSTARexact</span><span class="p">(</span><span class="n">Tpt</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span> <span class="k">for</span> <span class="n">Tpt</span> <span class="ow">in</span> <span class="n">Tpts</span><span class="p">]</span>        
             <span class="n">finter</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">Tpts</span><span class="p">,</span> <span class="n">gpts</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>            
 <span class="c1"># Neutrino decoupling            </span>
-        <span class="k">elif</span> <span class="n">T</span> <span class="o">&lt;</span> <span class="mf">6.</span><span class="o">*</span><span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span> <span class="ow">and</span> <span class="n">T</span> <span class="o">&gt;</span> <span class="mf">2.</span><span class="o">*</span><span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">):</span>
+        <span class="k">elif</span>  <span class="mf">2.</span><span class="o">*</span><span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">T</span> <span class="o">&lt;</span> <span class="mf">6.</span><span class="o">*</span><span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">):</span>
             <span class="n">Tpts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">2.</span><span class="o">*</span><span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">),</span> <span class="mf">6.</span><span class="o">*</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">)]</span>
             <span class="n">gpts</span> <span class="o">=</span> <span class="p">[</span><span class="n">gSTARexact</span><span class="p">(</span><span class="n">Tpt</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span> <span class="k">for</span> <span class="n">Tpt</span> <span class="ow">in</span> <span class="n">Tpts</span><span class="p">]</span>        
             <span class="n">finter</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">Tpts</span><span class="p">,</span> <span class="n">gpts</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
 <span class="c1"># Replace gstar value by interpolation:</span>
-        <span class="k">if</span> <span class="n">finter</span><span class="p">:</span> <span class="n">gstar</span> <span class="o">=</span> <span class="n">finter</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">finter</span><span class="p">:</span>
+            <span class="n">gstar</span> <span class="o">=</span> <span class="n">finter</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
     
     <span class="k">return</span> <span class="n">gstar</span></div>
-    
 
-<div class="viewcode-block" id="gSTARS"><a class="viewcode-back" href="../code.html#AuxFuncs.gSTARS">[docs]</a><span class="k">def</span> <span class="nf">gSTARS</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Computes the number of relativistic degrees of freedom for computing the entropy density,\</span>
-<span class="sd">    including the full MSSM spectrum, except for the lightest neutralino.&quot;&quot;&quot;</span>
-    
-    <span class="k">if</span> <span class="n">T</span> <span class="o">&gt;=</span> <span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">):</span> <span class="k">return</span> <span class="n">gSTAR</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
+<div class="viewcode-block" id="gSTARSexact"><a class="viewcode-back" href="../code.html#AuxFuncs.gSTARSexact">[docs]</a><span class="k">def</span> <span class="nf">gSTARSexact</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the number of relativistic degrees of freedom for computing the entropy density,\</span>
+<span class="sd">    including the full MSSM spectrum, except for the lightest neutralino.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+ 
+    <span class="k">if</span> <span class="n">T</span> <span class="o">&gt;=</span> <span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">gSTARexact</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>  <span class="c1"># Correct for neutrino decoupling:        </span>
-        <span class="k">return</span> <span class="n">gSTAR</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mf">7.</span> <span class="o">/</span> <span class="mf">8.</span><span class="p">)</span> <span class="o">*</span> <span class="mf">6.</span><span class="o">*</span><span class="p">(</span><span class="mf">4.</span> <span class="o">/</span> <span class="mf">11.</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mf">4.</span> <span class="o">/</span> <span class="mf">3.</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">7.</span> <span class="o">/</span> <span class="mf">8.</span><span class="p">)</span> <span class="o">*</span> <span class="mf">6.</span><span class="o">*</span><span class="p">(</span><span class="mf">4.</span> <span class="o">/</span> <span class="mf">11.</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">gSTARexact</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mf">7.</span> <span class="o">/</span> <span class="mf">8.</span><span class="p">)</span> <span class="o">*</span> <span class="mf">6.</span><span class="o">*</span><span class="p">(</span><span class="mf">4.</span> <span class="o">/</span> <span class="mf">11.</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mf">4.</span> <span class="o">/</span> <span class="mf">3.</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">7.</span> <span class="o">/</span> <span class="mf">8.</span><span class="p">)</span> <span class="o">*</span> <span class="mf">6.</span><span class="o">*</span><span class="p">(</span><span class="mf">4.</span> <span class="o">/</span> <span class="mf">11.</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="getTexact"><a class="viewcode-back" href="../code.html#AuxFuncs.getTexact">[docs]</a><span class="k">def</span> <span class="nf">getTexact</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">NS</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes the temperature for the thermal bath from xeff = NS - 3*x, where</span>
+<span class="sd">    x = log(R) and NS = log(S).&quot;&quot;&quot;</span>
+
+    <span class="n">xeff</span> <span class="o">=</span> <span class="n">NS</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">x</span>
     
-<div class="viewcode-block" id="PSlamb"><a class="viewcode-back" href="../code.html#AuxFuncs.PSlamb">[docs]</a><span class="k">def</span> <span class="nf">PSlamb</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Simple 3-body phase factor auxiliary function &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">TfuncA</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Auxiliary function, its zero implicitly determines T&quot;&quot;&quot;</span>        
+        <span class="k">return</span> <span class="p">((</span><span class="mf">2.</span><span class="o">*</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">45</span><span class="p">)</span><span class="o">*</span><span class="n">gSTARSexact</span><span class="p">(</span><span class="n">T</span><span class="p">)</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="n">exp</span><span class="p">(</span><span class="n">xeff</span><span class="p">)</span>
+
+    <span class="n">Tmax</span> <span class="o">=</span> <span class="p">(</span><span class="mf">45.</span><span class="o">/</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="n">xeff</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span>  <span class="c1"># Upper limit on T (since gSTARS &gt; 1 always)</span>
+    <span class="n">Tmin</span> <span class="o">=</span> <span class="p">(</span><span class="mf">45.</span><span class="o">/</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="mf">230.</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="n">xeff</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span>  <span class="c1"># Lower limit on T (since gSTARS &lt; 225 always)</span>
     
-    <span class="k">return</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">2.</span><span class="o">*</span><span class="n">x</span><span class="o">*</span><span class="n">y</span> <span class="o">-</span> <span class="mf">2.</span><span class="o">*</span><span class="n">x</span><span class="o">*</span><span class="n">z</span> <span class="o">-</span> <span class="mf">2.</span><span class="o">*</span><span class="n">z</span><span class="o">*</span><span class="n">y</span></div>
+    <span class="k">if</span> <span class="n">gSTARSexact</span><span class="p">(</span><span class="n">Tmin</span><span class="p">)</span> <span class="o">==</span> <span class="n">gSTARSexact</span><span class="p">(</span><span class="n">Tmax</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(((</span><span class="mf">2.</span><span class="o">*</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">45</span><span class="p">)</span><span class="o">*</span><span class="n">gSTARSexact</span><span class="p">(</span><span class="n">Tmin</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="n">xeff</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span>
+            
+    <span class="k">return</span> <span class="n">optimize</span><span class="o">.</span><span class="n">brenth</span><span class="p">(</span><span class="n">TfuncA</span><span class="p">,</span> <span class="n">Tmin</span><span class="p">,</span> <span class="n">Tmax</span><span class="p">)</span></div>
+
+
+
+<span class="c1">#Load auxiliary (pre-computed) functions:</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s1">&#39;gFunctions.pcl&#39;</span><span class="p">):</span>
+    <span class="n">getFunctions</span><span class="p">(</span><span class="s1">&#39;gFunctions.pcl&#39;</span><span class="p">)</span>
+ 
+<span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;gFunctions.pcl&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Loading aux functions. Ignoring BSM corrections to g* and g*_S&quot;</span><span class="p">)</span>
+<span class="n">gSTAR</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">gSTARS</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">Tfunc</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 
+           </div>
+           <div class="articleComments">
+            
            </div>
           </div>
           <footer>
@@ -504,12 +623,14 @@
             VERSION:'2.0.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: ''
         };
     </script>
       <script type="text/javascript" src="../_static/jquery.js"></script>
       <script type="text/javascript" src="../_static/underscore.js"></script>
       <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 

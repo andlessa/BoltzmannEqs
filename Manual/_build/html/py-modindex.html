@@ -13,6 +13,8 @@
 
   
   
+  
+  
 
   
 
@@ -46,6 +48,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -86,8 +89,13 @@
           
             
             
-                <ul>
-<li class="toctree-l1"><a class="reference internal" href="basic.html">Running the code</a></li>
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="boltzEquations.html">Boltzmann Equations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation and Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running.html">Running the code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="code.html">Code Documentation</a></li>
 </ul>
 
@@ -101,8 +109,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">Boltzmann Code</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Boltzmann Code</a>
+        
       </nav>
 
 
@@ -115,17 +125,34 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
-    <li></li>
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Python Module Index</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -136,12 +163,8 @@
 
    <div class="modindex-jumpbox">
    <a href="#cap-a"><strong>a</strong></a> | 
-   <a href="#cap-c"><strong>c</strong></a> | 
-   <a href="#cap-g"><strong>g</strong></a> | 
-   <a href="#cap-m"><strong>m</strong></a> | 
-   <a href="#cap-n"><strong>n</strong></a> | 
-   <a href="#cap-p"><strong>p</strong></a> | 
-   <a href="#cap-s"><strong>s</strong></a>
+   <a href="#cap-b"><strong>b</strong></a> | 
+   <a href="#cap-c"><strong>c</strong></a>
    </div>
 
    <table class="indextable modindextable" cellspacing="0" cellpadding="2">
@@ -158,77 +181,33 @@
        <td>
        <a href="code.html#module-AuxFuncs"><code class="xref">AuxFuncs</code></a></td><td>
        <em>This module provides auxiliary functions </em></td></tr>
+     <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
+     <tr class="cap" id="cap-b"><td></td><td>
+       <strong>b</strong></td><td></td></tr>
      <tr>
        <td></td>
        <td>
-       <a href="code.html#module-axinoDecays"><code class="xref">axinoDecays</code></a></td><td>
-       <em>Computes axino BRs and width </em></td></tr>
+       <a href="code.html#module-boltzEqs"><code class="xref">boltzEqs</code></a></td><td>
+       <em>This module defines the Boltzmann equations </em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="code.html#module-boltzSolver"><code class="xref">boltzSolver</code></a></td><td>
+       <em>This module contains the main methods for solving the Boltzmann equations </em></td></tr>
      <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
      <tr class="cap" id="cap-c"><td></td><td>
        <strong>c</strong></td><td></td></tr>
      <tr>
        <td></td>
        <td>
-       <a href="code.html#module-COsc"><code class="xref">COsc</code></a></td><td>
-       <em>This module defines all the oscillation amplitudes for the components at temperature T</em></td></tr>
-     <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
-     <tr class="cap" id="cap-g"><td></td><td>
-       <strong>g</strong></td><td></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="code.html#module-gravitinoDecays"><code class="xref">gravitinoDecays</code></a></td><td>
-       <em>Computes gravitino BRs and width </em></td></tr>
-     <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
-     <tr class="cap" id="cap-m"><td></td><td>
-       <strong>m</strong></td><td></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="code.html#module-Mass"><code class="xref">Mass</code></a></td><td>
-       <em>This module defines all the mass functions for the relevant components    It imports the model parameters from modelParameters.    The function names must match the particle IDs</em></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="code.html#module-modelParameters"><code class="xref">modelParameters</code></a></td><td>
-       <em>This module defines all relevant input parameters for the model and some methods to obtain     other relevant information (SUSY spectrum and parameters, neutralino sigma.v, etc)</em></td></tr>
-     <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
-     <tr class="cap" id="cap-n"><td></td><td>
-       <strong>n</strong></td><td></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="code.html#module-n1Decays"><code class="xref">n1Decays</code></a></td><td>
-       <em>Computes the neutralino1 BRs and width (if unstable) </em></td></tr>
-     <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
-     <tr class="cap" id="cap-p"><td></td><td>
-       <strong>p</strong></td><td></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="code.html#module-parameters"><code class="xref">parameters</code></a></td><td>
-       <em>defines useful numerical parameters</em></td></tr>
-     <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
-     <tr class="cap" id="cap-s"><td></td><td>
-       <strong>s</strong></td><td></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="code.html#module-saxionDecays"><code class="xref">saxionDecays</code></a></td><td>
-       <em>Computes saxion BRs and width </em></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="code.html#module-SIGVs"><code class="xref">SIGVs</code></a></td><td>
-       <em>This module defines all the annihilation cross-sections*v for the components at temperature T</em></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="code.html#module-Sources"><code class="xref">Sources</code></a></td><td>
-       <em>This module defines all the sources for the components at temperature T</em></td></tr>
+       <a href="code.html#module-component"><code class="xref">component</code></a></td><td>
+       <em>This module defines the component class, which describe common properties for    particle/field components </em></td></tr>
    </table>
 
 
+           </div>
+           <div class="articleComments">
+            
            </div>
           </div>
           <footer>
@@ -263,12 +242,14 @@
             VERSION:'2.0.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: ''
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 
