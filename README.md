@@ -16,6 +16,10 @@ In addition, some of the plotting functions may require:
 
 For a successful installation of Assilumo, `SUNDIALS <https://computation.llnl.gov/projects/sundials>`_ must also be installed.
 
+## Running BoltzmannCode ##
+
+A basic example of how to run the code is provided in the example folder.
+
 
 ## Manual ##
 
