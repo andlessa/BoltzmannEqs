@@ -1,7 +1,7 @@
-.. index:: Installation and Deployment
+.. index:: Installation
 
-Installation and Deployment
-===========================
+Installation
+============
 
 The code is written in Python and requires Python version 2.6 or later (but not Python 3)
 with the following *external* Python libraries:
