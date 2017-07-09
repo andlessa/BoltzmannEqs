@@ -1,4 +1,4 @@
-# Boltzmann Code - FIMP #
+# Boltzmann Code - PQMSSM #
 
 This branch focus on an implementation of the PQMSSM model.
 It is significantly more complex than the version in master, since
@@ -19,7 +19,7 @@ In addition, some of the plotting functions may require:
  * [matplotlib](https://pypi.python.org/pypi/matplotlib)
  * [pyROOT](https://root.cern.ch/pyroot)
 
-For a successful installation of Assilumo, `[SUNDIALS](https://computation.llnl.gov/projects/sundials) must also be installed.
+For a successful installation of Assilumo, [SUNDIALS](https://computation.llnl.gov/projects/sundials) must also be installed.
 
 
 ## Running BoltzmannCode ##
