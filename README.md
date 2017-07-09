@@ -1,4 +1,6 @@
-# Boltzmann Code #
+# Boltzmann Code - FIMP #
+
+This branch focus on a simple non-thermal (FIMP) DM implementation.
 
 ## Installation ##
 
