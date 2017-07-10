@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+import sys
+sys.path.append('../pyCode')
 from ROOT import *
-from pyCode import AuxPlot
+import AuxPlot
 import logging as logger
-from pyCode.AuxFuncs import getDataFrom
+from AuxFuncs import getDataFrom
 
 DoPrint = False
 
