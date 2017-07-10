@@ -17,13 +17,15 @@ In addition, some of the plotting functions may require:
 For a successful installation of Assilumo, [SUNDIALS](https://computation.llnl.gov/projects/sundials) must also be installed.
 
 
-## Running BoltzmannCode ##
+## Running ##
 
 A basic example of how to run the code is provided
 by Example.py. If all dependencies have been
-successfully installed, this code can be run as: ::
+successfully installed, this code can be run as:
 
-   Example.py -p parameters.ini -o output.dat -P
+```
+   Example.py -p parameters.ini -o output.dat -P
+```
 
 The resulting output will be written to the output file output.dat.
 If the flag -P is set, a simple plot showing the evolution of the energy
