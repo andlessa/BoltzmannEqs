@@ -1,8 +1,9 @@
 # Boltzmann Code - PQMSSM #
 
-This branch focus on an implementation of the PQMSSM model.
+This branch focus on an implementation of the supersymmetric axion model (PQMSSM).
 It is significantly more complex than the version in master, since
-it requires as input the whole MSSM (through an SLHA file).
+it requires as input the whole MSSM (through an SLHA file), as well as the axion, saxion
+and axino properties.
 This version still is under construction and needs to be updated.
 
 ## Installation ##
