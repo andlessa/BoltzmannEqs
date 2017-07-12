@@ -10,9 +10,9 @@
 
 """
 
-import os,sys
-from scipy import integrate, interpolate, optimize
-from numpy import arange
+import os
+from scipy import integrate, interpolate, optimize, special
+from numpy import arange, inf
 from math import exp, sqrt, log, pi, log10
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -82,7 +82,7 @@ def printSummary(compList,TF,outFile=None):
         omega = getOmega(comp,rhoF,nF,Tfinal)        
         if not comp.Tdecay: tag = '(@TF)'
         else: tag = '(@decay)'
-        f.write('# %s: T(osc)= %s | T(decouple)= %s | T(decay)= %s | Omega h^2 %s = %s\n' %(comp.label,comp.Tosc,
+        f.write('# %s: T(osc)= %s | T(decouple)~= %s | T(decay)~= %s | Omega h^2 %s = %s\n' %(comp.label,comp.Tosc,
                                                                                       comp.Tdecouple,comp.Tdecay,tag,omega))
         f.write('# \n')
     
@@ -413,6 +413,37 @@ def getTexact(x,NS):
     return optimize.brenth(TfuncA, Tmin, Tmax)
 
 
+
+def kint(x,m):
+    
+    return special.kn(1,x)*x**3/(gSTARS(m/x)*sqrt(gSTAR(m/x)))
+
+def omegaAnalytic(mDM,mMediator,gMed,width,TRH):    
+    """
+    Analytical approximation for the FIMP relic density.
+    Assumes the mediator is always in thermal equilibrium.
+    
+    :param mDM: DM mass
+    :param mMediator: Mediator mass
+    :param gMed: Number of degrees of freedom for the mediator
+    :param width: Mediator width
+    :param TRH: reheat temperature
+    
+    :return: omega_DM h^2 
+    """
+        
+    Ys = (8.488e17)*gMed*width/mMediator**2
+    Ttoday = 2.3697*10**(-13)*2.725/2.75  #Temperature today
+    Ys *= integrate.quad(kint,mMediator/TRH,inf,mMediator,limit=1000,epsrel=0.01)[0]    
+    s = (2.*pi**2*gSTARS(Ttoday)*Ttoday**3)/45.
+    rhos = mDM*Ys*s    
+    omega = rhos/8.0992e-47
+    
+    #Approximate result (for TRG >> mMed and g* ~ constant):
+#     omega = 1.09e27*gMed*mDM*width/(sqrt(gSTAR(mMediator))*gSTARS(mMediator)*mMediator**2)
+#     omega *= (gSTARS(0.)/3.9091)
+
+    return omega
 
 #Load auxiliary (pre-computed) functions:
 

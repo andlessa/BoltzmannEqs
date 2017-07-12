@@ -57,6 +57,8 @@ def main(parameterFile,outputFile,showPlot=True):
         AuxFuncs.printData(compList,outputFile)
     else:
         AuxFuncs.printSummary(compList,TF,sys.stdout)
+        print 'analytic result=',AuxFuncs.omegaAnalytic(dm.mass(1.),mediator.mass(1.),
+                                               abs(mediator.dof),mediator.width(1.),TRH)
     
     if showPlot:
         #Plot solutions
@@ -68,11 +70,6 @@ def main(parameterFile,outputFile,showPlot=True):
         pylab.yscale('log')
         pylab.xscale('log')
         pylab.show()
-        
-    from numpy import sqrt
-    om = 1.09e27*2*dm.mass(1.)*mediator.width(1.)/(sqrt(AuxFuncs.gSTAR(mediator.mass(1.)))*AuxFuncs.gSTARS(mediator.mass(1.))*mediator.mass(1.)**2)
-    om *= (AuxFuncs.gSTARS(0.)/3.9091)
-    print  'om=',om
         
 
 if __name__ == "__main__":

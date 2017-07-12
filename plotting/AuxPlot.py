@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 import os,sys,copy
+sys.path.append('../')
 from ROOT import TTree,TColor,TCanvas,TF1,TGraph,Double,TFile,gDirectory,TNamed
-from AuxFuncs import getDataFrom
 import logging as logger
+from pyCode import AuxFuncs
+from numpy import pi
   
 
 def getTGraph(dataFile,xprint,yprint):
     
-    dataDict = getDataFrom(dataFile)[-1]
+    dataDict = AuxFuncs.getDataFrom(dataFile)[-1]
 
     xlabel = xprint
     ylabel = yprint    
@@ -24,9 +26,11 @@ def getTGraph(dataFile,xprint,yprint):
     xpts, ypts = dataDict[xlabel],dataDict[ylabel]
     gr = TGraph()
     for i,x in enumerate(xpts):
+#         y = ypts[i]/(2.*pi*AuxFuncs.gSTARS(x)*x**3/45.)  ##Yield
+        y = ypts[i]
         if xprint == 'T^{-1} (1/GeV)':
             x = 1./x
-        gr.SetPoint(gr.GetN(),x,ypts[i])
+        gr.SetPoint(gr.GetN(),x,y)
 
     gr.GetXaxis().SetTitle(xlabel)
     gr.GetYaxis().SetTitle(ylabel)
