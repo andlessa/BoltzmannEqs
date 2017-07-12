@@ -120,11 +120,18 @@ class BoltzEqs(Explicit_Problem):
             RHS = -3.*n[i]     
             RHS += -width*mass*(n[i] - N1th[i])/(H*R[i])    #Decay term
             RHS += comp.getSource(T)/H  #Source term
+            annTerm = 0.
             if comp.Type == 'weakthermal':                
                 nrel = Zeta3*T**3/pi**2
-                RHS += comp.getSIGV(T)*nrel*(neq[i] - n[i])/H
+                annTerm = comp.getSIGV(T)*nrel/H                
             else:
-                RHS += comp.getSIGV(T)*(neq[i]**2 - n[i]**2)/H  #Annihilation term      
+                annTerm = comp.getSIGV(T)*n[i]/H
+            #Define approximate decoupling temperature (just used for printout)            
+            if annTerm < 1e-2 and not comp.Tdecouple:
+                comp.Tdecouple = T
+            elif annTerm > 1e-2 and comp.Tdecouple:
+                comp.Tdecouple = None  #Reset decoupling temperature if component becomes coupled
+            RHS += annTerm*(neq[i] - n[i]) #Annihilation term
             for a, compA in enumerate(self.components):
                 if not sw[a]: continue
                 if a == i: continue                                
@@ -212,7 +219,7 @@ class BoltzEqs(Explicit_Problem):
     def handle_event(self,solver,event_info):
         """Activate/de-activate components when a discontinuous transition happens\
         and sets the new initial conditions.\             
-        Possible discontinuities are: a CO component starts to oscillate.                 
+        Possible discontinuities are: a CO component starts to oscillate, a particle has decayed                 
         """
         
 #Event happened because of discontinuity

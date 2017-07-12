@@ -11,25 +11,25 @@ DoPrint = False
 
 def getPlot():
     
-    parDict,summaryDict,dataDict = getDataFrom('test.out')
+    parDict,summaryDict,dataDict = getDataFrom('decay.out')
     
     xprint = 'T^{-1} (1/GeV)'
     yprint = '#rho_{DM} (GeV^{2})'
-    grDM = AuxPlot.getTGraph('test.out', xprint, yprint)
+    grDM = AuxPlot.getTGraph('decay.out', xprint, yprint)
     grDM.SetLineColor(kAzure+2)
     grDM.SetLineWidth(3)
     yprint = '#rho_{Mediator} (GeV^{2})'
-    grMed = AuxPlot.getTGraph('test.out', xprint, yprint)
+    grMed = AuxPlot.getTGraph('decay.out', xprint, yprint)
     grMed.SetLineColor(kOrange)
     grMed.SetLineWidth(3)
     
     yprint = '#rho_{DM} (GeV^{2})'
-    grDMlow = AuxPlot.getTGraph('test2.out', xprint, yprint)
+    grDMlow = AuxPlot.getTGraph('nodecay.out', xprint, yprint)
     grDMlow.SetLineColor(kAzure+7)
     grDMlow.SetLineWidth(3)
     grDMlow.SetLineStyle(9)
     yprint = '#rho_{Mediator} (GeV^{2})'
-    grMedlow = AuxPlot.getTGraph('test2.out', xprint, yprint)
+    grMedlow = AuxPlot.getTGraph('nodecay.out', xprint, yprint)
     grMedlow.SetLineColor(kOrange+7)
     grMedlow.SetLineWidth(3)
     grMedlow.SetLineStyle(9)

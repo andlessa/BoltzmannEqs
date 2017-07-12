@@ -33,7 +33,9 @@ def omegaAnalytic(mDM,mMediator,gMed,width,TRH):
     rhos = mDM*Ys*s    
     omega = rhos/8.0992e-47
     
-    print  'om=',1.09e27*gMed*mDM*width/(sqrt(AuxFuncs.gSTAR(mMediator))*AuxFuncs.gSTARS(mMediator)*mMediator**2)
+    om = 1.09e27*gMed*mDM*width/(sqrt(AuxFuncs.gSTAR(mMediator))*AuxFuncs.gSTARS(mMediator)*mMediator**2)
+    om *= (AuxFuncs.gSTARS(0.)/3.9091)
+    print  'om=',om
 
     return omega
 

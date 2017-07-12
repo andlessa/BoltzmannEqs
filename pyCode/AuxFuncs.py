@@ -56,7 +56,7 @@ def printParameters(parameters,outFile=None):
         for par,val in sorted(parameters):
             f.write('# %s = %s\n' %(par,val))
         f.write('#-------------\n')            
-        f.close()        
+  
         
 def printSummary(compList,TF,outFile=None):
     """
@@ -88,7 +88,7 @@ def printSummary(compList,TF,outFile=None):
     
     f.write('# Delta Neff (@TF) = %s\n' %sum([getDNeff(comp,TF) for comp in compList]))
     f.write('#-------------\n')
-    f.close()
+
 
 def printData(compList,outputFile=None):
     """
@@ -112,7 +112,6 @@ def printData(compList,outputFile=None):
             line = ' '.join(str('%.4E'%x).center(maxLength) for x in data)
             f.write(line+'\n')
         f.write('#-------------\n')
-        f.close()
 
 def getDataFrom(dataFile):    
     """
@@ -229,9 +228,8 @@ def getDNeff(comp,TF):
 #Ignore component if it has decayed before TF        
     if comp.Tdecay and comp.Tdecay > TF: return 0.
 #Get the number and energy densities of comp at T:
-    mindelta = TF    
-    for iT,T in enumerate(comp.evolveVars['T']):
-        if abs(T-TF) < mindelta: iF,mindelta = iT,abs(T-TF)
+    Tdelta = [abs(TF-T) for T in comp.evolveVars['T']]
+    iF = Tdelta.index(min(Tdelta))    
     rho = comp.evolveVars['rho'][iF]
     n = comp.evolveVars['n'][iF]
     T = comp.evolveVars['T'][iF]
