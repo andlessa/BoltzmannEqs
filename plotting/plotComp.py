@@ -78,9 +78,7 @@ def getPlot():
         pars.AddText(key+' = %2.3g'%val)    
     pars.Draw()
     
-    #Legend
-
-     
+    #Legend     
     nplots = len(allGraphs)
     maxTitle = max([len(gr.GetYaxis().GetTitle()) for gr in allGraphs])
     leg = TLegend(min(0.85,0.99-0.0135*maxTitle),0.6,0.99,min(1.,0.6+0.1*nplots))

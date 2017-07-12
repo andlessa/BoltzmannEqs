@@ -48,14 +48,20 @@ def printParameters(parameters,outFile=None):
     Prints input parameters.
     
     :param parameters: dictionary with parameters labels and their values
-    """        
-    if outFile:
+    """
+    
+    if not outFile: return
+            
+    if isinstance(outFile,file):
+        f = outFile    
+    else:    
         f = open(outFile,'a')
-        f.write('#-------------\n')
-        f.write('# Parameters:\n')
-        for par,val in sorted(parameters):
-            f.write('# %s = %s\n' %(par,val))
-        f.write('#-------------\n')            
+
+    f.write('#-------------\n')
+    f.write('# Parameters:\n')
+    for par,val in sorted(parameters):
+        f.write('# %s = %s\n' %(par,val))
+    f.write('#-------------\n')            
   
         
 def printSummary(compList,TF,outFile=None):
@@ -95,26 +101,31 @@ def printData(compList,outputFile=None):
     Prints the evolution of number and energy densities of the species to the outputFile 
     """
     
-    if outputFile:
+    if not outputFile: return
+            
+    if isinstance(outputFile,file):
+        f = outputFile    
+    else:    
         f = open(outputFile,'a')
-        f.write('#-------------\n')
-        f.write('# Header:\n')
-        header = ['R','T (GeV)']
+
+    f.write('#-------------\n')
+    f.write('# Header:\n')
+    header = ['R','T (GeV)']
+    for comp in compList:
+        header += ['n_{%s} (GeV^{3})'%comp.label, '#rho_{%s} (GeV^{2})' %comp.label]
+    header.append('s (GeV^{3})')
+    maxLength = max([len(s) for s in header])
+    line = ' '.join(str(x).center(maxLength) for x in header)
+    f.write('# '+line+'\n')
+    for i,R in enumerate(compList[0].evolveVars['R']):
+        T = compList[0].evolveVars['T'][i]
+        data = [R,T]
         for comp in compList:
-            header += ['n_{%s} (GeV^{3})'%comp.label, '#rho_{%s} (GeV^{2})' %comp.label]
-        header.append('s (GeV^{3})')
-        maxLength = max([len(s) for s in header])
-        line = ' '.join(str(x).center(maxLength) for x in header)
-        f.write('# '+line+'\n')
-        for i,R in enumerate(compList[0].evolveVars['R']):
-            T = compList[0].evolveVars['T'][i]
-            data = [R,T]
-            for comp in compList:
-                data += [comp.evolveVars['n'][i],comp.evolveVars['rho'][i]]
-            data.append((2.*pi*gSTARS(T)*T**3)/45.)
-            line = ' '.join(str('%.4E'%x).center(maxLength) for x in data)
-            f.write(line+'\n')
-        f.write('#-------------\n')
+            data += [comp.evolveVars['n'][i],comp.evolveVars['rho'][i]]
+        data.append((2.*pi*gSTARS(T)*T**3)/45.)
+        line = ' '.join(str('%.4E'%x).center(maxLength) for x in data)
+        f.write(line+'\n')
+    f.write('#-------------\n')
 
 def getDataFrom(dataFile):    
     """

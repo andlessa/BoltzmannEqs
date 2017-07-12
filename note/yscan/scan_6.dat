@@ -1,0 +1,18 @@
+#-------------
+# Parameters:
+# TF = 1e-08
+# TRH = 10000000.0
+# mDM = 1.0
+# mMediator = 1000.0
+# yCoupling = 5.9716075583e-14
+#-------------
+#-------------
+# Summary
+# TF=1e-08
+# DM: T(osc)= None | T(decouple)~= 10000000.0 | T(decay)~= None | Omega h^2 (@TF) = 3.19408351739e-05
+# 
+# Mediator: T(osc)= None | T(decouple)~= 0.419120233489 | T(decay)~= 8.11439130158e-05 | Omega h^2 (@decay) = 1.05038022994e-20
+# 
+# Delta Neff (@TF) = 0.0
+#-------------
+Omega h^2 (analytic) = 2.87830213149e-07

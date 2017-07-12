@@ -121,6 +121,8 @@ Finally, a simple equation can be written for $R_M = \rho_M/n_M$:
 \Drv{R_M}{t} = -3 H \frac{P_M}{n_M} \label{eq:Rmed}
 \ee
 where $P_M$ is the pressure of $M$: $P_M = \rho_M/3$ ($0$) for a relativistic (non-relativistic) fluid.
+For the relativistic/non-relativistic transition an interpolation for $P_M$ is
+used.
 
 Under the above approximations, the coupled Boltzmann equations can be solved once we include
 the equation for the entropy:
@@ -156,7 +158,7 @@ In order to analytically solve Eq.(\ref{eq:nDM}), we make the following assumpti
 \item entropy conservation ($\dot{S} = 0$).
 \ei
 
-Under the above assumtions Eq.(\ref{eq:nDM}) simplifies to:
+Under the above assumptions Eq.(\ref{eq:nDM}) simplifies to:
 \be
 \Drv{n_{S}}{t} + 3H n_S  \simeq  \frac{\Gamma_M}{\gamma_M}  n_M
 \ee
@@ -181,6 +183,7 @@ and defining $x=m_M/T$, we obtain:
 
 \be
 Y_S = \left(\frac{45}{4 \pi^4} \frac{M_P}{1.66}\right)  g_M \frac{\Gamma_M}{m_M^2}   \int_{m_M/T_{RH}}^{\infty}  \frac{K_1(x) x^3}{\sqrt{g_*(m_M/x)} g_*^{S}(m_M/x)} dx
+\label{eq:Yana}
 \ee
 where we used $s = \frac{2 \pi^2}{45} g_*^{S}(T) T^3$.
 
@@ -189,6 +192,39 @@ can be evaluated, giving:
 \be
 Y_S = \left(\frac{135}{8 \pi^3} \frac{M_P}{1.66}\right)  g_M \frac{\Gamma_M}{m_M^2} \frac{4.71}{\sqrt{g_*(m_M)} g_*^{S}(m_M)}
 \ee
+
+
+In Fig.\ref{fig:solution2} (left) we show the relic DM abundance as a function of the DM-mediator coupling ($y$)
+obtained using Eq.(\ref{eq:Yana}). Since the mediator width increases with $y$ ($\Gamma_M \propto y^2$),
+the relic abundance increases quadratically with $y$, as seen in the plot.
+We also show the result obtained using the numerical solution discussed in
+Sec.\ref{sec:num}.
+As we can see both results agree very well, except for very low values of $y$.
+At these values the mediator is extremely long-lived and it decouples from the thermal
+bath before decaying. As a result, the approximation that $M$ is always in thermal equilibrium ($Y_M = \bar{Y}_M$)
+is not valid and the result obtained in Eq.(\ref{eq:Yana}) no longer applies.
+As seen in Fig.\ref{fig:solution2} (right) this happens when $T_{decay} \ll T_{freeze-out}$.
+For such cases the DM relic abundance is simply given by $\Omega_{DM} h^2 = \frac{m_{DM}}{m_M} \Omega_{M} h^2$,
+where $\Omega_{M} h^2$ is the mediator relic abundance before its decay.
+Furthermore, since $\Omega_{M} h^2$ does not depend on $y$, the DM relic abundance
+also becomes $y$-independent as shown by the numerical solution in Fig.\ref{fig:solution2} at low
+$y$ values.
+
+
+\begin{figure}
+\includegraphics[width=0.5\linewidth,clip]{scan1.png}
+\includegraphics[width=0.5\linewidth,clip]{scan2.png}
+\caption{{\it Left}: The relic DM abundance computed using Eq.(\ref{eq:Yana}) and the
+numerical solution of the Boltzmann equations (see Sec.\ref{sec:num}) as a function of
+the mediator-DM coupling $y$.
+{\it Right:} Approximate values for the mediator freeze-out and decay
+temperatures (obtained numerically) as a a function of the mediator-DM coupling $y$.
+The parameters used are the same as in Fig.\ref{fig:solution1} and correspond to the simplified FIMP scenario described in Sec.\ref{sec:simp}.
+ \label{fig:solution2}}
+\end{figure}
+
+
+
 
 
 
@@ -208,7 +244,7 @@ is valid for $m_M \gg m_S$.
 
 With the above definitions we can numerically and analytically compute the relic abundance
 of DM, following the procedures described in Secs.\ref{sec:num} and \ref{sec:analytic}.
-In Fig.\ref{fig:fig2}  we show the relic abundance as a function of $y$ for both the
+In Fig.\ref{fig:solution2}  we show the relic abundance as a function of $y$ for both the
 analytic and the numerical solution.
 
 
