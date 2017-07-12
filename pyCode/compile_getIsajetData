@@ -1,4 +1,0 @@
-#!/bin/bash
-
-gfortran -c getIsajetData.f
-gfortran -o getIsajetData.x getIsajetData.o auxcode/libisajet.a auxcode/libisared.a
