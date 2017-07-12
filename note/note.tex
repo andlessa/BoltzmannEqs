@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage{epsfig}
+\usepackage[margin=1.2in]{geometry}
 
 \def\Vind{V^{\rm induced}}
 \def\eslt{\not\!\!{E_T}}
@@ -90,8 +91,8 @@ In order to obtain the DM relic abundance, Eqs.(\ref{eq:nDM}) and (\ref{eq:nMed}
 from the initial conditions (at reheating) until today. Furthermore, additional equations
 must be included for the evolution of entropy (in case it is not conserved) and the
 energy densities of $S$ and $M$. Below we briefly discuss how these can be solved numerically
-under minimal assumptions and then how an analytical solution can be found if we assume entropy conservation
-and a radiation-dominated universe.
+under minimal assumptions and then how an analytical solution can be found if we assume entropy conservation,
+a radiation-dominated universe and a mediator always in thermal equilibrium.
 
 \subsection{Numerical Solution} \label{sec:num}
 
@@ -135,7 +136,15 @@ zero and entropy is conserved.
 The numerical solution of Eqs.(\ref{eq:nDM}),(\ref{eq:nMed}),(\ref{eq:Rmed}) and (\ref{eq:S})
 for a specific choice of parameters is shown in Fig.\ref{fig:solution1}.
 
-
+\begin{figure}
+\includegraphics[width=0.5\linewidth,clip]{test.png}
+\includegraphics[width=0.5\linewidth,clip]{yield.png}
+\caption{{\it Left}: Evolution of the mediator and DM energy densities ($\rho_M$ and $\rho_{DM}$)
+as a function of the inverse of temperature. The evolution of the entropy density ($s$) is also shown.
+{\it Right:} Evolution of the mediator and DM yields as a function of the inverse of temperature.
+The parameters shown refer to the simplified FIMP scenario described in Sec.\ref{sec:simp}.
+ \label{fig:solution1}}
+\end{figure}
 
 \subsection{Analytical Solution} \label{sec:analytic}
 
@@ -183,7 +192,7 @@ Y_S = \left(\frac{135}{8 \pi^3} \frac{M_P}{1.66}\right)  g_M \frac{\Gamma_M}{m_M
 
 
 
-\section{Simplified FIMP Scenario}
+\section{Simplified FIMP Scenario} \label{sec:simp}
 
 If we define the $S$-$M$-SM coupling as:
 \be

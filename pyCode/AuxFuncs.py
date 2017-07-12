@@ -102,13 +102,16 @@ def printData(compList,outputFile=None):
         header = ['R','T (GeV)']
         for comp in compList:
             header += ['n_{%s} (GeV^{3})'%comp.label, '#rho_{%s} (GeV^{2})' %comp.label]
+        header.append('s (GeV^{3})')
         maxLength = max([len(s) for s in header])
         line = ' '.join(str(x).center(maxLength) for x in header)
         f.write('# '+line+'\n')
         for i,R in enumerate(compList[0].evolveVars['R']):
-            data = [R,compList[0].evolveVars['T'][i]]
+            T = compList[0].evolveVars['T'][i]
+            data = [R,T]
             for comp in compList:
                 data += [comp.evolveVars['n'][i],comp.evolveVars['rho'][i]]
+            data.append((2.*pi*gSTARS(T)*T**3)/45.)
             line = ' '.join(str('%.4E'%x).center(maxLength) for x in data)
             f.write(line+'\n')
         f.write('#-------------\n')
