@@ -10,9 +10,9 @@
 
 """
 
-import os,sys
-from scipy import integrate, interpolate, optimize
-from numpy import arange
+import os
+from scipy import integrate, interpolate, optimize, special
+from numpy import arange, inf
 from math import exp, sqrt, log, pi, log10
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -56,7 +56,7 @@ def printParameters(parameters,outFile=None):
         for par,val in sorted(parameters):
             f.write('# %s = %s\n' %(par,val))
         f.write('#-------------\n')            
-        f.close()        
+  
         
 def printSummary(compList,TF,outFile=None):
     """
@@ -82,13 +82,13 @@ def printSummary(compList,TF,outFile=None):
         omega = getOmega(comp,rhoF,nF,Tfinal)        
         if not comp.Tdecay: tag = '(@TF)'
         else: tag = '(@decay)'
-        f.write('# %s: T(osc)= %s | T(decouple)= %s | T(decay)= %s | Omega h^2 %s = %s\n' %(comp.label,comp.Tosc,
+        f.write('# %s: T(osc)= %s | T(decouple)~= %s | T(decay)~= %s | Omega h^2 %s = %s\n' %(comp.label,comp.Tosc,
                                                                                       comp.Tdecouple,comp.Tdecay,tag,omega))
         f.write('# \n')
     
     f.write('# Delta Neff (@TF) = %s\n' %sum([getDNeff(comp,TF) for comp in compList]))
     f.write('#-------------\n')
-    f.close()
+
 
 def printData(compList,outputFile=None):
     """
@@ -112,7 +112,6 @@ def printData(compList,outputFile=None):
             line = ' '.join(str('%.4E'%x).center(maxLength) for x in data)
             f.write(line+'\n')
         f.write('#-------------\n')
-        f.close()
 
 def getDataFrom(dataFile):    
     """
@@ -229,9 +228,8 @@ def getDNeff(comp,TF):
 #Ignore component if it has decayed before TF        
     if comp.Tdecay and comp.Tdecay > TF: return 0.
 #Get the number and energy densities of comp at T:
-    mindelta = TF    
-    for iT,T in enumerate(comp.evolveVars['T']):
-        if abs(T-TF) < mindelta: iF,mindelta = iT,abs(T-TF)
+    Tdelta = [abs(TF-T) for T in comp.evolveVars['T']]
+    iF = Tdelta.index(min(Tdelta))    
     rho = comp.evolveVars['rho'][iF]
     n = comp.evolveVars['n'][iF]
     T = comp.evolveVars['T'][iF]
