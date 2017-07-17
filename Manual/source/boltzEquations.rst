@@ -105,7 +105,7 @@ densities, we will consider the following integral:
     \times \left[ f_a f_b - f_i f_j \right] E_i^{\alpha}
 
 where :math:`\alpha = 0 (1)` for the number (energy) density. Here we
-assume that the distributions can be approximated by [1]_:
+assume that the distributions can be approximated by:
 
 .. math:: f_i \simeq \exp(-(E_i - \mu_i)/T)
 

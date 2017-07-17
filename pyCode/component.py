@@ -3,12 +3,9 @@
 """
 
 .. module:: component
-    :synopsis: This module defines the component class, which describe common properties for\
-    particle/field components 
-
-:synopsis: This module defines the component class, which describe common properties for\
-    particle/field components    
-:author:: Andre Lessa <lessa.a.p@gmail.com>
+    :synopsis: This module defines the component class, which describe common properties for particle/field components 
+        
+:author: Andre Lessa <lessa.a.p@gmail.com>
 
 """
 
@@ -140,14 +137,15 @@ class Component(object):
             
 
     def getNTh(self,T,nratio,comp=None):
-        """Computes the effective thermal number density at temperature T:
-        If comp = None:
-          Nth = neq[self]*sum_{decays} BR(self->a + b +...)*(n[a]/neq[a])*(n[b]/neq[b])* ...
-        If comp = component:
-          Nth = (neq[self]/Norm)*sum_{decays} N_component BR(self-> component + b +...)*(n[a]/neq[a])*(n[b]/neq[b])*...
+        """        
+        Computes the effective thermal number density at temperature T:
+        If comp = None: Nth = neq[self]*sum_{decays} BR(self->a + b +...)*(n[a]/neq[a])*(n[b]/neq[b])* ...
+        If comp = component: Nth = (neq[self]/Norm)*sum_{decays} N_component BR(self-> component + b +...)*(n[a]/neq[a])*(n[b]/neq[b])*...
+          
         :param T: temperature (allows for T-dependent BRs)
         :param nratio: Dictionary with ratios of number density to the equilibrium number density.
-        :param comp: Component (if needed) to compute the weight X->Y+..."""
+        :param comp: Component (if needed) to compute the weight X->Y+...                
+        """
         
 #Compute BRs:
         Nth = 0.

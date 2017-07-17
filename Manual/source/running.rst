@@ -61,7 +61,6 @@ For the simple models assumed in nonThermalDM.py, the following parameters are d
 
   * **yCoupling** (float): Mediator-DM-SM coupling
   * **mMediator** (float): Mediator mass (in GeV)
-    perfoming :ref:`mass compression <massComp>`. *Only used if doCompress = True*
   * **mDM** (float): DM mass (in GeV)
   * **TRH** (float): reheat temperature (in GeV)
   * **TF** (float): Final temperature for evolution (should be after mediator decay)

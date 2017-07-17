@@ -7,7 +7,7 @@
     other relevant information
     
 :synopsis: This module defines all relevant input parameters for the model and some methods to obtain \
-    other relevant information (SUSY spectrum and parameters, neutralino sigma.v, etc)    
+    other relevant information (spectrum, decays, sigma.v, etc)    
 :author: Andre Lessa <lessa.a.p@gmail.com>
 
 """

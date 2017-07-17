@@ -172,10 +172,13 @@ class BoltzEqs(Explicit_Problem):
     
     
     def state_events(self,x,y,sw):
-        """Checks for a discontinuous transition happened.\
+        """
+        Checks for a discontinuous transition happened.
         Possible discontinuities are: 
-          * a CO component starts to oscillate\
-          * a particle has decayed and its number density is effectively zero
+        
+            * a CO component starts to oscillate
+            * a particle has decayed and its number density is effectively zero
+            
         The transition vector must be zero when such a transition occurs.
         Also updates the absolute tolerance of the solver, if the variable's
         values go below it.

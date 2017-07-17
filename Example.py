@@ -12,7 +12,7 @@ import logging as logger
 def main(parameterFile,outputFile,showPlot=True):
     """
     
-    Main code to solve the Boltzmann equations
+    Main code to define the BSM contents and properties and solve the Boltzmann equations
     
     :param parameterFile: Path to the file defining the main model parameters
     :param outputFile: Path to the output file. If None, no results will be written.

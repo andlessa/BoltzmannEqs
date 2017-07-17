@@ -5,18 +5,20 @@ Code Documentation
 :mod:`Example` File
 -------------------
 
-.. automodule:: component
+.. automodule:: Example
     :members:
     :undoc-members:
     :show-inheritance:
+    :noindex:
 
 :mod:`modelDefinitions` File
 ----------------------------
 
-.. automodule:: component
+.. automodule:: modelDefinitions
     :members:
     :undoc-members:
     :show-inheritance:
+    :noindex:
 
 
 
@@ -27,6 +29,7 @@ Code Documentation
     :members:
     :undoc-members:
     :show-inheritance:
+    :noindex:
 
 
 :mod:`boltzSolver` File
@@ -37,6 +40,7 @@ Code Documentation
     :members:
     :undoc-members:
     :show-inheritance:
+    :noindex:
 
 :mod:`boltzEqs` File
 --------------------
@@ -45,6 +49,7 @@ Code Documentation
     :members:
     :undoc-members:
     :show-inheritance:
+    :noindex:
 
 :mod:`AuxFuncs` File
 --------------------
@@ -53,6 +58,7 @@ Code Documentation
     :members:
     :undoc-members:
     :show-inheritance:
+    :noindex:
 
 :mod:`AuxDecays` File
 ---------------------
@@ -61,3 +67,4 @@ Code Documentation
     :members:
     :undoc-members:
     :show-inheritance:
+    :noindex:

@@ -5,7 +5,7 @@
 .. module:: AuxFuncs
     :synopsis: This module provides auxiliary functions 
 
-:synopsis: This module provides auxiliary functions
+
 :author: Andre Lessa <lessa.a.p@gmail.com>
 
 """
