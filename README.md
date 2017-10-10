@@ -16,7 +16,7 @@ In addition, some of the plotting functions may require:
  * [matplotlib](https://pypi.python.org/pypi/matplotlib)
  * [pyROOT](https://root.cern.ch/pyroot)
 
-For a successful installation of Assilumo, `[SUNDIALS](https://computation.llnl.gov/projects/sundials) must also be installed.
+For a successful installation of Assilumo, [SUNDIALS](https://computation.llnl.gov/projects/sundials) must also be installed.
 
 A script for installing Sundials and Assimulo is provided: 
 
@@ -24,7 +24,7 @@ A script for installing Sundials and Assimulo is provided:
 assimulo_installer.sh
 ```
 
-The script downloads ths Sundials tarball and installs in a local folder (./sundials).
+The script downloads the Sundials tarball and installs in a local folder (./sundials).
 It then installs Assimulo in the local user folder using pip.
 The installation can then be checked running:
 
