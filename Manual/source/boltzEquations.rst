@@ -12,8 +12,7 @@ General Formalism and Approximations
 The general Boltzmann equation for the number distribution of a particle
 species can be written as (assuming isotropy):
 
-.. math:: 
-   :label: eq:d1
+.. math::
    :nowrap:
    
    {\frac{\partial F_{i}}{\partial t}} -H p {\frac{\partial F_{i}}{\partial p}} = C_{i}[F_{i},F_{j},p] 
@@ -36,7 +35,7 @@ densities are given in terms of :math:`F_{i}` as:
    P_{i}(t) & = \frac{1}{3} \int \frac{dp}{2 \pi^2} \frac{p^4}{E_i} F_i(p) \nonumber\end{align}
 
 where :math:`m_i` is the mass of particle :math:`i` and
-:math:`E_i = \sqrt{p_i^2 + m_i^2}`. Using Eq. :eq:`eq:d1`, we obtain the
+:math:`E_i = \sqrt{p_i^2 + m_i^2}`. Using the Boltzmann equation above, we obtain the
 following equations for the number and energy densities:
 
 .. math::
