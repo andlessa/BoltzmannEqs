@@ -57,6 +57,9 @@ def Evolve(compList,T0,TF,omegaErr=0.01):
                             events=boltz_eqs.events)
     xvals = r.t
     yvals = r.y
+    ncomp = len(compList)
+    vals = np.array([list(zip(r.t,ycomp,r.y[ncomp+icomp])) if boltz_eqs.sw[icomp] else [] 
+                     for icomp,ycomp in enumerate(r.y)])
     while r.t[-1] < xf and r.status >= 0:
         if r.t_events:
             x0,y0,sw = boltz_eqs.handle_events(r)
@@ -65,8 +68,11 @@ def Evolve(compList,T0,TF,omegaErr=0.01):
             r = integrate.solve_ivp(boltz_eqs.rhs,t_span=(x0,xf),y0=y0,
                                     t_eval=tvals,method='BDF',
                                     events=boltz_eqs.events)
-            xvals = np.concatenate((xvals,r.t))
-            yvals = np.concatenate((yvals,r.y),axis=1)            
+            
+            newvals = np.array([list(zip(r.t,ycomp,r.y[ncomp+icomp])) if boltz_eqs.sw[icomp] else [] 
+                                for icomp,ycomp in enumerate(r.y)])           
+            
+            vals = np.concatenate((vals,newvals),axis=1)            
     
     if r.status < 0:
         logger.error(r.message)
