@@ -280,7 +280,7 @@ def getFunctions(pclFile):
     fpts = [log((2*pi**2/45.)*gSTARS(T)*T**3) for T in Tpts]
     #Get inverse function to compute temperature from 
     Tfunc =  interp1d_picklable(fpts,Tpts,fill_value='extrapolate')    
-    f = open(pclFile,'w')
+    f = open(pclFile,'wb')
     pickle.dump(gSTAR,f)
     pickle.dump(gSTARS,f)
     pickle.dump(Tfunc,f)
@@ -354,8 +354,8 @@ def gSTARexact(T, interpol=True):
         MassesHadrons = {"u" : 3.*10 ** (-3), "d" : 5.*10 ** (-3), "s" : 0.1, "c" : 1.3, "b" : 4.2, "t" : 173.3,
                          "g" : 0.}
         DoFHadrons = {"u" :-12, "d" :-12, "s" :-12, "c" :-12, "b" :-12, "t" :-12, "g" : 16}
-    MassesSM = dict(MassesGauge.items() + MassesLeptons.items() + MassesHadrons.items())
-    DoFSM = dict(DoFGauge.items() + DoFLeptons.items() + DoFHadrons.items())
+    MassesSM = dict(list(MassesGauge.items()) + list(MassesLeptons.items()) + list(MassesHadrons.items()))
+    DoFSM = dict(list(DoFGauge.items()) + list(DoFLeptons.items()) + list(DoFHadrons.items()))
 # Add up SM degrees of freedom     
     for part in MassesSM:
         gstar += gstarFunc(MassesSM[part] / T, DoFSM[part])
@@ -419,7 +419,7 @@ def getTexact(x,NS):
 if not os.path.isfile('gFunctions.pcl'):
     getFunctions('gFunctions.pcl')
  
-f = open('gFunctions.pcl','r')
+f = open('gFunctions.pcl','rb')
 logger.info("Loading aux functions. Ignoring BSM corrections to g* and g*_S")
 gSTAR = pickle.load(f)
 gSTARS = pickle.load(f)

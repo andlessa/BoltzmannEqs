@@ -1,12 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #Example to describe the main steps required to define the model and inpute paramaters
 #and solve the boltzmann equations
 
 #First tell the system where to find the modules:
 import sys,os
-from ConfigParser import SafeConfigParser
-import logging as logger
+from configparser import ConfigParser
+import logging
+# from matplotlib import pyplot as plt
+
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 
 def main(parameterFile,outputFile,showPlot=True):
@@ -20,13 +24,12 @@ def main(parameterFile,outputFile,showPlot=True):
     
     """
 
-    from pyCode import AuxFuncs
     import modelDefinitions
     from pyCode.component import Component
     from pyCode.boltzSolver import Evolve
 
     
-    parser = SafeConfigParser()    
+    parser = ConfigParser(inline_comment_prefixes=(';',))    
     if not parser.read(parameterFile):
         logger.error("No such file or directory: '%s'" % parameterFile)
         sys.exit()
@@ -47,30 +50,18 @@ def main(parameterFile,outputFile,showPlot=True):
     compList = [dm,mediator]
     
     #Evolve the equations from TR to TF
-    Evolve(compList,TRH,TF)
-    
-    #Print summary
-    # TF = compList[0].evolveVars['T'][-1]    
-    if outputFile:
-        if os.path.isfile(outputFile):
-            os.remove(outputFile)
-        AuxFuncs.printParameters(parser.items('parameters'),outputFile)
-        AuxFuncs.printSummary(compList,TF,outputFile)
-        AuxFuncs.printData(compList,outputFile)
-    else:
-        AuxFuncs.printSummary(compList,TF,sys.stdout)
-    
-    if showPlot:
-        #Plot solutions
-        from matplotlib import pylab   
-        for comp in compList:
-            pylab.plot(comp.evolveVars['R'],comp.evolveVars['rho'],label=comp.label)
-        pylab.plot(compList[0].evolveVars['R'],compList[0].evolveVars['T'],label='T')
-        pylab.legend()
-        pylab.yscale('log')
-        pylab.xscale('log')
-        pylab.show()
+    vals = Evolve(compList,TRH,TF)
+    from matplotlib import pyplot as plt
+    plt.plot(vals[:,0],vals[:,1],'b--',label='DM')
+    plt.plot(vals[:,0],vals[:,2],'r--',label='Mediator')
+    plt.show()
 
+   
+    return True
+    
+    
+    
+    
 if __name__ == "__main__":
 
     import argparse    

@@ -10,9 +10,9 @@
 """
 
 from math import exp,log,sqrt,pi
-from AuxDecays import DecayList
+from pyCode.AuxDecays import DecayList
 from scipy.special import kn,zetac
-import AuxFuncs
+from  pyCode import AuxFuncs
 from types import FunctionType
 import logging
 logging.basicConfig(level=logging.INFO)

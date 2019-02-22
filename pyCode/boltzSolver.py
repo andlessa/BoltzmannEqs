@@ -10,14 +10,15 @@
 
 """
 
-from boltzEqs import BoltzEqs
-from assimulo.solvers import CVode
-from AuxFuncs import gSTARS, getTemperature
+from pyCode.boltzEqs import BoltzEqs
+from pyCode.AuxFuncs import gSTARS, getTemperature
 from math import log,exp,pi
 import logging
 import random, time
+import numpy as np
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 random.seed('myseed')
 
 
@@ -48,80 +49,65 @@ def Evolve(compList,T0,TF,omegaErr=0.01):
 #Solve differential equations:
 #First call with large errors to estimate the size of the solution
     xf = 50.
-    rtol = omegaErr
-    atol = [omegaErr]*len(y0)    
+#     rtol = omegaErr
+#     atol = [omegaErr]*len(y0)    
     boltz_eqs = BoltzEqs(compList,x0,y0,sw) #Define equations and set initial conditions
-    y = mySolve(xf,boltz_eqs,rtol,atol)[1]
-    logger.info("First pass at solving Boltzmann equations done in %s s" %(time.time()-t0))
-    t0 = time.time()
-#Second call with proper relative/absolute errors
-    maxy = max([abs(yy) for yy in y[-1][:len(compList)]])
-    rtol = omegaErr/(2.*maxy)  #Re-scale error to obtain relic densities with precision omegaErr
-    atol = [omegaErr/2.]*len(compList) + [omegaErr*abs(yy) for yy in y[-1][len(compList):]]
-    atol = [max(xx,0.005) for xx in atol]
-    boltz_eqs = BoltzEqs(compList,x0,y0,sw) #Define equations and set initial conditions
-    x,y = mySolve(xf,boltz_eqs,rtol,atol,verbosity=50)
-    logger.info("Second pass at solving Boltzmann equations done in %s s" %(time.time()-t0))
-#Store the solutions:    
-    for comp in compList: comp.evolveVars = {'T' : [], 'R' : [], 'rho' : [], 'n' : []}
-    for ipt,ypt in enumerate(y):
-        NS = ypt[-1]
-        T = getTemperature(x[ipt],NS)
-        if T < max(10.**(-7),TF): continue     #Do not keep points above TF or after matter domination
-        for icomp,comp in enumerate(compList):        
-            comp.evolveVars['T'].append(T)
-            comp.evolveVars['R'].append(exp(x[ipt]))
-            n = exp(ypt[icomp])
-            if comp.Type == 'CO': rho = n*comp.mass(T)
-            else: rho = n*ypt[icomp + len(compList)]
-            if T < comp.Tdecay or (comp.Type == 'CO' and T > comp.Tosc): n = rho = 0.            
-            comp.evolveVars['rho'].append(rho)
-            comp.evolveVars['n'].append(n)
-
-    return True
-
-        
-def mySolve(xf,boltz_eqs,rtol,atol,verbosity=50):
-    """Sets the main options for the ODE solver and solve the equations. Returns the
-    array of x,y points for all components.
-    If numerical instabilities are found, re-do the problematic part of the evolution with smaller steps"""
-        
-    boltz_solver = CVode(boltz_eqs)  #Define solver method
-    boltz_solver.rtol = rtol
-    boltz_solver.atol = atol
-    boltz_solver.verbosity = verbosity
-    boltz_solver.linear_solver = 'SPGMR'
-    boltz_solver.maxh = xf/300.
-    xfinal = xf
-    xres = []
-    yres = []
-    sw = boltz_solver.sw[:]
-    while xfinal <= xf:
-        try:
-            boltz_solver.re_init(boltz_eqs.t0,boltz_eqs.y0)
-            boltz_solver.sw = sw[:]
-            x,y = boltz_solver.simulate(xfinal)
-            xres += x
-            for ypt in y: yres.append(ypt)
-            if xfinal == xf: break   #Evolution has been performed until xf -> exit            
-        except Exception,e:
-            print e
-            if not e.t or 'first call' in e.msg[e.value]:
-                logger.error("Error solving equations:\n "+str(e))
-                return False
-            xfinal = max(e.t*random.uniform(0.85,0.95),boltz_eqs.t0+boltz_solver.maxh)  #Try again, but now only until the error
-            logger.warning("Numerical instability found. Restarting evolution from x = "
-                           +str(boltz_eqs.t0)+" to x = "+str(xfinal))
-            continue
-        xfinal = xf  #In the next step try to evolve from xfinal -> xf
-        sw = boltz_solver.sw[:]
-        x0 = float(x[-1])
-        y0 = [float(yval) for yval in y[-1]]
-        boltz_eqs.updateValues(x0,y0,sw)
-
     
-    return xres,yres
-                            
+    boltz_eqs.solver.set_initial_value(y0,x0)
+    boltz_eqs.solver.set_integrator('lsoda',method='bdf')    
+    x_vals = np.linspace(x0, xf, 100)
+    vals = []
+    for xv in x_vals[1:]:
+        x_init,y_init = boltz_eqs.solver.t,boltz_eqs.solver.y
+        nsteps = 10
+        boltz_eqs.solver.set_integrator('lsoda',nsteps=nsteps)
+        boltz_eqs.solver.set_initial_value(y_init,x_init)        
+        print('x0=',x_init,'xf=',xv,'nsteps=',nsteps,boltz_eqs.solver.get_return_code())
+        while (boltz_eqs.solver.get_return_code() != 2) and nsteps < 10000:
+            try:
+                boltz_eqs.solver.set_integrator('lsoda',method='bdf',nsteps=nsteps)
+                boltz_eqs.solver.set_initial_value(y_init,x_init)
+                boltz_eqs.solver.integrate(xv)
+                vals.append(np.array([boltz_eqs.solver.t] + boltz_eqs.solver.y.tolist()))                
+            except Exception as e:
+                nsteps *= 5
+                print(e)
+                print(nsteps)
+        if boltz_eqs.solver.get_return_code() != 2:
+            break
+        
+
+    return np.array(vals)
+    
+    
+#     while boltz_eqs.solver.successful() and boltz_eqs.solver.t < xf:
+#         print('x=',boltz_eqs.solver.t)
+#         boltz_eqs.solver.integrate(boltz_eqs.solver.t + x_step)
+#         xvals.append(boltz_eqs.solver.t)
+#         yvals.append(boltz_eqs.solver.y)    
+    
+#     y = boltz_eqs.solver.integrate(xf)
+#     logger.info("First pass at solving Boltzmann equations done in %s s" %(time.time()-t0))
+#     t0 = time.time()
+
+#     for comp in compList: comp.evolveVars = {'T' : [], 'R' : [], 'rho' : [], 'n' : []}
+#     for ipt,ypt in enumerate(y):
+#         NS = ypt[-1]
+#         T = getTemperature(x[ipt],NS)
+#         if T < max(10.**(-7),TF): continue     #Do not keep points above TF or after matter domination
+#         for icomp,comp in enumerate(compList):        
+#             comp.evolveVars['T'].append(T)
+#             comp.evolveVars['R'].append(exp(x[ipt]))
+#             n = exp(ypt[icomp])
+#             if comp.Type == 'CO': rho = n*comp.mass(T)
+#             else: rho = n*ypt[icomp + len(compList)]
+#             if T < comp.Tdecay or (comp.Type == 'CO' and T > comp.Tosc): n = rho = 0.            
+#             comp.evolveVars['rho'].append(rho)
+#             comp.evolveVars['n'].append(n)
+#     return True
+#     return np.array(xvals),np.array(yvals)
+
+        
                 
 def goodCompList(compList,T0):
     """Checks if the list of components satisfies the minimum requirements"""
