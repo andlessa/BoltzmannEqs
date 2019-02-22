@@ -9,7 +9,7 @@
 
 """
 
-from math import exp,log,sqrt,pi
+from numpy import exp,log,sqrt,pi
 from pyCode.AuxDecays import DecayList
 from scipy.special import kn,zetac
 from  pyCode import AuxFuncs

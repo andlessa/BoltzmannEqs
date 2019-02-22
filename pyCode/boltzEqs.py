@@ -11,17 +11,14 @@
 """
 
 from pyCode.AuxFuncs import Hfunc, getTemperature, getPressure
-from math import isnan, pi
+from numpy import exp, log, isnan, pi
 import logging
-from scipy.integrate import ode
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 import numpy as np
-import decimal
 from scipy.special import zetac
-np.seterr(over='ignore')
 Zeta3 = zetac(3.) + 1.
-decimal.getcontext().prec = 28
+# np.seterr(over='ignore')
 
 
 class BoltzEqs(object):
@@ -29,12 +26,23 @@ class BoltzEqs(object):
     
 #Sets the initial conditions and check for errors in input
     def __init__(self,compList,x0=None,y0=None,sw=None):
-        self.components = compList
-        self.solver = ode(self.rhs)
-        self.solver.set_integrator('lsoda',method='bdf')
+        self.components = compList    
+        #Set initial conditions  
+        self.updateValues(x0,y0,sw)
+        #Define discontinuity events:            
+        self.events = [self.check_decayOf(i) for i in range(len(compList))]
+        self.events += [self.check_oscillationOf(i) for i in range(len(compList))]
+
+    def updateValues(self,x,y,sw):
+        """Replace the variables in self.components and set the new initial conditions."""        
+        #Store new values:
+        if len(y) != 2*len(self.components)+1:
+            logger.error("Wrong number of variables. Must be equal to number of 2*components+1 (entropy)")
+            return False
+        #Set initial conditions for next evolution
+        self.t0 = x                              
+        self.y0 = y     
         self.sw = sw
-        if not x0 is None and not y0 is None:
-            self.solver.set_initial_value(y0, x0)
 
 
     #The right-hand-side function (rhs)
@@ -47,7 +55,6 @@ class BoltzEqs(object):
         For simplicity we set  R0 = s0 = 1 (with respect to the notes).
         """
 
-#         self.check_discontinuities(x,y)
         sw = self.sw
         logger.debug('Calling RHS with arguments:\n   x=%s,\n   y=%s\n and switches %s' %(x,y,sw))
         n = []
@@ -59,22 +66,21 @@ class BoltzEqs(object):
         T = getTemperature(x,NS)
         for i,comp in enumerate(self.components):
             logger.debug('RHS: Computing component %s' %comp)
-            ni = np.exp(y[i])
+            ni = exp(y[i])
             Ri = y[i + len(self.components)]
             if comp.Type == 'CO':
                 rhoi = comp.mass(T)*ni
-            else: rhoi = Ri*ni
+            else:
+                rhoi = Ri*ni
             n.append(ni)
             neq.append(comp.nEQ(T))            
             rho.append(rhoi)
             R.append(Ri)
-            if neq[-1] > 0.: nratio[comp.label] = ni/neq[-1]
-            else: nratio[comp.label] = 0.
-            logger.debug('RHS: Done computing component %s.\n   rho = %s and n = %s' %(comp,rhoi,ni))
-            if y[i] < -100.:
-                sw[i] = False
+            if neq[-1] > 0.:
+                nratio[comp.label] = ni/neq[-1]
             else:
-                sw[i] = True
+                nratio[comp.label] = 0.
+            logger.debug('RHS: Done computing component %s.\n   rho = %s and n = %s' %(comp,rhoi,ni))
         H = Hfunc(T,rho,sw)
        
              
@@ -98,15 +104,14 @@ class BoltzEqs(object):
         dNS = 0.        
         for i,comp in enumerate(self.components):
             if not sw[i]: continue
-            dNS += comp.getBRX(T)*comp.width(T)*comp.mass(T)*(n[i]-N1th[i])*np.exp(3.*x - NS)/(H*T)
+            dNS += comp.getBRX(T)*comp.width(T)*comp.mass(T)*(n[i]-N1th[i])*exp(3.*x - NS)/(H*T)
         logger.debug('Done computing entropy derivative')
              
 #Derivatives for the Ni=log(ni/s0) variables:
         logger.debug('Computing Ni derivatives')
         dN = [0.]*len(self.components)        
         for i,comp in enumerate(self.components):
-            if not sw[i]:
-                continue
+            if not sw[i]: continue
             width = comp.width(T)
             mass = comp.mass(T)
             RHS = -3.*n[i]     
@@ -125,10 +130,8 @@ class BoltzEqs(object):
                 comp.Tdecouple = None  #Reset decoupling temperature if component becomes coupled
             RHS += annTerm*(neq[i] - n[i]) #Annihilation term
             for a, compA in enumerate(self.components):
-                if not sw[a]:
-                    continue
-                if a == i:
-                    continue                                
+                if not sw[a]: continue
+                if a == i: continue                                
                 massA = compA.mass(T)
                 widthA = compA.width(T)
                 RHS += widthA*Beff[a][i]*massA*(n[a] - N2th[a][i])/(H*R[a])  #Injection term                       
@@ -161,25 +164,85 @@ class BoltzEqs(object):
             if bigerror == 1:  logger.warning("Right-hand called with NaN values.")
             if bigerror == 2:  logger.warning("Right-hand side evaluated to NaN.")
         
-        logger.debug('dN= %s' %dN)
-        logger.debug('dR= %s' %dR)
-        logger.debug('dNS= %s' %dNS)
-        logger.debug('DONE')
         return np.array(dN + dR + [dNS])
     
-
-    def check_discontinuities(self,x,y):
+    
+    def check_decayOf(self,icomp):
         """
-        Activate/de-activate components when a discontinuous transition happens
-        and sets the new initial conditions.          
-        Possible discontinuities are: a CO component starts to oscillate, a particle has decayed.
+        Create event for checking if component icomp has decayed
+        """
+        def event(x,y):
+            NS = y[-1]
+            T = getTemperature(x,NS)
+            comp = self.components[icomp]                     
+            if comp.width(T) == 0. or not self.sw[icomp]:
+                return 1            
+            return y[icomp] + 100.
+        
+        event.terminal = True #Whether to stop the evolution when event happens
+        return event
+    
+    def check_oscillationOf(self,icomp):
+        """
+        Create event for checking if component icomp started to oscillate
         """
         
-        #Event happened because of discontinuity
-        NS = y[-1]
-        T = getTemperature(x,NS)         
-        for icomp,yv in enumerate(y):            
-            if self.components[icomp].width(T) == 0. or not self.sw[icomp]:
+        def event(x,y):
+            comp = self.components[icomp]
+            if comp.Type != 'CO':
+                return 1            
+            NS = y[-1]
+            T = getTemperature(x,NS)           
+            
+            ncomp = len(self.components)
+            n = exp(np.array(y)[:ncomp])
+            rho = n*np.array(y[ncomp:2*ncomp])
+            return Hfunc(T,rho,self.sw)*3. - comp.mass(T)
+        
+        event.terminal = True #Whether to stop the evolution when event happens
+        return event        
+    
+
+    def handle_events(self,solution):
+        """Activate/de-activate components when a discontinuous transition happens
+        and sets the new initial conditions.
+        Possible discontinuities are: a CO component starts to oscillate, a particle has decayed                 
+        """
+        
+#Event happened because of discontinuity
+        NS = solution.y[:,-1][-1]
+        T = getTemperature(solution.t[-1],NS)
+        events = solution.t_events
+        ncomp = len(self.components)
+        newY0 = solution.y[:,-1]
+        newX0 = solution.t[-1]
+        sw = self.sw[:]
+        for icomp,comp in enumerate(self.components):
+            decayT, oscillT = None,None
+            if events[icomp].size:
+                decayT = events[icomp][0]
+                T = getTemperature(decayT,NS)
+            if events[icomp+ncomp].size:
+                oscillT = events[icomp+ncomp][0]
+            if not decayT and not oscillT:
                 continue
-            if 2.*yv + 200. < 0:
-                self.sw[icomp] = False
+            if oscillT:
+                if comp.Type != 'CO':
+                    logger.error("Particle started of oscillate, but it is of type %s" %comp.Type)
+                    return False
+                sw[icomp] = True
+                comp.active = True 
+                comp.Tosc = T
+                comp.xosc = solution.t[-1]
+                initN = comp.getOscAmplitute(T)/comp.mass(T)
+                newY0[icomp] = log(initN)  #Initial condition for log(n/s0)
+                newY0[icomp+ncomp] = comp.mass(T) #Initial condition for log(rho/n)
+            if decayT:    #Discontinuities due to component decay                
+                if self.components[icomp].width(T) == 0.:
+                    logger.error("Stable component %s has decayed. Should not happen." %self.components[icomp].label)
+                    return False
+                comp.Tdecay = T
+                sw[icomp] = False   #Deactivate particle
+                
+        return newX0,newY0,sw
+                

@@ -9,6 +9,7 @@ from configparser import ConfigParser
 import logging
 # from matplotlib import pyplot as plt
 
+# logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
@@ -50,10 +51,10 @@ def main(parameterFile,outputFile,showPlot=True):
     compList = [dm,mediator]
     
     #Evolve the equations from TR to TF
-    vals = Evolve(compList,TRH,TF)
+    xvals,yvals = Evolve(compList,TRH,TF)
     from matplotlib import pyplot as plt
-    plt.plot(vals[:,0],vals[:,1],'b--',label='DM')
-    plt.plot(vals[:,0],vals[:,2],'r--',label='Mediator')
+    plt.plot(xvals,yvals[0,:],'b--',label='DM')
+    plt.plot(xvals,yvals[1,:],'r--',label='Mediator')
     plt.show()
 
    

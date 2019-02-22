@@ -12,10 +12,11 @@
 
 from pyCode.boltzEqs import BoltzEqs
 from pyCode.AuxFuncs import gSTARS, getTemperature
-from math import log,exp,pi
+from numpy import log,exp,pi
+import numpy as np
+from scipy import integrate
 import logging
 import random, time
-import numpy as np
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -49,64 +50,29 @@ def Evolve(compList,T0,TF,omegaErr=0.01):
 #Solve differential equations:
 #First call with large errors to estimate the size of the solution
     xf = 50.
-#     rtol = omegaErr
-#     atol = [omegaErr]*len(y0)    
+    tvals = np.linspace(x0,xf,100)
     boltz_eqs = BoltzEqs(compList,x0,y0,sw) #Define equations and set initial conditions
+    r = integrate.solve_ivp(boltz_eqs.rhs,t_span=(x0,xf),y0=y0,
+                            t_eval=tvals,method='BDF',
+                            events=boltz_eqs.events)
+    xvals = r.t
+    yvals = r.y
+    while r.t[-1] < xf and r.status >= 0:
+        if r.t_events:
+            x0,y0,sw = boltz_eqs.handle_events(r)
+            boltz_eqs.updateValues(x0, y0, sw)
+            tvals = [t for t in tvals[:] if t > x0]
+            r = integrate.solve_ivp(boltz_eqs.rhs,t_span=(x0,xf),y0=y0,
+                                    t_eval=tvals,method='BDF',
+                                    events=boltz_eqs.events)
+            xvals = np.concatenate((xvals,r.t))
+            yvals = np.concatenate((yvals,r.y),axis=1)            
     
-    boltz_eqs.solver.set_initial_value(y0,x0)
-    boltz_eqs.solver.set_integrator('lsoda',method='bdf')    
-    x_vals = np.linspace(x0, xf, 100)
-    vals = []
-    for xv in x_vals[1:]:
-        x_init,y_init = boltz_eqs.solver.t,boltz_eqs.solver.y
-        nsteps = 10
-        boltz_eqs.solver.set_integrator('lsoda',nsteps=nsteps)
-        boltz_eqs.solver.set_initial_value(y_init,x_init)        
-        print('x0=',x_init,'xf=',xv,'nsteps=',nsteps,boltz_eqs.solver.get_return_code())
-        while (boltz_eqs.solver.get_return_code() != 2) and nsteps < 10000:
-            try:
-                boltz_eqs.solver.set_integrator('lsoda',method='bdf',nsteps=nsteps)
-                boltz_eqs.solver.set_initial_value(y_init,x_init)
-                boltz_eqs.solver.integrate(xv)
-                vals.append(np.array([boltz_eqs.solver.t] + boltz_eqs.solver.y.tolist()))                
-            except Exception as e:
-                nsteps *= 5
-                print(e)
-                print(nsteps)
-        if boltz_eqs.solver.get_return_code() != 2:
-            break
-        
+    if r.status < 0:
+        logger.error(r.message)
 
-    return np.array(vals)
+    return xvals,yvals
     
-    
-#     while boltz_eqs.solver.successful() and boltz_eqs.solver.t < xf:
-#         print('x=',boltz_eqs.solver.t)
-#         boltz_eqs.solver.integrate(boltz_eqs.solver.t + x_step)
-#         xvals.append(boltz_eqs.solver.t)
-#         yvals.append(boltz_eqs.solver.y)    
-    
-#     y = boltz_eqs.solver.integrate(xf)
-#     logger.info("First pass at solving Boltzmann equations done in %s s" %(time.time()-t0))
-#     t0 = time.time()
-
-#     for comp in compList: comp.evolveVars = {'T' : [], 'R' : [], 'rho' : [], 'n' : []}
-#     for ipt,ypt in enumerate(y):
-#         NS = ypt[-1]
-#         T = getTemperature(x[ipt],NS)
-#         if T < max(10.**(-7),TF): continue     #Do not keep points above TF or after matter domination
-#         for icomp,comp in enumerate(compList):        
-#             comp.evolveVars['T'].append(T)
-#             comp.evolveVars['R'].append(exp(x[ipt]))
-#             n = exp(ypt[icomp])
-#             if comp.Type == 'CO': rho = n*comp.mass(T)
-#             else: rho = n*ypt[icomp + len(compList)]
-#             if T < comp.Tdecay or (comp.Type == 'CO' and T > comp.Tosc): n = rho = 0.            
-#             comp.evolveVars['rho'].append(rho)
-#             comp.evolveVars['n'].append(n)
-#     return True
-#     return np.array(xvals),np.array(yvals)
-
         
                 
 def goodCompList(compList,T0):
