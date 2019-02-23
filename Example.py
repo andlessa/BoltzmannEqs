@@ -1,11 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #Example to describe the main steps required to define the model and inpute paramaters
 #and solve the boltzmann equations
 
 #First tell the system where to find the modules:
 import sys,os
-from ConfigParser import SafeConfigParser
 import logging as logger
 
 
@@ -20,13 +19,14 @@ def main(parameterFile,outputFile,showPlot=True):
     
     """
 
-    from pyCode import AuxFuncs
+    from configparser import ConfigParser
     import modelDefinitions
     from pyCode.component import Component
-    from pyCode.boltzSolver import Evolve
+    from pyCode.boltzSolver import BoltzSolution
+    from pyCode import AuxFuncs 
 
     
-    parser = SafeConfigParser()    
+    parser = ConfigParser(inline_comment_prefixes=(';',))
     if not parser.read(parameterFile):
         logger.error("No such file or directory: '%s'" % parameterFile)
         sys.exit()
@@ -47,29 +47,32 @@ def main(parameterFile,outputFile,showPlot=True):
     compList = [dm,mediator]
     
     #Evolve the equations from TR to TF
-    Evolve(compList,TRH,TF)
+    solution = BoltzSolution(compList,TRH,TF)
+    solution.Evolve()
     
     #Print summary
-    # TF = compList[0].evolveVars['T'][-1]    
     if outputFile:
         if os.path.isfile(outputFile):
             os.remove(outputFile)
         AuxFuncs.printParameters(parser.items('parameters'),outputFile)
-        AuxFuncs.printSummary(compList,TF,outputFile)
-        AuxFuncs.printData(compList,outputFile)
+        solution.printSummary(outputFile)
+#         solution.printData(outputFile)
     else:
-        AuxFuncs.printSummary(compList,TF,sys.stdout)
+        solution.printSummary()
     
     if showPlot:
         #Plot solutions
-        from matplotlib import pylab   
+        import matplotlib.pyplot as plt   
+        R = solution.solutionDict['R']
         for comp in compList:
-            pylab.plot(comp.evolveVars['R'],comp.evolveVars['rho'],label=comp.label)
-        pylab.plot(compList[0].evolveVars['R'],compList[0].evolveVars['T'],label='T')
-        pylab.legend()
-        pylab.yscale('log')
-        pylab.xscale('log')
-        pylab.show()
+#             n = solution.solutionDict['n_'+comp.label][-1]
+            rho = solution.solutionDict['rho_'+comp.label][-1]
+            plt.plot(R,rho,label=comp.label)
+        plt.plot(R,solution.solutionDict['T'],label='T')
+        plt.legend()
+        plt.yscale('log')
+        plt.xscale('log')
+        plt.show()
 
 if __name__ == "__main__":
 

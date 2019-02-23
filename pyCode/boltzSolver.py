@@ -10,8 +10,9 @@
 
 """
 
+import sys
 from pyCode.boltzEqs import BoltzEqs
-from pyCode.AuxFuncs import gSTARS, getTemperature
+from pyCode.AuxFuncs import gSTARS, getTemperature, getOmega, getDNeff
 from numpy import log,pi,exp
 import numpy as np
 from scipy import integrate
@@ -182,4 +183,73 @@ class BoltzSolution(object):
         S0 = (2*pi**2/45)*gSTARS(self.T0)*self.T0**3
         S = S0*exp(r.y[-1,:])
         self.solutionDict['S'] = np.concatenate((self.solutionDict['S'],S))
+
+    def printSummary(self,outFile=None):
+        """
+        Prints basic summary of solutions.
+        """
+        #Solution summary:
+        if outFile:
+            if isinstance(outFile,file):
+                f = outFile    
+            else:    
+                f = open(outFile,'a')
+        else:
+            f = sys.stdout
+            
+        T = self.solutionDict['T']
+        TF = T[-1]
+        f.write('#-------------\n')
+        f.write('# Summary\n')
+        f.write('# TF=%1.2g\n' %TF)
+        for comp in self.compList:
+            if comp.Tdecay:
+                Tlast = max(comp.Tdecay,TF)
+            else:
+                Tlast = TF
+            #Get point closest to Tlast    
+            i = (np.abs(T - Tlast)).argmin()                    
+            rhoF = self.solutionDict['rho_'+comp.label][i]
+            nF = self.solutionDict['n_'+comp.label][i]
+            Tfinal = T[i]
+            omega = getOmega(comp,rhoF,nF,Tfinal)        
+            if not comp.Tdecay:
+                tag = '(@TF)'
+            else:
+                tag = '(@decay)'
+            f.write('# %s: T(osc)= %s | T(decouple)~= %s | T(decay)~= %s | Omega h^2 %s = %1.2f\n' %(comp.label,comp.Tosc,
+                                                                                          comp.Tdecouple,comp.Tdecay,tag,omega))
+            f.write('# \n')
+        
+        DNeff = 0.
+        for comp in self.compList:
+            rho = self.solutionDict['rho_'+comp.label][-1]
+            n = self.solutionDict['n_'+comp.label][-1]
+            DNeff += getDNeff(comp, rho, n, TF)
+                    
+        f.write('# Delta Neff (T = %1.2g) = %1.2g \n' %(TF,DNeff))
+        f.write('#-------------\n')
+    
+    def printData(self,outputFile=None):
+        """
+        Prints the evolution of number and energy densities of the species to the outputFile 
+        """
+        
+#         if outputFile:
+#             f = open(outputFile,'a')
+#             f.write('#-------------\n')
+#             f.write('# Header:\n')
+#             header = ['R','T (GeV)']
+#             for comp in self.compList:
+#                 header += ['n_{%s} (GeV^{3})'%comp.label, '#rho_{%s} (GeV^{2})' %comp.label]
+#             maxLength = max([len(s) for s in header])
+#             line = ' '.join(str(x).center(maxLength) for x in header)
+#             f.write('# '+line+'\n')
+#             for i,R in enumerate(compList[0].evolveVars['R']):
+#                 data = [R,compList[0].evolveVars['T'][i]]
+#                 for comp in compList:
+#                     data += [comp.evolveVars['n'][i],comp.evolveVars['rho'][i]]
+#                 line = ' '.join(str('%.4E'%x).center(maxLength) for x in data)
+#                 f.write(line+'\n')
+#             f.write('#-------------\n')
         
