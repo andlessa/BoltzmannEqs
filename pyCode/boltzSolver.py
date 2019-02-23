@@ -177,7 +177,7 @@ class BoltzSolution(object):
                 n = exp(r.y[icomp,:])
                 rho = n*r.y[icomp+self.ncomp,:]
             self.solutionDict['n_'+comp.label] = np.concatenate((self.solutionDict['n_'+comp.label],n))
-            self.solutionDict['rho_'+comp.label] = np.concatenate((self.solutionDict['n_'+comp.label],rho))
+            self.solutionDict['rho_'+comp.label] = np.concatenate((self.solutionDict['rho_'+comp.label],rho))
             
         #Store the entropy values:
         S0 = (2*pi**2/45)*gSTARS(self.T0)*self.T0**3
@@ -190,7 +190,7 @@ class BoltzSolution(object):
         """
         #Solution summary:
         if outFile:
-            if isinstance(outFile,file):
+            if hasattr(outFile,'write'):
                 f = outFile    
             else:    
                 f = open(outFile,'a')
@@ -229,27 +229,28 @@ class BoltzSolution(object):
                     
         f.write('# Delta Neff (T = %1.2g) = %1.2g \n' %(TF,DNeff))
         f.write('#-------------\n')
+        f.close()
     
-    def printData(self,outputFile=None):
+    def printData(self,outFile=None):
         """
         Prints the evolution of number and energy densities of the species to the outputFile 
         """
         
-#         if outputFile:
-#             f = open(outputFile,'a')
-#             f.write('#-------------\n')
-#             f.write('# Header:\n')
-#             header = ['R','T (GeV)']
-#             for comp in self.compList:
-#                 header += ['n_{%s} (GeV^{3})'%comp.label, '#rho_{%s} (GeV^{2})' %comp.label]
-#             maxLength = max([len(s) for s in header])
-#             line = ' '.join(str(x).center(maxLength) for x in header)
-#             f.write('# '+line+'\n')
-#             for i,R in enumerate(compList[0].evolveVars['R']):
-#                 data = [R,compList[0].evolveVars['T'][i]]
-#                 for comp in compList:
-#                     data += [comp.evolveVars['n'][i],comp.evolveVars['rho'][i]]
-#                 line = ' '.join(str('%.4E'%x).center(maxLength) for x in data)
-#                 f.write(line+'\n')
-#             f.write('#-------------\n')
+        if outFile:
+            if hasattr(outFile,'write'):
+                f = outFile    
+            else:    
+                f = open(outFile,'a')
+            header = sorted(self.solutionDict.keys())
+            values = [self.solutionDict[label] for label in header]
+            
+            if any(len(v) != len(values[0]) for v in values):
+                logger.error("Data has distinct lengths and can not be written to file.")
+                f.close()
+                return False
+            data = np.column_stack(values)
+            f.write('#--------------\n')
+            np.savetxt(f,data,delimiter=' ',header = " ".join(header),fmt='%1.3g')
+            f.write('#--------------\n')    
+            f.close()
         

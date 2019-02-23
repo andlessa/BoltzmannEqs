@@ -54,9 +54,9 @@ def main(parameterFile,outputFile,showPlot=True):
     if outputFile:
         if os.path.isfile(outputFile):
             os.remove(outputFile)
-        AuxFuncs.printParameters(parser.items('parameters'),outputFile)
+#         AuxFuncs.printParameters(parser.items('parameters'),outputFile)
         solution.printSummary(outputFile)
-#         solution.printData(outputFile)
+        solution.printData(outputFile)
     else:
         solution.printSummary()
     
