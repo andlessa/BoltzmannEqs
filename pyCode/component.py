@@ -46,7 +46,6 @@ class Component(object):
         self.Tdecay = None
         self.Tosc = None
         self.Tdecouple = None
-        self.evolveVars = {"R" : None, "N": None, "x" : None}
 
         if not Type or type(Type) != type(str()) or not Type in Types:
             logger.error("Please define proper particle Type (not "+str(Type)+"). \n Possible Types are: "+str(Types))
@@ -236,36 +235,37 @@ class Component(object):
         if self.Type != 'CO': return None
         else: return self.coherentAmplitute(T)
         
-    def setInitialCond(self,T):
-        """Set initial conditions for component at temperature T, assuming the energy\
-        density is dominated by radiation."""
+    def getInitialCond(self,T):
+        """
+        Get initial conditions for component at temperature T, assuming the energy
+        density is dominated by radiation.
+        """
         
         H = sqrt(8.*pi**3*AuxFuncs.gSTAR(T)/90.)*T**2/MP
                 
-        self.evolveVars["N"] = None
-        self.evolveVars["R"] = None
+        N = None
+        R = None
                 
-        if self.Type == 'thermal' or self.Type == 'weakthermal':
-            
+        if self.Type == 'thermal' or self.Type == 'weakthermal':            
             if self.getSIGV(T)*self.nEQ(T)/H < 2.:  #Particle starts decoupled
                 self.Tdecouple = T            
                 initN =  (self.getSource(T) + self.getSIGV(T)*self.nEQ(T)**2)*0.1/H  #Rough estimate for initial n of decoupled states
-                self.evolveVars["N"] = log(initN)
+                N = log(initN)
             else:                                   #Particle starts coupled
                 initN =  self.nEQ(T)
-                self.evolveVars["N"] = log(initN)
-            self.evolveVars["R"] = self.rEQ(T)
+                N = log(initN)
+            R = self.rEQ(T)
         else:
             self.Tdecouple = T  #CO particles are always decoupled
             if self.isOscillating(T,H):  #Particle starts oscillating
                 self.Tosc = T
                 initN = self.getOscAmplitute(T)/self.mass(T)
-                self.evolveVars["N"] = log(initN)
-                self.evolveVars["R"] = self.mass(T)            
+                N = log(initN)
+                R = self.mass(T)            
             else:
                 self.active = False   #Deactivate component if it does not start oscillating 
-                self.evolveVars["N"] = 0.
-                self.evolveVars["R"] = 0.
+                N = 0.
+                R = 0.
             
-        
+        return N,R
         

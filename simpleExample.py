@@ -7,6 +7,7 @@
 import sys,os
 from configparser import ConfigParser
 import logging
+from pyCode import AuxFuncs
 # from matplotlib import pyplot as plt
 
 # logging.basicConfig(level=logging.DEBUG)
@@ -27,7 +28,7 @@ def main(parameterFile,outputFile,showPlot=True):
 
     import modelDefinitions
     from pyCode.component import Component
-    from pyCode.boltzSolver import Evolve
+    from pyCode.boltzSolver import BoltzSolution
 
     
     parser = ConfigParser(inline_comment_prefixes=(';',))    
@@ -51,10 +52,21 @@ def main(parameterFile,outputFile,showPlot=True):
     compList = [dm,mediator]
     
     #Evolve the equations from TR to TF
-    xvals,yvals = Evolve(compList,TRH,TF)
+    solution = BoltzSolution(compList,TRH,TF)
+    solution.Evolve()
+
+    T = solution.solutionDict['T'][-1]
+    print('Tfinal=',T)
+    for comp in compList:
+        n = solution.solutionDict['n_'+comp.label][-1]
+        rho = solution.solutionDict['rho_'+comp.label][-1]
+        print('Omega_%s=' %comp.label,AuxFuncs.getOmega(comp,rho,n,T))
+
     from matplotlib import pyplot as plt
-    plt.plot(xvals,yvals[0,:],'b--',label='DM')
-    plt.plot(xvals,yvals[1,:],'r--',label='Mediator')
+    plt.plot(solution.solutionDict['x'],solution.solutionDict['n_DM'],'b--',label='DM')
+    plt.plot(solution.solutionDict['x'],solution.solutionDict['n_Mediator'],'r--',label='Mediator')
+    plt.yscale('log')
+    plt.legend()
     plt.show()
 
    

@@ -11,9 +11,9 @@
 """
 
 import os
-from scipy import integrate, interpolate, optimize, special
-from numpy import arange, inf
-from math import exp, sqrt, log, pi, log10
+from scipy import integrate, interpolate, optimize
+from numpy import arange
+from numpy import exp, sqrt, log, pi, log10
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -191,8 +191,10 @@ def getDataFrom(dataFile):
 
 
 def getOmega(comp,rho,n,T):
-    """Compute relic density today, given the component, number density and energy density\
-    at temperature T. """
+    """
+    Compute relic density today, given the component, number density and energy density
+    at temperature T.
+    """
     
     if comp.Tdecay and comp.Tdecay > T: return 0.
     
@@ -235,19 +237,20 @@ def getDNeff(comp,TF):
     T = comp.evolveVars['T'][iF]
     mass = comp.mass(T)
     if T > 10.**(-3): return 0.    
-    if mass == 0. or (n and rho and rho/(n*mass) > 2.): rhoRel = rho    
+    if mass == 0. or (n and rho and rho/(n*mass) > 2.):
+        rhoRel = rho    
     else: rhoRel = 0.
     DNeff = rhoRel/(((pi**2)/15)*(7./8.)*((4./11.)**(4./3.))*T**4)
     return DNeff
 
-def Hfunc(T, rhov, sw):
+def Hfunc(T, rhov, isActive):
     """Compute the Hubble parameter, given the variables x=log(R/R0) and ni, rhoi and NS=log(S/S0) """
     
     MP = 1.22*10**19
     
     rhoActive = []
     for i, rho in enumerate(rhov):
-        if not sw[i]: continue
+        if not isActive[i]: continue
         rhoActive.append(rho)  # energy density of each active component     
     rhoRad = (pi**2/30)*gSTAR(T)*T** 4  # thermal bath's energy density    
     rhoActive.append(rhoRad)
@@ -255,7 +258,6 @@ def Hfunc(T, rhov, sw):
     H = sqrt(8*pi*rhoTot/3)/MP
     
     return H
-
 
 def getFunctions(pclFile):
     """

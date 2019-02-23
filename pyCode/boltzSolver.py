@@ -12,7 +12,7 @@
 
 from pyCode.boltzEqs import BoltzEqs
 from pyCode.AuxFuncs import gSTARS, getTemperature
-from numpy import log,exp,pi
+from numpy import log,pi,exp
 import numpy as np
 from scipy import integrate
 import logging
@@ -23,79 +23,163 @@ logging.basicConfig(level=logging.DEBUG)
 random.seed('myseed')
 
 
-def Evolve(compList,T0,TF,omegaErr=0.01):
-    """Evolve the components in component list from the re-heat temperature T0 to TF
-    For simplicity we set  R0 = s0 = 1 (with respect to the notes).
-    Returns a list with components, where the evolveVars hold the evolution of each component.
-    The last element of the list is a simple array with the evolution of NS.
-    omegaErr is the approximate relative error for Omega h^2.    
-    """
-
-#Sanity checks
-    if not goodCompList(compList,T0): return False
+class BoltzSolution(object):
     
-    t0 = time.time()
-#Compute initial conditions    
-    for comp in compList:
-        comp.setInitialCond(T0)
-    x0 = 0.      # Initial condition for log(R/R0)
-    y0 = [comp.evolveVars["N"] for comp in compList]  #Initial conditions for log(n/s0)
-    y0 += [comp.evolveVars["R"] for comp in compList] #Initial conditions for log(rho/n)
-    S = (2*pi**2/45)*gSTARS(T0)*T0**3
-    y0.append(log(S))  #Initial condition for log(S/S0)
-    sw = [comp.active for comp in compList]
-    logger.info("Initial conditions computed in %s s" %(time.time()-t0))
-    t0 = time.time()
-    
-#Solve differential equations:
-#First call with large errors to estimate the size of the solution
-    xf = 50.
-    tvals = np.linspace(x0,xf,100)
-    boltz_eqs = BoltzEqs(compList,x0,y0,sw) #Define equations and set initial conditions
-    r = integrate.solve_ivp(boltz_eqs.rhs,t_span=(x0,xf),y0=y0,
-                            t_eval=tvals,method='BDF',
-                            events=boltz_eqs.events)
-    xvals = r.t
-    yvals = r.y
-    ncomp = len(compList)
-    vals = np.array([list(zip(r.t,ycomp,r.y[ncomp+icomp])) if boltz_eqs.sw[icomp] else [] 
-                     for icomp,ycomp in enumerate(r.y)])
-    while r.t[-1] < xf and r.status >= 0:
-        if r.t_events:
-            x0,y0,sw = boltz_eqs.handle_events(r)
-            boltz_eqs.updateValues(x0, y0, sw)
-            tvals = [t for t in tvals[:] if t > x0]
-            r = integrate.solve_ivp(boltz_eqs.rhs,t_span=(x0,xf),y0=y0,
-                                    t_eval=tvals,method='BDF',
-                                    events=boltz_eqs.events)
-            
-            newvals = np.array([list(zip(r.t,ycomp,r.y[ncomp+icomp])) if boltz_eqs.sw[icomp] else [] 
-                                for icomp,ycomp in enumerate(r.y)])           
-            
-            vals = np.concatenate((vals,newvals),axis=1)            
-    
-    if r.status < 0:
-        logger.error(r.message)
-
-    return xvals,yvals
-    
+    def __init__(self,compList,T0,TF,npoints=100,omegaErr=0.01):
         
-                
-def goodCompList(compList,T0):
-    """Checks if the list of components satisfies the minimum requirements"""
+        self.compList = compList #List of components (species)
+        self.T0 = T0 #Initial temperature
+        self.TF = TF #Final temperature
+        self.omegaErr = omegaErr #Accepted error for relic densities
+        self.npoints = npoints
+        self.ncomp = len(compList)
+        self.solutionDict = {'S' : np.array([]), 'T' : np.array([]), 
+                             'x' : np.array([]), 'R' : np.array([])}
+        for comp in compList:
+            self.solutionDict['n_'+comp.label] = np.array([])
+            self.solutionDict['rho_'+comp.label] = np.array([])
+        self.boltz_eqs = None
+        
+    def loadEquations(self):
+        """
+        Sets the initial conditions and create the BoltzEquations object.
+        """
+        
+        compList = self.compList
+        T0 = self.T0
+            
+        #Sanity checks
+        if not self.goodCompList(compList,T0):
+            return False
+        
+        t0 = time.time()
+        #Compute initial conditions    
+        x0 = 0. # Initial condition for log(R/R0)
+        initConditions = np.array([comp.getInitialCond(T0) for comp in self.compList])
+        y0 = np.concatenate((initConditions[:,0],initConditions[:,1])).tolist()  #Initial conditions for log(n/s0) + conditions for log(rho/n)
+        S = (2*pi**2/45)*gSTARS(T0)*T0**3
+        y0.append(log(S))  #Initial condition for log(S/S0)
+        isActive = [comp.active for comp in compList]
+        logger.info("Initial conditions computed in %s s" %(time.time()-t0))
+        t0 = time.time()
+        
+        self.boltz_eqs = BoltzEqs(compList,x0,y0,isActive) #Define equations and set initial conditions
+        
+    def Evolve(self):
+        """
+        Evolve the components in component list from the re-heat temperature T0 to TF
+        For simplicity we set  R0 = s0 = 1 (with respect to the notes).
+        The solution is stored in self.solutionDict.
+        Returns True/False if the integration was successful (failed)    
+        """
+        
+        if not self.boltz_eqs:
+            self.loadEquations()
+        
+        t0 = time.time()
+        T0 = self.T0
+        TF = self.TF
+        
+        #Solve differential equations:
+        x0 = 0.
+        #Estimate the final value of x (x=log(R/R0)) assuming conservation of entropy
+        xf = log(T0/TF) + (1./3.)*log(gSTARS(T0)/gSTARS(TF)) #Evolve till late times
+        tvals = np.linspace(x0,xf,self.npoints)
+        y0 = self.boltz_eqs.y0
+        logger.debug('Evolving from',x0,'to',xf,'with',len(tvals),'points')
+        r = integrate.solve_ivp(self.boltz_eqs.rhs,t_span=(x0,xf),y0=y0,
+                                t_eval=tvals,method='BDF',
+                                events=self.boltz_eqs.events)
+        if r.status < 0:
+            logger.error(r.message)
+            return False
+        
+        self.updateSolution(r)
+        x = r.t[-1]
+        NS = r.y[-1][-1]
+        T  = getTemperature(x,NS)
+        while T > TF and r.status >= 0:
+            x0old = x0            
+            xf = x + log(T/TF) + (1./3.)*log(gSTARS(T)/gSTARS(TF)) #Update final x-value for evolutiontvals = np.linspace(x0,xf,self.npoints)            
+            if r.t_events:                
+                x0,y0,isActive = self.boltz_eqs.handle_events(r)
+            else:
+                x0 = r.t[-1]
+                y0 = r.y[:,-1]
+            self.boltz_eqs.updateValues(x0, y0, isActive)
+            tvals = np.linspace(x0,xf,int(self.npoints*(xf-x0)/(xf-x0old))+2) #Try to keep the total number of points evenly distributed in x
+            logger.debug('Evolving from',x0,'to',xf,'with',len(tvals),'points')
+            r = integrate.solve_ivp(self.boltz_eqs.rhs,t_span=(x0,xf),y0=y0,
+                                        t_eval=tvals,method='BDF',
+                                        events=self.boltz_eqs.events)
+            self.updateSolution(r)
+            x = r.t[-1]
+            NS = r.y[-1][-1]
+            T  = getTemperature(x,NS)
+                          
+        
+        logger.info("Solution computed in %1.2f s" %(time.time()-t0))
+        if r.status < 0:
+            logger.error(r.message)
+            return False
     
-    if type(compList) != type(list()):
-        logger.error("Input must be a list of Component objects")
-        return False
-    for comp1 in compList:
-        BRs1 = comp1.getBRs(T0)
-        for comp2 in compList:            
-            if comp1 == comp2: continue
-            if not comp2.label in BRs1.getAllFinalStates(): continue
-            if comp1.width(T0) < comp2.width(T0):
-                logger.error("Improper decay from %s to %s" %(comp1.label,comp2.label))
-                return False
+        return True
+                    
+    def goodCompList(self,compList,T0):
+        """Checks if the list of components satisfies the minimum requirements"""
+        
+        if type(compList) != type(list()):
+            logger.error("Input must be a list of Component objects")
+            return False
+        for comp1 in compList:
+            BRs1 = comp1.getBRs(T0)
+            for comp2 in compList:            
+                if comp1 == comp2: continue
+                if not comp2.label in BRs1.getAllFinalStates(): continue
+                if comp1.width(T0) < comp2.width(T0):
+                    logger.error("Improper decay from %s to %s" %(comp1.label,comp2.label))
+                    return False
+    
+        return True
+        
+    def updateSolution(self,r):
+        """
+        Updates the solution in self.solutionDict if the
+        integration was successful.
+        :param r: Return of scipy.solution_ivp (Bunch object) with information about the integration
+        """
+        
+        if r.status < 0:
+            return #Do nothing
 
-    return True
-    
-    
+        npts = len(r.t)
+        
+        #Store x-values
+        xvalues = r.t
+        self.solutionDict['x'] = np.concatenate((self.solutionDict['x'],xvalues))
+        
+        #Store R values:
+        R = exp(r.t)
+        self.solutionDict['R'] = np.concatenate((self.solutionDict['R'],R))
+        
+        #Store T-values
+        NSvalues = r.y[-1,:]
+        Tvalues = np.array([getTemperature(x, NSvalues[i]) for i,x in enumerate(xvalues)])
+        self.solutionDict['T'] = np.concatenate((self.solutionDict['T'],Tvalues))
+        
+        #Store the number and energy densities for each component:
+        for icomp,comp in enumerate(self.compList):
+            if not self.boltz_eqs.isActive[icomp]:
+                n = np.array([np.nan]*npts)
+                rho = np.array([np.nan]*npts)
+            else:
+                n = exp(r.y[icomp,:])
+                rho = n*r.y[icomp+self.ncomp,:]
+            self.solutionDict['n_'+comp.label] = np.concatenate((self.solutionDict['n_'+comp.label],n))
+            self.solutionDict['rho_'+comp.label] = np.concatenate((self.solutionDict['n_'+comp.label],rho))
+            
+        #Store the entropy values:
+        S0 = (2*pi**2/45)*gSTARS(self.T0)*self.T0**3
+        S = S0*exp(r.y[-1,:])
+        self.solutionDict['S'] = np.concatenate((self.solutionDict['S'],S))
+        
