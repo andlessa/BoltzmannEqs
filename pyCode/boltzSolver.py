@@ -88,9 +88,10 @@ class BoltzSolution(object):
         tvals = np.linspace(x0,xf,self.npoints)
         y0 = self.boltz_eqs.y0
         logger.debug('Evolving from',x0,'to',xf,'with',len(tvals),'points')
+        maxstep = (xf-x0)/300.
         r = integrate.solve_ivp(self.boltz_eqs.rhs,t_span=(x0,xf),y0=y0,
                                 t_eval=tvals,method='BDF',
-                                events=self.boltz_eqs.events)
+                                events=self.boltz_eqs.events,max_step=maxstep)
         if r.status < 0:
             logger.error(r.message)
             return False
@@ -110,9 +111,10 @@ class BoltzSolution(object):
             self.boltz_eqs.updateValues(x0, y0, isActive)
             tvals = np.linspace(x0,xf,int(self.npoints*(xf-x0)/(xf-x0old))+2) #Try to keep the total number of points evenly distributed in x
             logger.debug('Evolving from',x0,'to',xf,'with',len(tvals),'points')
+            maxstep = (xf-x0)/300.
             r = integrate.solve_ivp(self.boltz_eqs.rhs,t_span=(x0,xf),y0=y0,
                                         t_eval=tvals,method='BDF',
-                                        events=self.boltz_eqs.events)
+                                        events=self.boltz_eqs.events,max_step=maxstep)
             self.updateSolution(r)
             x = r.t[-1]
             NS = r.y[-1][-1]
