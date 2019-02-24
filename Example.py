@@ -23,7 +23,6 @@ def main(parameterFile,outputFile,showPlot=True):
     import modelDefinitions
     from pyCode.component import Component
     from pyCode.boltzSolver import BoltzSolution
-    from pyCode import AuxFuncs 
 
     
     parser = ConfigParser(inline_comment_prefixes=(';',))
@@ -47,7 +46,7 @@ def main(parameterFile,outputFile,showPlot=True):
     compList = [dm,mediator]
     
     #Evolve the equations from TR to TF
-    solution = BoltzSolution(compList,TRH,TF)
+    solution = BoltzSolution(compList,TRH,TF,npoints=500)
     solution.Evolve()
     
     #Print summary
@@ -66,7 +65,7 @@ def main(parameterFile,outputFile,showPlot=True):
         R = solution.solutionDict['R']
         for comp in compList:
 #             n = solution.solutionDict['n_'+comp.label][-1]
-            rho = solution.solutionDict['rho_'+comp.label][-1]
+            rho = solution.solutionDict['rho_'+comp.label]
             plt.plot(R,rho,label=comp.label)
         plt.plot(R,solution.solutionDict['T'],label='T')
         plt.legend()
