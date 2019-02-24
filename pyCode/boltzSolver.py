@@ -245,14 +245,15 @@ class BoltzSolution(object):
                 f = open(outFile,'a')
             header = sorted(self.solutionDict.keys())
             values = [self.solutionDict[label] for label in header]
-            
+            maxLength = max([len(s) for s in header])
+            header = ' '.join(str(x).center(maxLength) for x in header)
             if any(len(v) != len(values[0]) for v in values):
                 logger.error("Data has distinct lengths and can not be written to file.")
                 f.close()
                 return False
             data = np.column_stack(values)
             f.write('#--------------\n')
-            np.savetxt(f,data,delimiter=' ',header = " ".join(header),fmt='%1.3g')
+            np.savetxt(f,data,delimiter=' ',header = header,fmt=('{:^%i}'%(maxLength-5)).format('%1.4E'))
             f.write('#--------------\n')    
             f.close()
         
