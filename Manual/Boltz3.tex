@@ -160,22 +160,22 @@ In order to include convertion, co-annihilation and annihilation of BSM particle
 \begin{itemize}
 	\item $i = j = BSM$ and $a,b = SM,SM$:
 	\begin{equation}
-		\int \frac{dp}{2 \pi^2} p^2 C_{ann} E_i^{\alpha}  =  -\left( n_i^2 - \bar{n}_i^2 \right) \langle \sigma v E_i^{\alpha} \rangle_{ii}
+		\int \frac{dp}{2 \pi^2} p^2 C_{ann} E_i^{\alpha}  =  -\left( n_i^2 - \bar{n}_i^2 \right) \langle \sigma v E_i^{\alpha} \rangle_{ii} \label{eq:annihilation2}
 	\end{equation} 
 
 	\item $i \neq j$, $i,j = BSM$ and $a,b = SM,SM$:
 	\begin{equation}
-		\int \frac{dp}{2 \pi^2} p^2 C_{ann} E_i^{\alpha}  =  -\left( n_i n_j - \bar{n}_i \bar{n}_j \right) \langle \sigma v E_i^{\alpha} \rangle_{ij}
+		\int \frac{dp}{2 \pi^2} p^2 C_{ann} E_i^{\alpha}  =  -\left( n_i n_j - \bar{n}_i \bar{n}_j \right) \langle \sigma v E_i^{\alpha} \rangle_{ij} \label{eq:coannihilation2}
 	\end{equation} 
 
 	\item $i =  j = BSM$, $ a = b = BSM$:
 	\begin{equation}
-		\int \frac{dp}{2 \pi^2} p^2 C_{ann} E_i^{\alpha}  =  -\left(n_i^2 - \frac{\bar{n}_i^2}{\bar{n}_j^2} n_j^2  \right) \langle \sigma v E_i^{\alpha} \rangle_{jj}
+		\int \frac{dp}{2 \pi^2} p^2 C_{ann} E_i^{\alpha}  =  -\left(n_i^2 - \frac{\bar{n}_i^2}{\bar{n}_j^2} n_j^2  \right) \langle \sigma v E_i^{\alpha} \rangle_{jj} \label{eq:thermal2}
 	\end{equation} 
 
 	\item $i = BSM$, $j = SM$, $ a = BSM$, $b = SM$ and $a \neq i$:
 	\begin{equation}
-		\int \frac{dp}{2 \pi^2} p^2 C_{ann} E_i^{\alpha}  =  -\left(n_i - \frac{\bar{n}_i}{\bar{n}_j} n_j  \right) \bar{n}_{SM} \langle \sigma v E_i^{\alpha} \rangle_{iSM} \equiv  -\left(n_i - \frac{\bar{n}_i}{\bar{n}_j} n_j  \right) \tilde{\Gamma}_{iSM}
+		\int \frac{dp}{2 \pi^2} p^2 C_{ann} E_i^{\alpha}  =  -\left(n_i - \frac{\bar{n}_i}{\bar{n}_j} n_j  \right) \bar{n}_{SM} \langle \sigma v E_i^{\alpha} \rangle_{ijSM} \equiv  -\left(n_i - \frac{\bar{n}_i}{\bar{n}_j} n_j  \right) \tilde{\Gamma}_{ijSM} \label{eq:convertion2}
 	\end{equation} 
 	
 \end{itemize}
@@ -185,7 +185,7 @@ where:
 \langle \sigma v E_i^\alpha \rangle_i & =  \frac{1}{\bar{n}_i^2}\int  d\Pi_{i} d\Pi_{j} d\Pi_{a} d\Pi_{b} (2 \pi)^4 \delta^{(4)}(P) |M|^2 e^{-(E_i + E_j)/T} \times E_i^{\alpha} \\
 \langle \sigma v E_i^\alpha \rangle_{ij} & =  \frac{1}{\bar{n}_i \bar{n}_j}\int  d\Pi_{i} d\Pi_{j} d\Pi_{a} d\Pi_{b} (2 \pi)^4 \delta^{(4)}(P) |M|^2 e^{-(E_i + E_j)/T} \times E_i^{\alpha} \\
 \langle \sigma v E_i^\alpha \rangle_{jj} & =  \frac{1}{\bar{n}_i^2}\int  d\Pi_{i} d\Pi_{j} d\Pi_{a} d\Pi_{b} (2 \pi)^4 \delta^{(4)}(P) |M|^2 e^{-(E_i + E_j)/T} \times E_i^{\alpha} \\
-\tilde{\Gamma}_{iSM} & =  \frac{1}{\bar{n}_i}\int  d\Pi_{i} d\Pi_{j} d\Pi_{a} d\Pi_{b} (2 \pi)^4 \delta^{(4)}(P) |M|^2 e^{-(E_i + E_j)/T} \times E_i^{\alpha} 
+\tilde{\Gamma}_{ijSM} & =  \frac{1}{\bar{n}_i}\int  d\Pi_{i} d\Pi_{j} d\Pi_{a} d\Pi_{b} (2 \pi)^4 \delta^{(4)}(P) |M|^2 e^{-(E_i + E_j)/T} \times E_i^{\alpha} 
 \end{eqnarray}
 
 For $\alpha = 0$, the above equation is the well known contribution from thermal scatterings to the annihilation term. To estimate its value for $\alpha = 1$, we assume:
@@ -384,15 +384,15 @@ Combining the results for $\alpha = 0$ and 1, we have:
 
 \subsection{Number and Energy Density Equations}
 
-Using the results of Eqs.(\ref{eq:collfin}), (\ref{eq:decfin}) and
+Using the results of Eqs.(\ref{eq:annihilation2})-(\ref{eq:convertion2}), (\ref{eq:decfin}) and
 (\ref{eq:prodfin}) in the Boltzmann equations for $n_i$ and $\rho_i$
 (Eq.(\ref{eq:meqs})), we obtain:
 \begin{eqnarray}
 \Drv{n_i}{t} + 3H n_i  & = &  \left( \bar{n}_i^2 - n_i^2 \right) \langle \sigma
-v \rangle_{ii} +  \left( \bar{n}_i \bar{n}_j - n_i n_j \right) \langle \sigma
-v \rangle_{ij} + \left(\frac{\bar{n}_i^2}{\bar{n}_j^2} n_j^2  - n_i^2 \right) \langle \sigma v \rangle_{jj} \nonumber
+v \rangle_{ii} + \sum_{j\neq i} \left( \bar{n}_i \bar{n}_j - n_i n_j \right) \langle \sigma
+v \rangle_{ij} + \sum_{j\neq i} \left(\frac{\bar{n}_i^2}{\bar{n}_j^2} n_j^2  - n_i^2 \right) \langle \sigma v \rangle_{jj} \nonumber
 \\
-& + & \left(\frac{\bar{n}_i}{\bar{n}_j} n_j  - n_i\right)  \tilde{\Gamma}_{iSM} - \Gamma_i m_i \frac{n_i}{\rho_i}\left(n_i - \bar{n}_i \sum_{i\to\ldots}
+& + & \sum_{j\neq i} \left(\frac{\bar{n}_i}{\bar{n}_j} n_j  - n_i\right)  \tilde{\Gamma}_{ijSM} - \Gamma_i m_i \frac{n_i}{\rho_i}\left(n_i - \bar{n}_i \sum_{i\to\ldots}
 \mathcal{B}_{ab\ldots} \frac{n_a n_b \ldots}{\bar{n}_a \bar{n}_b \ldots} \right)
 \nonumber
 \\
@@ -403,7 +403,7 @@ i\ldots} \frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}} \frac{n_i n_b \ldots}{\b
 v \rangle_{ii} + \frac{\rho_i}{n_i}  \left( \bar{n}_i \bar{n}_j - n_i n_j \right) \langle \sigma
 v \rangle_{ij} + \frac{\rho_i}{n_i} \left(\frac{\bar{n}_i^2}{\bar{n}_j^2} n_j^2  - n_i^2 \right) \langle \sigma v \rangle_{jj} \nonumber
 \\
-& + &\frac{\rho_i}{n_i}  \left(\frac{\bar{n}_i}{\bar{n}_j} n_j  - n_i\right)  \tilde{\Gamma}_{iSM} - \sum_a \Gamma_a  \mathcal{B}_i \frac{m_a}{2} \left( n_a -
+& + &\frac{\rho_i}{n_i}  \left(\frac{\bar{n}_i}{\bar{n}_j} n_j  - n_i\right)  \tilde{\Gamma}_{ijSM} - \sum_a \Gamma_a  \mathcal{B}_i \frac{m_a}{2} \left( n_a -
  \bar{n}_a \sum_{a \to i\ldots}  \frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}} \frac{n_i
  n_b..}{\bar{n}_i \bar{n}_b..} \right) \nonumber
 \\
@@ -466,10 +466,14 @@ we can write Eqs.(\ref{Seq}), (\ref{eq:nieq}) and (\ref{eq:Rieq}) as:
 N_S' & = & \frac{e^{(3 x - N_S)}}{HT} \sum_{i} BR(i,X) \Gamma_i m_i \left(n_i -
 \mathcal{N}_{i}^{th} \right) 
 \label{Seqb} \\
-N_i' & = & -3 + \frac{\sigv_i}{H} n_i [\left(\frac{\bar{n}_i}{n_i}\right)^2
--1] -  \frac{\Gamma_i}{H} \frac{m_i}{R_i}\left(1 -
-\frac{\mathcal{N}_{i}^{th}}{n_i} \right) \nonumber  \\
- & + & \sum_{a} \mathcal{B}_{ai}^{eff} \frac{\Gamma_a}{H}
+N_i' & = & -3 
++ \frac{n_i}{H}\left( \frac{\bar{n}_i^2}{n_i^2} -1 \right) \langle \sigma v \rangle_{ii} 
++ \frac{1}{H} \sum_{j\neq i} \left( \frac{\bar{n}_i}{n_i} \bar{n}_j - n_j \right) \langle \sigma v \rangle_{ij} \nonumber \\
+&+& \frac{n_i}{H} \sum_{j\neq i} \left(\frac{\bar{n}_i^2}{n_i^2}\frac{n_j^2}{\bar{n}_j^2}  - 1 \right) \langle \sigma v \rangle_{jj}
++ \frac{1}{H} \sum_{j\neq i} \left(\frac{\bar{n}_i}{n_i}\frac{n_j}{\bar{n}_j}  - 1\right)  \tilde{\Gamma}_{ijSM}  \nonumber \\
+&-&  \frac{\Gamma_i}{H} \frac{m_i}{R_i}\left(1 -
+\frac{\mathcal{N}_{i}^{th}}{n_i} \right)
+ +  \sum_{a} \mathcal{B}_{ai}^{eff} \frac{\Gamma_a}{H}
  \frac{m_a}{R_a}\left(\frac{n_a}{n_i} - \frac{\mathcal{N}_{ai}^{th}}{n_i}
   \right)
  \\
@@ -500,9 +504,12 @@ N_S' = \frac{e^{(3 x - N_S)}}{HT} \sum_{i} BR(i,X) \Gamma_i m_i \left(n_i -
 \end{equation}
 \item Thermal fields:
 \begin{eqnarray}
-N_i'& = & -3 + \frac{\sigv_i}{H} n_i [\left(\frac{\bar{n}_i}{n_i}\right)^2
--1] -  \frac{\Gamma_i}{H} \frac{m_i}{R_i}\left(1 - \frac{\mathcal{N}_{i}^{th}}{n_i}
- \right)
+N_i'& = & -3
++ \frac{n_i}{H}\left( \frac{\bar{n}_i^2}{n_i^2} -1 \right) \langle \sigma v \rangle_{ii} 
++ \frac{1}{H} \sum_{j\neq i} \left( \frac{\bar{n}_i}{n_i} \bar{n}_j - n_j \right) \langle \sigma v \rangle_{ij}
++ \frac{n_i}{H} \sum_{j\neq i} \left(\frac{\bar{n}_i^2}{n_i^2}\frac{n_j^2}{\bar{n}_j^2}  - 1 \right) \langle \sigma v \rangle_{jj} \nonumber\\
+&+& \frac{1}{H} \sum_{j\neq i} \left(\frac{\bar{n}_i}{n_i}\frac{n_j}{\bar{n}_j}  - 1\right)  \tilde{\Gamma}_{ijSM} 
+ -  \frac{\Gamma_i}{H} \frac{m_i}{R_i}\left(1 - \frac{\mathcal{N}_{i}^{th}}{n_i} \right)
   +  \sum_{a} \mathcal{B}_{ai}^{eff} \frac{\Gamma_a}{H}
  \frac{m_a}{R_a}\left(\frac{n_a}{n_i} - \frac{\mathcal{N}_{ai}^{th}}{n_i}
   \right) \nonumber

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 
@@ -9,9 +9,9 @@
 
 """
 
-from numpy import exp,log,sqrt,pi
 from pyCode.AuxDecays import DecayList
 from scipy.special import kn,zetac
+from numpy import exp,log,sqrt,pi
 from  pyCode import AuxFuncs
 from types import FunctionType
 import logging
@@ -38,7 +38,10 @@ class Component(object):
     
     """
     
-    def __init__(self,label,Type,dof,mass,decays=DecayList(),sigmav=0.,source=0.,coherentAmplitute=0.):
+    def __init__(self,label,Type,dof,mass,decays=DecayList(),
+                 sigmav = lambda x: 0., coSigmav = lambda x,y: 0.,
+                 convertionRate = lambda x,y: 0., sigmavBSM = lambda x,y: 0.,
+                 source = lambda x: 0., coherentAmplitute = lambda x: 0.):
         self.label = label
         self.Type = Type
         self.active = True
@@ -46,6 +49,12 @@ class Component(object):
         self.Tdecay = None
         self.Tosc = None
         self.Tdecouple = None
+        self.sigmav = sigmav
+        self.coSigmav = coSigmav
+        self.convertionRate = convertionRate
+        self.sigmavBSM = sigmavBSM
+        self.source = source
+        self.coherentAmplitude = coherentAmplitute
 
         if not Type or type(Type) != type(str()) or not Type in Types:
             logger.error("Please define proper particle Type (not "+str(Type)+"). \n Possible Types are: "+str(Types))
@@ -67,34 +76,6 @@ class Component(object):
             self.decays = lambda T: decays  #Use value given for all T
         else:
             logger.error("Decays must be a DecayList object or a function of T")
-            return False
-
-
-        #Check if given sigmaV already is a function: 
-        if isinstance(sigmav,FunctionType):
-            self.sigmav = sigmav #Use function given
-        elif isinstance(sigmav,int) or isinstance(sigmav,float):
-            self.sigmav = lambda T: float(sigmav)  #Use value given for all T
-        else:
-            logger.error("sigmav must be a number or a function of T")
-            return False
-
-        #Check if given source already is a function: 
-        if isinstance(source,FunctionType):
-            self.source = source #Use function given
-        elif isinstance(source,int) or isinstance(source,float):
-            self.source = lambda T: float(source)  #Use value given for all T
-        else:
-            logger.error("source must be a number or a function of T")
-            return False
-
-        #Check if given coherent amplitude already is a function: 
-        if isinstance(coherentAmplitute,FunctionType):
-            self.coherentAmplitute = coherentAmplitute #Use function given
-        elif isinstance(coherentAmplitute,int) or isinstance(coherentAmplitute,float):
-            self.coherentAmplitute = lambda T: float(coherentAmplitute)  #Use value given for all T
-        else:
-            logger.error("coherentAmplitute must be a number or a function of T")
             return False
 
     def __str__(self):
@@ -169,11 +150,36 @@ class Component(object):
 
     def getSIGV(self,T):
         """
-        Returns the thermally averaged annihilation cross-section
+        Returns the thermally averaged annihilation cross-section self+self -> SM + SM
         at temperature T
         """
         
         return self.sigmav(T)
+
+
+    def getCOSIGV(self,T,other):
+        """
+        Returns the thermally averaged co-annihilation cross-section self+other -> SM + SM
+        at temperature T
+        """
+        
+        return self.coSigmav(T,other)
+
+    def getConvertionRate(self,T,other):
+        """
+        Returns the thermally averaged annihilation rate self+SM -> other+SM
+        at temperature T
+        """
+        
+        return self.convertionRate(T,other)
+
+    def getSIGVBSM(self,T,other):
+        """
+        Returns the thermally averaged annihilation rate self+self -> other+other
+        at temperature T
+        """
+        
+        return self.sigmavBSM(T,other)
 
         
     def getSource(self,T):
@@ -242,7 +248,10 @@ class Component(object):
         """
         
         H = sqrt(8.*pi**3*AuxFuncs.gSTAR(T)/90.)*T**2/MP
-                
+        
+        if hasattr(self,'initN'):
+            return self.initN
+
         N = None
         R = None
                 

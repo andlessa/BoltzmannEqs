@@ -4,7 +4,7 @@
 #and solve the boltzmann equations
 
 #First tell the system where to find the modules:
-import sys,os
+import sys
 from configparser import ConfigParser
 import logging
 from pyCode import AuxFuncs
@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
-def main(parameterFile,outputFile,showPlot=True):
+def main(parameterFile):
     """
     
     Main code to define the BSM contents and properties and solve the Boltzmann equations

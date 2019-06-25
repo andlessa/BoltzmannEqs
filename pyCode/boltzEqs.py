@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 
@@ -115,18 +115,34 @@ class BoltzEqs(object):
             RHS = -3.*n[i]     
             RHS += -width*mass*(n[i] - N1th[i])/(H*R[i])    #Decay term
             RHS += comp.getSource(T)/H  #Source term
-            annTerm = 0.
-            if comp.Type == 'weakthermal':                
-                nrel = Zeta3*T**3/pi**2
-                annTerm = comp.getSIGV(T)*nrel/H                
+            ri = n[i]/neq[i]
+            annTerm = 0. #Annihilation term
+            coannTerm = 0. #Co-annihilation term
+            bsmScatter = 0. #2<->2 scattering between BSM components
+            convertion = 0. #i<->j convertion
+            if ri:
+                annTerm = comp.getSIGV(T)*ni*((1./ri)**2 - 1.)/H
             else:
-                annTerm = comp.getSIGV(T)*n[i]/H
+                annTerm = -comp.getSIGV(T)*ni/H
+            for j, compj in enumerate(self.components):
+                if j == i or not isActive[j]:
+                    continue
+                if ri:
+                    rj = n[j]/neq[j]
+                    coannTerm += comp.getCOSIGV(T,compj)*neq[j]*(1./ri-rj)/H
+                    bsmScatter += comp.getSIGVBSM(T,compj)*ni*((rj/ri)**2-1)/H
+                    convertion += comp.getConvertionRate(T,compj)*(rj/ri-1)/H                    
+                else:
+                    coannTerm += -comp.getCOSIGV(T,compj)*neq[j]*rj/H
+                    bsmScatter += -comp.getSIGVBSM(T,compj)*ni/H
+                    convertion += -comp.getConvertionRate(T,compj)/H
+            annTotal = annTerm+coannTerm+bsmScatter+convertion 
             #Define approximate decoupling temperature (just used for printout)            
-            if annTerm < 1e-2 and not comp.Tdecouple:
+            if annTotal < 1e-10 and not comp.Tdecouple:
                 comp.Tdecouple = T
-            elif annTerm > 1e-2 and comp.Tdecouple:
+            elif annTotal > 1e-10 and comp.Tdecouple:
                 comp.Tdecouple = None  #Reset decoupling temperature if component becomes coupled
-            RHS += annTerm*(neq[i] - n[i]) #Annihilation term
+            RHS += annTotal #Annihilation term
             for a, compA in enumerate(self.components):
                 if not isActive[a]: continue
                 if a == i: continue                                

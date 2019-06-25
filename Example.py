@@ -39,7 +39,9 @@ def main(parameterFile,outputFile,showPlot=True):
     
     #Define the components to be evolved and their properties:   
     dm = Component(label='DM',Type='thermal',dof=1,
-                   mass=modelDefinitions.mDM,sigmav=modelDefinitions.DMSigmaV)
+                   mass=modelDefinitions.mDM,
+                   sigmav=modelDefinitions.DMSigmaV,
+                   )
     mediator = Component(label='Mediator',Type='thermal',dof=-2,
                    mass=modelDefinitions.mMediator,decays=modelDefinitions.MediatorDecays,
                    sigmav=modelDefinitions.MediatorSigmaV)

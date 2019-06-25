@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 
@@ -12,7 +12,6 @@
 
 import os
 from scipy import integrate, interpolate, optimize
-import numpy as np
 from numpy import exp, sqrt, log, pi, log10, arange
 import logging
 logging.basicConfig(level=logging.INFO)
