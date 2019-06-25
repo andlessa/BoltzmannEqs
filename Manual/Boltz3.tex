@@ -1,0 +1,772 @@
+\documentclass[preprint,notoc]{JHEP3}
+\usepackage{epsfig}
+
+\def\Vind{V^{\rm induced}}
+\def\eslt{\not\!\!{E_T}}
+\def\eslt{E_T^{\rm miss}}
+\def\emiss{\not\!\!{E}}
+\def\to{\rightarrow}
+\def\Phat{\hat{\Phi}}
+\def\bi{\begin{equation}gin{itemize}}
+\def\ei{\end{itemize}}
+\def\te{\tilde e}
+\def\c1p{C1^\prime}
+\def\ta{\tilde a}
+\def\tG{\widetilde G}
+\def\th{\tilde h}
+\def\tH{\tilde H}
+\def\tl{\tilde l}
+\def\tu{\tilde u}
+\def\tc{\tilde c}
+\def\ta{\tilde a}
+\def\ts{\tilde s}
+\def\tb{\tilde b}
+\def\tf{\tilde f}
+\def\td{\tilde d}
+\def\tQ{\tilde Q}
+\def\tL{\tilde L}
+\def\tH{\tilde H}
+\def\tst{\tilde t}
+\def\ttau{\tilde \tau}
+\def\tmu{\tilde \mu}
+\def\tg{\tilde g}
+\def\tnu{\tilde\nu}
+\def\tell{\tilde\ell}
+\def\tq{\tilde q}
+\def\tB{\widetilde B}
+\def\tw{\widetilde W}
+\def\tz{\widetilde Z}
+\def\mgut{M_{\rm GUT}}
+%\def\tw{\tilde\chi}
+%\def\twp{\tilde\chi^+}
+%\def\twm{\tilde\chi^-}
+%\def\twpm{\tilde\chi^\pm}
+%\def\tz{\tilde\chi^0}
+%\def\alt{\stackrel{<}{\sim}}
+%\def\agt{\stackrel{>}{\sim}}
+\def\alt{\lesssim}
+\def\agt{\gtrsim}
+%\def\begin{equation}{\begin{equation}gin{equation}}  
+%\def\end{equation}{\end{equation}}  
+%\def\begin{eqnarray}{\begin{eqnarray}}  
+%\def\end{eqnarray}{\end{eqnarray}}  
+\def\CM{\cal M}
+\def\sigv{\langle \sigma v \rangle}
+\def\To{\Rightarrow}
+\def\to{\rightarrow}
+\newcommand\drv[2]{\frac{\partial #1}{\partial #2}}
+\newcommand\Drv[2]{\frac{d #1}{d #2}}
+
+\title{Boltzmann Equations for the PQMSSM (v3.0)}
+\author{Andre Lessa}
+\abstract{}
+
+
+\begin{document}
+
+\section{General Formalism and Approximations}
+
+The general Boltzmann equation for the number distribution of a particle species can be written as\cite{turner} (assuming isotropy):
+\begin{equation}
+\drv{F_{i}}{t} -H p \drv{F_{i}}{p} = C_{i}[F_{i},F_{j},p] \label{eq:d1}
+\end{equation}
+where $F_{i}(p)$ is the number distribution of particle $i$ as function of momentum $p$, $C$ represents a source/sink term and $H$ is the Hubble constant:
+\begin{equation}
+H = \sqrt{\frac{8 \pi}{3} \frac{\rho_T}{M_P^2}} \label{H} 
+\end{equation} 
+with $M_{P} = 1.22\times 10^{19}$ GeV and $\rho_T = \sum_{i} \rho_i$. The number, energy and pressure densities are given in terms
+of $F_{i}$ as:
+\begin{eqnarray}
+n_{i}(t) & = & \int \frac{dp}{2 \pi^2} p^2 F_i(p) \nonumber \\ 
+\rho_{i}(t) & = & \int \frac{dp}{2 \pi^2} p^2 E_i F_i(p) \label{beqs}\\
+P_{i}(t) & = & \frac{1}{3} \int \frac{dp}{2 \pi^2} \frac{p^4}{E_i} F_i(p) \nonumber
+\end{eqnarray}
+where $m_i$ is the mass of particle $i$ and $E_i = \sqrt{p_i^2 + m_i^2}$. Using Eq.(\ref{eq:d1}), we obtain the following equations for the number and energy densities:
+\begin{eqnarray}
+\Drv{n_i}{t} + 3H n_i & = & \int \frac{dp}{2 \pi^2} p^2 C_i \nonumber \\
+\Drv{\rho_i}{t} + 3H (\rho_i + P_i) & = & \int \frac{dp}{2 \pi^2} p^2 E_i C_i \label{eq:meqs}
+\end{eqnarray}
+
+The collision term, $C_i$, for the process $i + f + \ldots \leftrightarrow a
++ b + c + \ldots$ is given by\cite{kawasaki0}:
+\begin{eqnarray}
+C_i & = & \frac{1}{E_i} \int \prod_{j,a} \frac{d^3 p_j}{2 E_j (2 \pi)^3}
+\frac{d^3 p_a}{2 E_a (2 \pi)^3} (2 \pi)^4 \delta^{4}\left(p_i + p_j + \ldots - p_a - p_b
+\ldots\right) |\mathcal{M}|^2 \nonumber \\
+&\times& \left[(1 \pm f_a) (1 \pm
+f_b)\ldots f_i f_j\ldots - f_a f_b \ldots (1 \pm f_i)(1 \pm f_j)\ldots \right]
+\end{eqnarray}
+where the plus (minus) sign is for bosons (fermions). Below we always assume
+$f_{i,j,a,..} \ll 1$, so:
+\begin{eqnarray}
+C_i & \simeq & \frac{1}{E_i} \int \prod_{j,a} \frac{d^3 p_j}{2 E_j (2 \pi)^3}
+\frac{d^3 p_a}{2 E_a (2 \pi)^3} (2 \pi)^4 \delta^{4}\left(p_i + p_j + \ldots - p_a - p_b
+\ldots\right) |\mathcal{M}|^2 \nonumber \\
+&\times& \left[f_i f_j\ldots - f_a f_b \ldots \right]
+\end{eqnarray}
+
+We will assume that $C$ is given by:
+\begin{equation}
+C = C_{dec} + C_{prod} + C_{ann} 
+\end{equation}
+where $C_{dec}$ contains the contributions from decays and inverse decays
+($i \leftrightarrow a + b + \ldots$), $C_{prod}$ contains the
+contributions from decay injection and inverse decay injection 
+($a \leftrightarrow i + b + \ldots$) and $C_{ann}$ from
+annihilations with the thermal plasma ($i + i \leftrightarrow a + b$).
+Below we compute each term separately, under some assumptions.
+
+\subsection{Annihilation Term}
+
+The annihilation term $C_{ann}$ for the $i + j \leftrightarrow a + b$ process is
+given by\cite{turner}:
+\begin{equation}
+\int \frac{dp}{2 \pi^2} p^2 C_{ann} = \int d\Pi_{i} d\Pi_{j} d\Pi_{a}
+d\Pi_{b} (2 \pi)^4 \delta^{(4)}(p_i + p_j - p_a - p_b) |M|^2 \left[ f_a f_b -
+f_i f_j \right]
+\end{equation}
+where $d\Pi_{i} = d^{3} p_i/((2\pi)^3 2 E_i)$. Since we are ultimately interested in Eqs.(\ref{eq:meqs}) for the number and energy densities, we will
+consider the following integral:
+\begin{equation}
+\int \frac{dp}{2 \pi^2} p^2 C_{ann}  E_i^{\alpha} = \int d\Pi_{i} d\Pi_{j} d\Pi_{a} d\Pi_{b} (2 \pi)^4 
+\delta^{(4)}(p_i + p_j - p_a - p_b) |M|^2
+ \left[ f_a f_b - f_i f_j \right] E_i^{\alpha}
+\end{equation}
+where $\alpha = 0 (1)$ for the number (energy) density. Here we assume that the
+distributions can be approximated by\footnote{This approximation is only valid for 
+particles with a thermal distribution. However, since the annihilation term
+is responsible for keeping the particle $i$ in thermal equilibrium with the plasma, 
+it is reasonable to assume a thermal distribution for $i$
+while the annihilation term is relevant.}:
+\begin{equation}
+f_i \simeq \exp(-(E_i - \mu_i)/T)
+\end{equation}
+so the annihilation term can then be written as:
+\begin{eqnarray}
+& \int & \frac{dp}{2 \pi^2} p^2 C_{ann}  E_i^{\alpha} =  -\left( \exp((\mu_i + \mu_j)/T) -\exp((\mu_a + \mu_b)/T)\right) \nonumber \\
+ & \times & \int  d\Pi_{i} d\Pi_{j} d\Pi_{a} d\Pi_{b} (2 \pi)^4 \delta^{(4)}(p_i + p_j - p_a - p_b) |M|^2 \exp(-(E_i + E_j)/T) \times E_i^{\alpha} \nonumber
+\end{eqnarray}
+where above we have used conservation of energy ($E_i + E_j = E_a + E_b$). Assuming\footnote{Note that in a more
+general case one can have $T_i \neq T$ and this approximation is not valid.}:
+\begin{equation}
+\frac{n_i}{\bar{n}_i} = \exp(\mu_i/T)
+\end{equation}
+we obtain:
+\begin{eqnarray}
+& \int & \frac{dp}{2 \pi^2} p^2 C_{ann} E_i^{\alpha} = -\left( \frac{n_i n_j}{\bar{n}_i \bar{n}_j} - \frac{n_a n_b}{\bar{n}_a \bar{n}_b}\right) \nonumber \\
+ & \times & \int  d\Pi_{i} d\Pi_{j} d\Pi_{a} d\Pi_{b} (2 \pi)^4 \delta^{(4)}(p_i + p_j - p_a - p_b) |M|^2 \exp(-(E_i + E_j)/T) \times E_i^{\alpha} \nonumber
+\end{eqnarray}
+In order to include convertion, co-annihilation and annihilation of BSM particles we must consider the cases:
+\begin{itemize}
+	\item $i = j = BSM$ and $a,b = SM,SM$:
+	\begin{equation}
+		\int \frac{dp}{2 \pi^2} p^2 C_{ann} E_i^{\alpha}  =  -\left( n_i^2 - \bar{n}_i^2 \right) \langle \sigma v E_i^{\alpha} \rangle_{ii}
+	\end{equation} 
+
+	\item $i \neq j$, $i,j = BSM$ and $a,b = SM,SM$:
+	\begin{equation}
+		\int \frac{dp}{2 \pi^2} p^2 C_{ann} E_i^{\alpha}  =  -\left( n_i n_j - \bar{n}_i \bar{n}_j \right) \langle \sigma v E_i^{\alpha} \rangle_{ij}
+	\end{equation} 
+
+	\item $i =  j = BSM$, $ a = b = BSM$:
+	\begin{equation}
+		\int \frac{dp}{2 \pi^2} p^2 C_{ann} E_i^{\alpha}  =  -\left(n_i^2 - \frac{\bar{n}_i^2}{\bar{n}_j^2} n_j^2  \right) \langle \sigma v E_i^{\alpha} \rangle_{jj}
+	\end{equation} 
+
+	\item $i = BSM$, $j = SM$, $ a = BSM$, $b = SM$ and $a \neq i$:
+	\begin{equation}
+		\int \frac{dp}{2 \pi^2} p^2 C_{ann} E_i^{\alpha}  =  -\left(n_i - \frac{\bar{n}_i}{\bar{n}_j} n_j  \right) \bar{n}_{SM} \langle \sigma v E_i^{\alpha} \rangle_{iSM} \equiv  -\left(n_i - \frac{\bar{n}_i}{\bar{n}_j} n_j  \right) \tilde{\Gamma}_{iSM}
+	\end{equation} 
+	
+\end{itemize}
+
+where:
+\begin{eqnarray}
+\langle \sigma v E_i^\alpha \rangle_i & =  \frac{1}{\bar{n}_i^2}\int  d\Pi_{i} d\Pi_{j} d\Pi_{a} d\Pi_{b} (2 \pi)^4 \delta^{(4)}(P) |M|^2 e^{-(E_i + E_j)/T} \times E_i^{\alpha} \\
+\langle \sigma v E_i^\alpha \rangle_{ij} & =  \frac{1}{\bar{n}_i \bar{n}_j}\int  d\Pi_{i} d\Pi_{j} d\Pi_{a} d\Pi_{b} (2 \pi)^4 \delta^{(4)}(P) |M|^2 e^{-(E_i + E_j)/T} \times E_i^{\alpha} \\
+\langle \sigma v E_i^\alpha \rangle_{jj} & =  \frac{1}{\bar{n}_i^2}\int  d\Pi_{i} d\Pi_{j} d\Pi_{a} d\Pi_{b} (2 \pi)^4 \delta^{(4)}(P) |M|^2 e^{-(E_i + E_j)/T} \times E_i^{\alpha} \\
+\tilde{\Gamma}_{iSM} & =  \frac{1}{\bar{n}_i}\int  d\Pi_{i} d\Pi_{j} d\Pi_{a} d\Pi_{b} (2 \pi)^4 \delta^{(4)}(P) |M|^2 e^{-(E_i + E_j)/T} \times E_i^{\alpha} 
+\end{eqnarray}
+
+For $\alpha = 0$, the above equation is the well known contribution from thermal scatterings to the annihilation term. To estimate its value for $\alpha = 1$, we assume:
+\begin{equation}
+\langle \sigma v E \rangle \simeq \langle \sigma v \rangle \langle E_i \rangle = \langle \sigma v \rangle \frac{\rho_i}{n_i} \label{eq:app}
+\end{equation}
+where $\langle \;\; \rangle$ represents thermal average.
+
+
+\subsection{Decay Term}
+
+Now we derive a simplified expression for the decay (and inverse decay) term,
+under approximations similar to the ones used in the last section.
+The decay term includes the contributions from particle decay and inverse
+decay\cite{kawasaki0,kawasaki}:
+\begin{equation}
+C_{dec} \simeq \frac{1}{E_i} \int \prod_{a} \frac{d^3 p_a}{2 E_a (2 \pi)^3}
+(2 \pi)^4 \delta^{4}\left(p_i - p_a - p_b \ldots\right) |\mathcal{M}|^2 \left[f_i - f_a f_b \ldots \right]
+\label{eq:dec0}
+\end{equation}
+As in the case of the annihilation term, we assume that the distributions for
+$a,b,\ldots$ can be approximated by $f_x \simeq \exp(-(E_x -
+\mu_x)/T)$, so we can write:
+\begin{equation}
+f_a f_b \ldots \simeq \exp\left(\frac{\mu_a +
+\mu_b + \ldots}{T}\right) \exp(-E_i/T) = \frac{n_a n_b \ldots}{\bar{n}_a
+\bar{n}_b \ldots} \exp(-E_i/T)  =  \frac{n_a n_b \ldots}{\bar{n}_a \bar{n}_b \ldots}
+\bar{f}_{i}
+\end{equation}
+where we used conservation of energy ($E_a + E_b + \ldots = E_i$) and
+$\bar{f}_i$ is the equilibrium distribution for the species $i$.
+Hence we can write Eq.(\ref{eq:dec0}) as:
+\begin{eqnarray}
+C_{dec} & \simeq & \left[f_i - \frac{n_a n_b \ldots}{\bar{n}_a \bar{n}_b \ldots}
+\bar{f}_{i} \right] \frac{1}{E_i} \int \prod_{a}
+\frac{d^3 p_a}{2 E_a (2 \pi)^3} (2 \pi)^4 \delta^{4}\left(p_i - p_a - p_b
+\ldots\right) |\mathcal{M}|^2 \nonumber \\
+& = & \mathcal{B}_{ab\ldots} \frac{\Gamma_i m_i}{E_i} \left[f_i -
+\frac{n_a n_b \ldots}{\bar{n}_a \bar{n}_b \ldots} \bar{f}_{i} \right] 
+\end{eqnarray}
+where $\Gamma_i$ is the width for $i$ and 
+$\mathcal{B}_{ab\ldots} \equiv BR(i \to a + b + \ldots)$
+
+Once again we consider the integral:
+\begin{eqnarray}
+\int \frac{dp}{2 \pi^2} p^2 C_{dec}(p) E_i^{\alpha} = 
+ & - & \Gamma_i \int \frac{dp}{2 \pi^2} p^2 \frac{m_i}{E_i} f_i E_i^{\alpha}
+ \nonumber \\
+ & + & \sum_{i \; decays} \mathcal{B}_{ab\ldots}
+\Gamma_i \frac{n_a n_b \ldots}{\bar{n}_a \bar{n}_b \ldots} \int \frac{dp}{2 \pi^2}
+p^2 \frac{m_i}{E_i} \bar{f}_{i} E_i^\alpha \label{eq:dec2}
+\end{eqnarray}
+where we have included the sum over all decay channels and $\alpha = 0 (1)$
+for the contribution to the number (energy) density equation.
+Note that both integrals are identical, except for the replacement
+$f_i \to \bar{f_i}$. The first integral in Eq.(\ref{eq:dec2}) gives:
+\begin{equation}
+-\Gamma_i \int \frac{dp}{2 \pi^2} p^2 \frac{m_i}{E_i} f_i(p) E_i^{\alpha} =
+\left\{ \begin{array}{rl} -\Gamma_i m_i n_i \langle \frac{1}{E_i} \rangle  & \mbox{, for $\alpha = 0$} \\
+-\Gamma_i m_i n_i &\mbox{, for $\alpha = 1$}
+\end{array} \right. \label{eq:dec1a}
+\end{equation}
+where
+\begin{equation}
+\langle \frac{1}{E_i} \rangle \equiv \frac{1}{n_i} \int \frac{dp}{2 \pi^2} p^2
+\frac{1}{E_i} f_i(p)
+\end{equation}
+Hence we can write Eq.(\ref{eq:dec2}) as:
+\begin{equation}
+\int \frac{dp}{2 \pi^2} p^2 C_{dec}(p) E_i^{\alpha} = -\Gamma_i m_i 
+\left\{ \begin{array}{ll} n_i \langle \frac{1}{E_i} \rangle - \bar{n}_i  \langle
+\frac{1}{E_i}
+\rangle_{eq} \sum \mathcal{B}_{ab\ldots}
+ \frac{n_a n_b\ldots}{\bar{n}_a \bar{n}_b\ldots}  & \mbox{, for $\alpha = 0$}  \\
+ n_i - \bar{n}_i \sum \mathcal{B}_{ab\ldots}
+ \frac{n_a n_b\ldots}{\bar{n}_a \bar{n}_b\ldots}  & \mbox{, for $\alpha = 1$}
+\end{array} \right. \label{eq:decfin}
+\end{equation}
+
+
+For the non-equilibrium average we assume:
+\begin{equation}
+\langle \frac{1}{E_i} \rangle \simeq \frac{1}{\langle E_i \rangle} =
+\frac{n_i}{\rho_i}
+\end{equation}
+which is exact in the non-relativistic limit, but it is only an approximation
+for the relativistic case.
+Although we can compute the equilibrium average ($\langle
+\frac{1}{E_i}\rangle_{eq}$)
+explicitly, in order to have an exact cancellation between 
+the decay and inverse decay terms when $i$, $a$ and $b$ are all in equilibrium,
+we take:
+\begin{equation}
+\langle \frac{1}{E_i} \rangle_{eq} \simeq \langle \frac{1}{E_i} \rangle =
+\frac{n_i}{\rho_i}
+\end{equation}
+With the above approximations we finally obtain:
+
+\begin{equation}
+\int \frac{dp}{2 \pi^2} p^2 C_{dec}(p) E_i^{\alpha} = 
+ -\Gamma_i  m_i \left\{ \begin{array}{ll}\frac{n_i}{\rho_i}\left( n_i -
+ \bar{n}_i \sum \mathcal{B}_{ab\ldots}
+ \frac{n_a n_b \ldots}{\bar{n}_a \bar{n}_b \ldots} \right)   &
+ \mbox{, for $\alpha = 0$}
+ \\
+ n_i - \bar{n}_i \sum \mathcal{B}_{ab\ldots}
+ \frac{n_a n_b \ldots}{\bar{n}_a \bar{n}_b \ldots}  & \mbox{, for $\alpha = 1$}
+\end{array} \right. \label{eq:decfin}
+\end{equation}
+where $\mathcal{B}_{ab\ldots} \equiv BR(i\to a+b+\ldots)$.
+
+
+
+\subsection{Production Term}
+
+The decay and inverse decay of other particles ($a \to i + b + \ldots$) can also
+affect the species $i$. The contribution from these terms we label $C_{prod}$, which is given
+by\cite{kawasaki0}:
+\begin{equation}
+C_{prod} \simeq \frac{1}{E_i} \int \frac{d^3 p_a}{2 E_a (2
+\pi)^3} \prod_{b} \frac{d^3 p_b}{2 E_b (2 \pi)^3} (2 \pi)^4 \delta^{4}\left(p_a
+- p_i - p_b \ldots\right) |\mathcal{M}|^2 \left[f_a - f_i f_b \ldots \right]
+\end{equation}
+Using the same approximations of the previous section, we write:
+\begin{equation}
+f_i f_b\ldots \simeq  \frac{n_i n_b \ldots}{\bar{n}_i \bar{n}_b \ldots}
+e^{-E_a/T} = \frac{n_i n_b \ldots}{\bar{n}_i \bar{n}_b \ldots}
+\bar{f}_{a}
+\end{equation} 
+Hence:
+\begin{equation}
+C_{prod} = \frac{1}{E_i} \int \frac{d^3 p_a}{2 E_a (2 \pi)^3} \prod_{b} \frac{d^3 p_b}{2 E_b (2 \pi)^3} 
+(2 \pi)^4 \delta^{4}\left(p_a - p_i - p_b \ldots\right) |\mathcal{M}|^2
+\left(f_a - \bar{f}_a \frac{n_i n_b \ldots}{\bar{n}_i
+\bar{n}_b \ldots} \right)
+\end{equation}
+and
+\begin{eqnarray}
+\int \frac{dp}{2 \pi^2} p^2 C_{prod}(p) E_i^\alpha & = & 
+\int \frac{d^3 p_a}{E_a (2 \pi)^3} \left(f_a - \bar{f}_a \frac{n_i n_b \ldots}{\bar{n}_i
+\bar{n}_b \ldots} \right) \nonumber \\
+& \times & \frac{d^3 p E_i^{\alpha}}{2 E_i (2 \pi)^3}
+\prod_{b} \frac{d^3 p_b}{2 E_b (2 \pi)^3} (2 \pi)^4 \delta^{4}\left(p_a - p_i - p_b \ldots\right) |\mathcal{M}|^2
+\label{eq:prod2}
+\end{eqnarray}
+with $\alpha = 0 (1)$ for the contribution to the number (energy) density equation.
+For $\alpha = 0$ we obtain:
+\begin{eqnarray}
+\int \frac{dp}{2 \pi^2} p^2 C_{prod}(p) & = & \Gamma_a  \mathcal{B}_{i} m_a 
+\int \frac{d^3 p_a}{E_a (2 \pi)^3} \left(f_a - \bar{f}_a \sum_b
+\frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}}\frac{n_i n_b \ldots}{\bar{n}_i
+\bar{n}_b \ldots} \right)
+\nonumber
+\\
+& = & \Gamma_a \mathcal{B}_{i} m_a \frac{n_a}{\rho_a} \left( n_a - \bar{n}_a
+  \sum_b \frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}} \frac{n_i n_b
+  \ldots}{\bar{n}_i \bar{n}_b \ldots} \right)
+\end{eqnarray}
+where $\mathcal{B}_{ib\ldots} \equiv BR(a \to i + b + \ldots)$, $\mathcal{B}_i
+= \sum_{b} \mathcal{B}_{ib\ldots}$ and we have once again assumed $\langle 1/E_a
+\rangle \simeq \langle 1/E_a \rangle_{eq} \simeq n_a/\rho_a$.
+
+
+For $\alpha = 1$, the integral in Eq.(\ref{eq:prod2}) does not take a simple
+form. In order to compute it, we assume:
+\begin{equation}
+E_i \simeq \frac{E_a}{2}
+\end{equation}
+The above expression is only exact for 2-body decays and $m_a \gg
+m_i,m_b$. For the remaining cases, it is only an estimate.
+\begin{eqnarray}
+\int \frac{dp}{2 \pi^2} p^2 C_{prod}(p) E_i & \simeq & 
+\Gamma_a \mathcal{B}_{i}  \frac{m_a}{2} \int \frac{d^3 p_a}{(2
+\pi)^3} \left(f_a - \bar{f}_a \sum_b
+\frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}}
+ \frac{n_i n_b \ldots}{\bar{n}_i \bar{n}_b \ldots} \right)
+\nonumber
+\\
+& = & \Gamma_a \mathcal{B}_{i}  \frac{m_a}{2} \left( n_a -
+\bar{n}_a \sum_b \frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}} \frac{n_i n_b
+\ldots}{\bar{n}_i \bar{n}_b \ldots} \right)
+\end{eqnarray}
+
+
+Combining the results for $\alpha = 0$ and 1, we have:
+\begin{equation}
+\int \frac{dp}{2 \pi^2} p^2 C_{prod}(p) E_i^{\alpha} = 
+\Gamma_a \mathcal{B}_{i} m_a  \left( n_a - \bar{n}_a
+\sum_b \frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}} \frac{n_i n_b
+\ldots}{\bar{n}_i
+\bar{n}_b \ldots} \right) \left\{ \begin{array}{ll}  \frac{n_a}{\rho_a}  & \mbox{, for $\alpha = 0$} 
+\\
+ \frac{1}{2}  & \mbox{, for $\alpha = 1$}
+\end{array} \right. \label{eq:prodfin}
+\end{equation}
+
+\subsection{Number and Energy Density Equations}
+
+Using the results of Eqs.(\ref{eq:collfin}), (\ref{eq:decfin}) and
+(\ref{eq:prodfin}) in the Boltzmann equations for $n_i$ and $\rho_i$
+(Eq.(\ref{eq:meqs})), we obtain:
+\begin{eqnarray}
+\Drv{n_i}{t} + 3H n_i  & = &  \left( \bar{n}_i^2 - n_i^2 \right) \langle \sigma
+v \rangle_{ii} +  \left( \bar{n}_i \bar{n}_j - n_i n_j \right) \langle \sigma
+v \rangle_{ij} + \left(\frac{\bar{n}_i^2}{\bar{n}_j^2} n_j^2  - n_i^2 \right) \langle \sigma v \rangle_{jj} \nonumber
+\\
+& + & \left(\frac{\bar{n}_i}{\bar{n}_j} n_j  - n_i\right)  \tilde{\Gamma}_{iSM} - \Gamma_i m_i \frac{n_i}{\rho_i}\left(n_i - \bar{n}_i \sum_{i\to\ldots}
+\mathcal{B}_{ab\ldots} \frac{n_a n_b \ldots}{\bar{n}_a \bar{n}_b \ldots} \right)
+\nonumber
+\\
+& + & \sum_a 
+\Gamma_a \mathcal{B}_i m_a \frac{n_a}{\rho_a} \left(n_a - \bar{n}_a \sum_{a \to
+i\ldots} \frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}} \frac{n_i n_b \ldots}{\bar{n}_i \bar{n}_b \ldots} \right)  + C_{i}(T) \label{eq:nieq} \\
+\Drv{\rho_i}{t} + 3H (\rho_i + P_i) & = & \frac{\rho_i}{n_i} \left( \bar{n}_i^2 - n_i^2 \right) \langle \sigma
+v \rangle_{ii} + \frac{\rho_i}{n_i}  \left( \bar{n}_i \bar{n}_j - n_i n_j \right) \langle \sigma
+v \rangle_{ij} + \frac{\rho_i}{n_i} \left(\frac{\bar{n}_i^2}{\bar{n}_j^2} n_j^2  - n_i^2 \right) \langle \sigma v \rangle_{jj} \nonumber
+\\
+& + &\frac{\rho_i}{n_i}  \left(\frac{\bar{n}_i}{\bar{n}_j} n_j  - n_i\right)  \tilde{\Gamma}_{iSM} - \sum_a \Gamma_a  \mathcal{B}_i \frac{m_a}{2} \left( n_a -
+ \bar{n}_a \sum_{a \to i\ldots}  \frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}} \frac{n_i
+ n_b..}{\bar{n}_i \bar{n}_b..} \right) \nonumber
+\\
+& + & \tilde{C}_{i}(T)
+ \frac{\rho_i}{n_i}
+\end{eqnarray}
+where $\mathcal{B}_{ab\ldots} = BR(i \to a + b+ \ldots)$, $\mathcal{B}_{ib\ldots} =
+BR(a \to i + b + \ldots)$, $\mathcal{B}_i = \sum_b \mathcal{B}_{ib\ldots}$ and
+we have included an extra term ($C_i$ and $\tilde{C}_i$) to allow for other possible sources for the number and energy densities. 
+For simplicity we assume $C_i = \tilde{C}_{i}$ from now on.
+
+
+It is also convenient to use the above results to obtain a simpler equation for
+$\rho_i/n_i$:
+\begin{equation}
+\Drv{\rho_i/n_i}{t} \equiv \Drv{R_i}{t} = -3 H \frac{P_i}{n_i} + \sum_{a}
+\mathcal{B}_{i} \frac{\Gamma_a m_a}{n_i} \left( \frac{1}{2} - \frac{n_a}{\rho_a} \frac{\rho_i}{n_i} \right) \left(n_a -
+\bar{n}_a \sum_{a \to i\ldots} \frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}} \frac{n_i
+ n_b..}{\bar{n}_i \bar{n}_b..}\right) \label{eq:Rieq}
+\end{equation}
+
+Besides the above equations, it is useful to consider the evolution equation for entropy:
+\begin{equation}
+dS \equiv \frac{dQ^{dec}}{T}
+\end{equation}
+where $dQ^{dec}$ is the net energy injected from decays.
+With the above definition we have:
+\begin{eqnarray}
+\dot{S} & = & \frac{1}{T}\sum_i BR(i,X)
+\frac{d\left(R^3 \rho_i\right)^{dec}}{dt}  \nonumber \\
+\To \dot{S} & = & \frac{R^3}{T}\sum_i BR(i,X)
+\Gamma_i m_i\left(n_i - \bar{n}_i \sum_{i\to\ldots} \mathcal{B}_{ab\ldots} \frac{n_a n_b\ldots}{\bar{n}_a
+\bar{n}_b\ldots} \right) \label{Seq}
+\end{eqnarray}
+where $R$ is the scale factor and $BR(i,X)$ is the fraction of energy injected
+in the thermal bath from $i$ decays.
+ 
+ 
+The above expressions can be written in a more compact form if we define
+the following ''effective thermal densities'' and ''effective BR'':
+\begin{eqnarray}
+\mathcal{N}^{th}_{X} & \equiv &  \bar{n}_X \sum_{X \to \ldots} BR(X \to 1 + 2 +
+\ldots)
+\prod_{k}
+\frac{n_k}{\bar{n}_k} \nonumber \\
+\mathcal{N}^{th}_{XY} & \equiv & \frac{\bar{n}_X}{\mathcal{B}^{eff}_{XY}}
+\sum_{X \to Y + \ldots} g_Y BR(X \to g_Y Y + 1 + \ldots)
+\left(\frac{n_Y}{\bar{n}_Y}\right)^{g_Y} \prod_{k} \frac{n_k}{\bar{n}_k}
+\nonumber \\
+\mathcal{B}^{eff}_{XY} & \equiv & \sum_{X \to Y + \ldots} g_Y BR(X \to g_Y Y +
+1+\ldots) \nonumber
+\end{eqnarray}
+where $g_Y$ is the $Y$ multiplicity in the final state of $X$ decays. 
+In addition, defining:
+\begin{equation}
+x = \ln(R/R_0),\;\; N_i = \ln(n_i/s_0),\;\; {\rm and}\;\; N_S = \ln(S/S_0)
+\end{equation}
+we can write Eqs.(\ref{Seq}), (\ref{eq:nieq}) and (\ref{eq:Rieq}) as:
+\begin{eqnarray}
+N_S' & = & \frac{e^{(3 x - N_S)}}{HT} \sum_{i} BR(i,X) \Gamma_i m_i \left(n_i -
+\mathcal{N}_{i}^{th} \right) 
+\label{Seqb} \\
+N_i' & = & -3 + \frac{\sigv_i}{H} n_i [\left(\frac{\bar{n}_i}{n_i}\right)^2
+-1] -  \frac{\Gamma_i}{H} \frac{m_i}{R_i}\left(1 -
+\frac{\mathcal{N}_{i}^{th}}{n_i} \right) \nonumber  \\
+ & + & \sum_{a} \mathcal{B}_{ai}^{eff} \frac{\Gamma_a}{H}
+ \frac{m_a}{R_a}\left(\frac{n_a}{n_i} - \frac{\mathcal{N}_{ai}^{th}}{n_i}
+  \right)
+ \\
+R_i' & = &  -3 \frac{P_i}{n_i} + \sum_{a} \mathcal{B}_{ai}^{eff}
+\frac{\Gamma_a}{H} m_a \left( \frac{1}{2} - \frac{R_i}{R_a} \right) \left(\frac{n_a}{n_i} -
+\frac{\mathcal{N}_{ai}^{th}}{n_i} \right)
+\label{Nieq}
+\end{eqnarray}
+where $'=d/dx$.
+
+The above equation for $N_i$ also applies for coherent oscillating fields, if we define:
+\begin{equation}
+N_i = \ln(n_i/s_0),\;\; {\rm and}\;\; n_i \equiv \rho_i/m_i
+\end{equation}
+so
+\begin{eqnarray}
+N_i' & = & -3 - \frac{\Gamma_i}{H}  \nonumber \\
+R_i'& = & 0 \label{Nico}
+\end{eqnarray}
+where we assume that the coherent oscillating component does not couple to any of the other fields.
+
+Collecting Eqs.(\ref{Seqb})-(\ref{Nieq}) and (\ref{Nico}) we have a closed set of first order differential equations:
+\begin{itemize}
+\item Entropy:
+\begin{equation}
+N_S' = \frac{e^{(3 x - N_S)}}{HT} \sum_{i} BR(i,X) \Gamma_i m_i \left(n_i -
+\mathcal{N}_{i}^{th} \right) \label{eq:Sfin}
+\end{equation}
+\item Thermal fields:
+\begin{eqnarray}
+N_i'& = & -3 + \frac{\sigv_i}{H} n_i [\left(\frac{\bar{n}_i}{n_i}\right)^2
+-1] -  \frac{\Gamma_i}{H} \frac{m_i}{R_i}\left(1 - \frac{\mathcal{N}_{i}^{th}}{n_i}
+ \right)
+  +  \sum_{a} \mathcal{B}_{ai}^{eff} \frac{\Gamma_a}{H}
+ \frac{m_a}{R_a}\left(\frac{n_a}{n_i} - \frac{\mathcal{N}_{ai}^{th}}{n_i}
+  \right) \nonumber
+ \\
+R_i' & = &  -3 \frac{P_i}{n_i} + \sum_{a} \mathcal{B}_{ai}^{eff}
+\frac{\Gamma_a}{H} m_a \left( \frac{1}{2} - \frac{R_i}{R_a} \right) \left(\frac{n_a}{n_i} -
+\frac{\mathcal{N}_{ai}^{th}}{n_i} \right)
+\end{eqnarray}
+\item Coherent Oscillating fields:
+\begin{eqnarray}
+N_i' & = & -3 - \frac{\Gamma_i}{H} \nonumber \\
+R_i' & = & 0 \label{eq:COeq}
+\end{eqnarray}
+\end{itemize}
+
+
+As seen above, the equation for $R_i = \rho_i/n_i$ depends on $P_i/n_i$. A proper evaluation of this quantity
+requires knowledge of the distribution $F_i(p,t)$. However, for relativistic (or
+massless) particles we have $P_i = \rho_i/3$, as seen from Eq.(\ref{beqs}), while for particles at rest we have $P_i = 0$. Hence $F_i(p,t)$ is only 
+required to evaluate the relativistic/non-relativistic transition, which corresponds to a relatively small part of the evolution history
+of particle $i$. Nonetheless, to model this transition we approximate $F_i$ by a thermal distribution and take $T_i, \mu_i \ll m_i$, where $T_i$ is
+the temperature of the particle (which can be different from the thermal bath's). Under these approximations we have:
+\begin{eqnarray}
+\frac{P_i}{n_i} & = & T_i \nonumber \\
+\frac{\rho_i}{n_i} & = & T_i \left[ \frac{K_1(m_i/T_i)}{K_2(m_i/T_i)} \frac{m_i}{T_i} + 3 \right] \label{eq:p1}
+\end{eqnarray}
+where $K_{1,2}$ are the modified Bessel functions. In particular, if $m_i/T_i \gg 1$:
+\begin{equation}
+\frac{\rho_i}{n_i} \simeq T_i \left[\frac{3}{2} + \frac{m_i}{T_i}  + 3 \right] \To \frac{P_i}{n_i} = T_i = \frac{2 m_i}{3}\left( \frac{R_i}{m_i} -1 \right)
+\end{equation}
+As shown above, for a given value of $R_i = \rho_i/n_i$, Eq.(\ref{eq:p1}) can be inverted to compute $T_i$ ($=P_i/n_i$):
+\begin{equation}
+\frac{P_i}{n_i} = T_i(R_i)
+\end{equation}
+Since we are interested in the non-relativistic/relativistic transition, we can expand the above expression around $R_i/m_i = 1$,
+so $P_i/n_i$ can be written as:
+\begin{equation}
+\frac{P_i}{n_i} = \frac{2 m_i}{3}\left( \frac{R_i}{m_i} -1 \right) + m_i \sum_{n >1} a_n \left(\frac{R_i}{m_i} -1 \right)^n
+\end{equation}
+where the coefficients $a_n$ can be numerically computed from Eq.(\ref{eq:p1}). The above approximation should be valid for
+$m_i/T_i \gtrsim 1$ (or $R_i \gtrsim m_i$). On the other hand, for $m_i/T_i \ll 1$ (or $R_i \gg m_i$), we have the 
+relativistic regime, with $P_i/n_i = R_i/3$.
+Therefore we can approximate the $P_i/n_i$ function for all values of $R_i$ by:
+\begin{equation}
+\frac{P_i}{n_i} = \left\{ \begin{array}{rl}
+& \frac{2 m_i}{3}\left( \frac{R_i}{m_i} -1 \right) + m_i \sum_{n >1} a_n \left(\frac{R_i}{m_i} -1 \right)^n  \mbox{ , for $R_i < \tilde{R}$} \\
+& \frac{R_i}{3}  \mbox{ , for $R_i > \tilde{R}$} 
+\end{array} \right. \label{Pfin}
+\end{equation}
+where the coefficients $a_n$ are given by the numerical fit of Eq.(\ref{eq:p1}) and $\tilde{R}$ is given by the matching of the two solutions.
+
+Finally, to solve Eqs.(\ref{eq:Sfin})-(\ref{eq:COeq}) we need to compute $H$
+according to Eq.(\ref{H}), which requires knowledge of the energy densities for all
+particles ($\rho_i$) and for the thermal bath ($\rho_R$). The former are directly obtained from $N_i$ and $R_i$, while the latter can be
+ computed from $N_S$:
+\begin{equation}
+T = \left(\frac{g_{*S}(T_R)}{g_{*S}(T)}\right)^{1/3} T_R \exp[N_S/3 -x] \To \rho_R = \frac{\pi^2}{30} g_{*}(T) T^4
+\end{equation}
+
+Eqs.(\ref{eq:Sfin})-(\ref{eq:COeq}), with the auxiliary equations for $H$
+(Eq.(\ref{H})) and $P_i/n_i$ (Eq.(\ref{Pfin})) form a set of closed equations, which can be solved once the initial conditions for the number
+density ($n_i$), energy density ($\rho_i$) and entropy ($S$) are given. For thermal fluids we assume:
+\begin{eqnarray}
+n_i(T_R) & = & \left\{ 
+\begin{array}{ll} 
+0 & , \mbox{ if $\sigv_i \bar{n}_i/H|_{T=T_R} < 10$} \\
+\bar{n}_i(T_R) & , \mbox{ if $\sigv_i \bar{n}_i/H|_{T=T_R} > 10$} 
+\end{array} \right. \label{ni0TP} \\
+\frac{\rho_i}{n_i}(T_R) & = & \frac{\bar{\rho}_i}{\bar{n}_i}(T_R)
+\end{eqnarray}
+where $\bar{\rho}_i$ is the equilibrium energy density (with zero chemical potential) for the particle $i$.
+While for coherent oscillating fluids the initial condition is set at the beginning of oscillations:
+\begin{eqnarray}
+n_i(T^{osc}_i) & = &\frac{\rho_i^{0}}{m_i(T^{osc}_i)} \\
+\frac{\rho_i}{n_i}(T^{osc}_i) & = & m_i
+\end{eqnarray}
+where $T^{osc}_i$ is the oscillation temperature, given by $3H(T^{osc}_i) = m_i(T^{osc}_i)$ and $\rho_i^{0}$ the
+initial energy density for oscillations.
+
+Finally, the initial condition for the entropy $S$ is trivially obtained, once we assume a radiation dominated universe
+at $T=T_R$:
+\begin{equation}
+S(T_R) = \frac{2 \pi^2}{45} g_*(T_R) T_R^3 R_0^3
+\end{equation}
+
+
+
+\section{Code}
+
+Here we describe how the above formalism is implemented in a numerical code for solving the coupled Boltzmann equations.
+In Sec.\ref{sec:In} we describe how the input for specific models should be defined. Then, in Sec.\ref{sec:Main} we
+outline the procedure used to solve the Boltzmann equations and to treat some of the discrete transitions
+required by the formalism described above. Finally, in Sec.\ref{sec:Out} we describe what is the output of the code and
+how it can be controlled by the user.
+
+\subsection{Input}
+\label{sec:In}
+
+In order to solve the Boltzmann equations for a particular model,
+the user has to provide the SUBROUTINE INPUTBOLTZ(T), which, for a given (thermal bath) temperature $T$,
+fills the COMMON BLOCK:
+\begin{center}
+	COMMON/INBOLTZ/BR(NP,NP),DEGF(NP),MASS(NP),GAM(NP),\\SIGV(NP),C(NP),COHOSC(NP),TRH,NCOMPS,LABEL(NP)
+\end{center}
+where NP = 20 and
+\begin{itemize}
+\item NCOMPS ($\leq 10$) = the number of particles (the first component must be radiation)
+\item MASS(i) = mass for particle i (can be temperature dependent, as in the axion case)
+\item DEGF(i) = +-number of degrees of freedom for particle i. A plus sign should be used
+for bosons, while a minus should be used for fermions, i.e. DEGF=-2 for neutralinos and DEGF=1 for axions. The
+value for the i=1 component (radiation) is never used, since the number of degrees of freedom in this case
+in given by the function GSTAR(T).
+\item GAM(i) = decay width for particle i, in its rest frame.
+\item BR(i,j) = branching ratio for the decay $i \to j + X$, including the multiplicity factor, if the
+i particle decays into multiple j's.
+\item BR(i,1) = fraction of energy per i particle injected in the radiation fluid.
+\item SIGV(i) = thermal averaged cross-section for the annihilation of i particles, as defined in the previous section.
+\item C(i) = additional source term for particle i, as defined in the previous section.
+\item COHOSC(i) = initial energy density for coherent oscillating particles. Must be zero for thermal (non-oscillating) components.
+\item TRH = re-heat temperature.
+\item LABEL(i) = label for particle i (optional)
+\end{itemize}
+
+
+\subsection{Main Code}
+\label{sec:Main}
+
+
+Once the INPUTBOLTZ subroutine is provided, the user can compute the solution for the Boltzmann equations from T=TRH to T=TF,
+calling:
+\begin{flushleft}
+CALL INPUTBOLTZ(TRH)    ! (iniatilization)\\
+CALL EQSBOLTZ(TF,IOUT)  ! (compute solution)
+\end{flushleft}
+where, if IOUT$>0$, the scale factor ($R$) and energy densities as a function of $T$ are written to UNIT=IOUT. If TF = 0,
+the evolution proceeds until all unstable particles have decayed and/or all coherent oscillating components have 
+started to oscillate. Before calling EQSBOLTZ, the user must define the parameters which regulate the precision
+of the procedure, given by the BLOCK DEPARS:
+\begin{center}
+COMMON/DEPARS/EPS,DX0,STEP,IERROR
+\end{center}
+where EPS is the relative precision for the solution $N_i(TF)$, DX0 is the $x$ interval for printing the solutions in IOUT and
+the maximum $\Delta x$ step and STEP is the initial $\Delta x$ step for the evolution.
+Failure to solve the equations (most likely due to numerical instabilities) is indicated by IERROR$<0$.
+
+Specific components can be turned off using the COMMON BLOCK:
+\begin{center}
+COMMON/SWITCHES/TURNOFF(NP)
+\end{center}
+If TURNOFF(I)=.TRUE., the $i-$component will not be included in the evolution of the Boltzmann equations.
+
+
+The EQSBOLTZ is the main subroutine used to solve the equations, once the appropriate input has been defined. Its main steps
+are:
+\begin{enumerate}
+\item Set initial conditions at $T=TRH$: check which thermal particles are coupled/decoupled to the thermal bath and if coherent
+oscillating fluids are already oscillating at T=TRH. Then it sets the initial
+number densities and temperatures for each component, as defined in the previous section. Set X1=1 and X2=X1+DX0.
+\item Solve the equations between X1 and X2.
+\item Check if a particle has decayed. If the particle $i$ satisfies
+\begin{equation}
+\Gamma_i/H > 100\;\; {\rm and}\;\; \min_{j \neq i}(\rho_i/\rho_j)< 10^{-3}
+\end{equation}
+the particle is neglected from here on. 
+The decay temperature ($T_D$) is defined by the sudden decay approximation: $\Gamma_i/\gamma_i = H(T_D)$, where $\gamma_i$ is
+the boost factor ($\gamma_i \equiv \langle E_i \rangle/m_i$). Although this temperature
+is printed out in the output, it is never used in the code.
+\item Check if a particle has decoupled from the thermal bath or started to oscillate in the interval (X1,X2).
+Decoupling is assumed if $\sigv_i \bar{n}_i < H/10$, which also defines the freeze-out temperature.
+The oscillation temperature is given by $3 H(T_{osc}) = m_i(T_{osc})$ and defines the beginning of evolution for
+the oscillating components.
+\item If a component has started to oscillate or if it has decoupled, loop over this interval with smaller steps until the decoupling or oscillation temperature converges ($\Delta T_i/T_i < 0.1$).
+\item Write temperature, scale factor and energy densities to IOUT, if IOUT$>0$.
+\item Set X1=X2 and X2=X1+DX0 and return to point 2. until $T<TF$ (or all unstable particles have decayed and all oscillating
+fluids have oscillated, if TF$\leq 0$).
+\end{enumerate}
+
+
+
+
+\subsection{Output}
+\label{sec:Out}
+
+The standard information printed after solving the Boltzmann equations gives:
+\begin{itemize}
+\item Freeze-out temperatures ($T_{fr}$) for each thermal component. As mentioned in the last section, $T_{fr}$ is
+given by the decoupling condition: $\sigv_i \bar{n}_i = H/10$. Since the decoupling is a continuous process, $T_{fr}$
+is just an estimate for the decoupling temperature.
+\item Decay temperatures ($T_D$) for each thermal component. Once again the decay process is continuous and $T_D$ given in
+the print out is estimated by the sudden decay approximation ($\Gamma_i/\gamma_i = H(T_D)$).
+\item Oscillation temperature ($T_{osc}$).
+\item Entropy ratio ($S/S_0$). In case of entropy injection from decays of unstable particles, $S/S_0 > 1$.
+\item Relic densities ($\Omega_i h^2$) at $T_0 = 2.725$ K. In order to consistently compute the relic densities today,
+we evolve $R_i = \rho_i/n_i$ from $TF$ to $T_0$ assuming a trivial universe expansion:
+\begin{equation}
+R_i' = - 3 \frac{P_i}{n_i}
+\end{equation}
+Note that the result obtained above is insensitive to $H$, so it does not matter if there is a transition from
+a radiation dominated to a matter dominated (or dark energy dominated) universe between $TF$ and $T_0$. Once $R_i(T_0)$
+is obtained, the relic density is given by:
+\begin{equation}
+\Omega_i h^2 = n_i(TF) \times \frac{g_{*S}(T_0) T_0^3}{g_{*S}(TF) TF^3} \times \frac{R_i(T_0)}{\rho_c/h^2}
+\end{equation}
+\item Relic densities before decay. It may be relevant to compute the relic densities of an unstable particle as it would be given
+if it had not decayed. In particular, this value can be used to impose BBN bounds on the decays. This quantity is computed after
+the particle becomes non-relativistic and well before the decay starts ($\Gamma_i/H(T) = 1/10$)  and is given by:
+\begin{equation}
+\tilde{\Omega}_i h^2 = \frac{\rho_i(T)}{s(T)} \times \frac{s(T_0)}{\rho_c/h^2}
+\end{equation}
+Note that the above expression assumes a radiation dominated universe from $T$ to $T_0$ and should be used with caution.
+\item Effective number of (new) neutrinos ($\Delta N_{eff}$). Since neutrinos are still coupled for $T > 1$ MeV, this quantity is only compute below
+this temperature. $\Delta N_{eff}$ is given by:
+\begin{equation}
+\Delta N_{eff}(T) = \frac{\rho_{DR}(T)}{\rho_{\nu}}
+\end{equation}
+where $\rho_{DR}$ is the total energy density of relativistic particles (excluding radiation and neutrinos) and $\rho_{\nu}$ is the energy density
+of neutrinos after they freeze-out:
+\begin{equation}
+\rho_{DR} = \sum_{R_i/m_i > 2} \rho_i \mbox{ and } \rho_{\nu} = \frac{\pi^2}{15}\frac{7}{8}\left(\frac{4}{11}\right)^{4/3} T^4
+\end{equation}
+Note that $\Delta N_{eff}$ is in general a function of temperature, since $\rho_{DR}$ will decrease if massive particles become 
+non-relativistic below 1 MeV.
+
+\end{itemize}
+
+
+Furthermore, if $IOUT>0$, the scale factor ($R$), the energy densities and  $\Delta N_{eff}$ are printed as a function of $T$ in UNIT=IOUT.
+Also, the following quantities are stored in COMMON BLOCKs:
+\begin{itemize}
+\item Final relic densities and entropy ratio:
+\begin{center}
+COMMON/OUTPUT/OMEGA(NP),RS
+\end{center}
+\item Decoupling, oscillation and decay temperatures:
+\begin{center}
+COMMON/TEMPS/TDEC(NP),TOSC(NP),TDCAY(NP)
+\end{center}
+\item Relic density of unstable particles before decay ($\tilde{\Omega} h^2$), temperature at the end of entropy injection (if any) and
+effective number of new neutrinos ($\Delta N_{eff}$) {\it at the final temperature $TF$}:
+\begin{center}
+COMMON/BBNINFO/UMEGA(NP),TSTAB,DNeff
+\end{center}
+\end{itemize}
+
+% ---- Bibliography ----
+%
+\begin{thebibliography}{99}
+%
+\bibitem{turner} E. Kolb and M. Turner, {\it The Early Universe}, Addison-Wesley Pub. (1990).
+%
+\bibitem{kawasaki0} M. Kawasaki, G. Steigman and H. Kang, {\it Cosmological evolution of generic early-decaying
+particles and their daughters}, Nucl.Phys. B402, 323-348 (1993).
+%
+\bibitem{kawasaki} M. Kawasaki, G. Steigman and H. Kang, {\it Cosmological evolution of an early-decaying particle}, Nucl.Phys. B403, 671-706 (1993).
+%
+\bibitem{graff} P. Graff and F. Steffen, {\it Thermal axion production in the primordial quark-gluon plasma}, Phys.Rev. D 83, 070511 (2011).
+%
+\bibitem{graff2} P. Graff and F. Steffen, {\it Axions and saxions from the primordial supersymmetric plasma and extra radiation signatures}, arXiv:1208.2951 (2012).
+%
+\bibitem{strumia} A. Strumia, {\it Thermal production of axino Dark Matter}, JHEP 06, 036 (2010).
+%
+\bibitem{pradler} J. Pradler and F. Steffen, {\it Constraints on the reheating temperature in gravitino dark matter scenarios}, Phys.Lett. {\bf B 648}, 224 (2007).
+%
+\end{thebibliography}
+
+
+\end{document}
