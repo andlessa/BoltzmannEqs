@@ -73,7 +73,7 @@ class Component(object):
         if isinstance(decays,FunctionType):
             self.decays = decays #Use function given
         elif isinstance(decays,DecayList):
-            self.decays = lambda T: decays  #Use value given for all T
+            self.decays = lambda T: decays #Use value given for all T
         else:
             logger.error("Decays must be a DecayList object or a function of T")
             return False
@@ -241,7 +241,7 @@ class Component(object):
         if self.Type != 'CO': return None
         else: return self.coherentAmplitute(T)
         
-    def getInitialCond(self,T):
+    def getInitialCond(self,T,components=[]):
         """
         Get initial conditions for component at temperature T, assuming the energy
         density is dominated by radiation.
@@ -249,18 +249,29 @@ class Component(object):
         
         H = sqrt(8.*pi**3*AuxFuncs.gSTAR(T)/90.)*T**2/MP
         
-        if hasattr(self,'initN'):
-            return self.initN
-
         N = None
         R = None
                 
-        if self.Type == 'thermal' or self.Type == 'weakthermal':            
-            if self.getSIGV(T)*self.nEQ(T)/H < 2.:  #Particle starts decoupled
-                self.Tdecouple = T            
-                initN =  (self.getSource(T) + self.getSIGV(T)*self.nEQ(T)**2)*0.1/H  #Rough estimate for initial n of decoupled states
+        if self.Type == 'thermal' or self.Type == 'weakthermal':
+            coannTerm = 0. #Co-annihilation term
+            bsmScatter = 0. #2<->2 scattering between BSM components
+            convertion = 0. #i<->j convertion
+            annTerm = self.getSIGV(T)*self.nEQ(T)/H #Annihilation term
+            for comp in components:
+                if comp is self:
+                    continue
+                if comp.Tdecouple:
+                    continue
+                coannTerm += self.getCOSIGV(T,comp)*self.nEQ(T)/H
+                bsmScatter += self.getSIGVBSM(T,comp)*self.nEQ(T)/H
+                convertion += self.getConvertionRate(T,comp)/H
+
+            totalProdRate = annTerm+convertion+bsmScatter+coannTerm
+            if totalProdRate < 2.:  #Particle starts decoupled
+                self.Tdecouple = T
+                initN =  1e-10*self.nEQ(T)
                 N = log(initN)
-            else:                                   #Particle starts coupled
+            else: #Particle starts coupled
                 initN =  self.nEQ(T)
                 N = log(initN)
             R = self.rEQ(T)

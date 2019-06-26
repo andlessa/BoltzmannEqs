@@ -28,8 +28,9 @@ def main(parameterFile,outputFile,showPlot=True):
     decays = DecayList()
     decayToDM = Decay(instate='Mediator',fstates=['DM','radiation'],br=1.)
     decays.addDecay(decayToDM)
-    decays.Xfraction = 0.5 #
-    decays.width = 1e-15
+    decays.Xfraction = 0.1
+#     decays.width = 1e-15
+    decays.width = 0.0
 
     
     parser = ConfigParser(inline_comment_prefixes=(';',))
@@ -42,24 +43,29 @@ def main(parameterFile,outputFile,showPlot=True):
     TF = 1.
     
     def dummySigmaV(T,g,mass):
-        return g**2*np.exp(-2*mass/T)/T**6
+        return g**2*np.exp(-2*mass/T)/T**2
 
     def dummyConvertionRate(T,g,mass):
-        return g**2*np.exp(-mass/T)/T**3
+        return g**2*np.exp(-mass/T)*T
 
     
     #Define the components to be evolved and their properties:   
+#     dm = Component(label='DM',Type='thermal',dof=1,
+#                    mass=500.,
+#                    convertionRate= lambda T,other: dummyConvertionRate(T=T, g=1e-5, mass=500.))
+    
     dm = Component(label='DM',Type='thermal',dof=1,
-                   mass=500.,convertionRate= lambda T,other: dummyConvertionRate(T=T, g=1e-3, mass=500.))
+                   mass=500.)    
     mediator = Component(label='Mediator',Type='thermal',dof=-2,
                    mass=510.,decays=decays,
                    sigmav=lambda T: dummySigmaV(T=T, g=1., mass=510.))
     compList = [dm,mediator]
     
-    dm.initN = np.log(1e-20),dm.rEQ(TRH)
+    
+    
     
     #Evolve the equations from TR to TF
-    solution = BoltzSolution(compList,TRH,TF,npoints=500)
+    solution = BoltzSolution(compList,TRH,TF,npoints=5000)
     solution.Evolve()
     
     #Print summary

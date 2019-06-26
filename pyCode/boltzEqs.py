@@ -11,7 +11,7 @@
 """
 
 from pyCode.AuxFuncs import Hfunc, getTemperature, getPressure
-from numpy import exp, log, isnan, pi
+from numpy import exp, log, isnan
 import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -112,30 +112,21 @@ class BoltzEqs(object):
             if not isActive[i]: continue
             width = comp.width(T)
             mass = comp.mass(T)
-            RHS = -3.*n[i]     
+            RHS = -3.*n[i]
             RHS += -width*mass*(n[i] - N1th[i])/(H*R[i])    #Decay term
             RHS += comp.getSource(T)/H  #Source term
-            ri = n[i]/neq[i]
             annTerm = 0. #Annihilation term
             coannTerm = 0. #Co-annihilation term
             bsmScatter = 0. #2<->2 scattering between BSM components
             convertion = 0. #i<->j convertion
-            if ri:
-                annTerm = comp.getSIGV(T)*ni*((1./ri)**2 - 1.)/H
-            else:
-                annTerm = -comp.getSIGV(T)*ni/H
+            annTerm = comp.getSIGV(T)*(neq[i]**2 - n[i]**2)/H
             for j, compj in enumerate(self.components):
                 if j == i or not isActive[j]:
                     continue
-                if ri:
-                    rj = n[j]/neq[j]
-                    coannTerm += comp.getCOSIGV(T,compj)*neq[j]*(1./ri-rj)/H
-                    bsmScatter += comp.getSIGVBSM(T,compj)*ni*((rj/ri)**2-1)/H
-                    convertion += comp.getConvertionRate(T,compj)*(rj/ri-1)/H                    
-                else:
-                    coannTerm += -comp.getCOSIGV(T,compj)*neq[j]*rj/H
-                    bsmScatter += -comp.getSIGVBSM(T,compj)*ni/H
-                    convertion += -comp.getConvertionRate(T,compj)/H
+                rj = n[j]/neq[j]
+                coannTerm += comp.getCOSIGV(T,compj)*(neq[i]*neq[j]-n[i]*n[j])/H
+                bsmScatter += comp.getSIGVBSM(T,compj)*(neq[i]**2*rj**2-n[i]**2)/H
+                convertion += comp.getConvertionRate(T,compj)*(neq[i]*rj-n[i])/H
             annTotal = annTerm+coannTerm+bsmScatter+convertion 
             #Define approximate decoupling temperature (just used for printout)            
             if annTotal < 1e-10 and not comp.Tdecouple:
@@ -148,9 +139,9 @@ class BoltzEqs(object):
                 if a == i: continue                                
                 massA = compA.mass(T)
                 widthA = compA.width(T)
-                RHS += widthA*Beff[a][i]*massA*(n[a] - N2th[a][i])/(H*R[a])  #Injection term                       
+                RHS += widthA*Beff[a][i]*massA*(n[a] - N2th[a][i])/(H*R[a])  #Injection term
+
             dN[i] = RHS/n[i]    #Log equations
-        
 
             
 
@@ -178,6 +169,7 @@ class BoltzEqs(object):
             if bigerror == 1:  logger.warning("Right-hand called with NaN values.")
             if bigerror == 2:  logger.warning("Right-hand side evaluated to NaN.")
         
+        print(dN,dR,dNS)
         return np.array(dN + dR + [dNS])
             
     def check_decayOf(self,icomp):

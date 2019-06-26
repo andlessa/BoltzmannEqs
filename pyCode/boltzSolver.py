@@ -56,7 +56,7 @@ class BoltzSolution(object):
         t0 = time.time()
         #Compute initial conditions    
         x0 = 0. # Initial condition for log(R/R0)
-        initConditions = np.array([comp.getInitialCond(T0) for comp in self.compList])
+        initConditions = np.array([comp.getInitialCond(T0,self.compList) for comp in self.compList])
         y0 = np.concatenate((initConditions[:,0],initConditions[:,1])).tolist()  #Initial conditions for log(n/s0) + conditions for log(rho/n)
         S = (2*pi**2/45)*gSTARS(T0)*T0**3
         y0.append(log(S))  #Initial condition for log(S/S0)
