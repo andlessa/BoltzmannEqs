@@ -100,7 +100,7 @@ class BoltzSolution(object):
         x = r.t[-1]
         NS = r.y[-1][-1]
         T  = getTemperature(x,NS)
-        while T > TF and r.status >= 0:
+        while T > TF+maxstep and r.status >= 0:
             x0old = x0            
             xf = x + log(T/TF) + (1./3.)*log(gSTARS(T)/gSTARS(TF)) #Update final x-value for evolutiontvals = np.linspace(x0,xf,self.npoints)            
             if r.t_events:                
@@ -110,7 +110,7 @@ class BoltzSolution(object):
                 y0 = r.y[:,-1]
             self.boltz_eqs.updateValues(x0, y0, isActive)
             tvals = np.linspace(x0,xf,int(self.npoints*(xf-x0)/(xf-x0old))+2) #Try to keep the total number of points evenly distributed in x
-            logger.debug('Evolving from',x0,'to',xf,'with',len(tvals),'points')
+            logger.debug('Evolving from %1.3g to %1.3g with %i points' %(x0,xf,len(tvals)))
             maxstep = (xf-x0)/300.
             r = integrate.solve_ivp(self.boltz_eqs.rhs,t_span=(x0,xf),y0=y0,
                                         t_eval=tvals,method='BDF',

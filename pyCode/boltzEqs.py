@@ -109,7 +109,8 @@ class BoltzEqs(object):
         logger.debug('Computing Ni derivatives')
         dN = [0.]*len(self.components)        
         for i,comp in enumerate(self.components):
-            if not isActive[i]: continue
+            if not isActive[i]:
+                continue
             width = comp.width(T)
             mass = comp.mass(T)
             RHS = -3.*n[i]
@@ -119,14 +120,18 @@ class BoltzEqs(object):
             coannTerm = 0. #Co-annihilation term
             bsmScatter = 0. #2<->2 scattering between BSM components
             convertion = 0. #i<->j convertion
-            annTerm = comp.getSIGV(T)*(neq[i]**2 - n[i]**2)/H
+            annTerm = comp.getSIGV(T)*(neq[i] - n[i])*(neq[i] + n[i])/H
             for j, compj in enumerate(self.components):
                 if j == i or not isActive[j]:
                     continue
-                rj = n[j]/neq[j]
-                coannTerm += comp.getCOSIGV(T,compj)*(neq[i]*neq[j]-n[i]*n[j])/H
-                bsmScatter += comp.getSIGVBSM(T,compj)*(neq[i]**2*rj**2-n[i]**2)/H
-                convertion += comp.getConvertionRate(T,compj)*(neq[i]*rj-n[i])/H
+                thermalXsecs = [comp.getCOSIGV(T,compj),comp.getSIGVBSM(T,compj),
+                                comp.getConvertionRate(T,compj)]
+                if thermalXsecs[0]:
+                    coannTerm += thermalXsecs[0]*(neq[i]*neq[j]-n[i]*n[j])/H
+                if thermalXsecs[1]:
+                    bsmScatter += thermalXsecs[1]*(neq[i]*nratio[compj.label]-n[i])*(neq[i]*nratio[compj.label]+n[i])/H
+                if thermalXsecs[2]:
+                    convertion += thermalXsecs[2]*(neq[i]*nratio[compj.label]-n[i])/H
             annTotal = annTerm+coannTerm+bsmScatter+convertion 
             #Define approximate decoupling temperature (just used for printout)            
             if annTotal < 1e-10 and not comp.Tdecouple:
@@ -140,9 +145,7 @@ class BoltzEqs(object):
                 massA = compA.mass(T)
                 widthA = compA.width(T)
                 RHS += widthA*Beff[a][i]*massA*(n[a] - N2th[a][i])/(H*R[a])  #Injection term
-
             dN[i] = RHS/n[i]    #Log equations
-
             
 
         dR = [0.]*len(self.components)
@@ -168,8 +171,8 @@ class BoltzEqs(object):
         if bigerror:
             if bigerror == 1:  logger.warning("Right-hand called with NaN values.")
             if bigerror == 2:  logger.warning("Right-hand side evaluated to NaN.")
-        
-        print(dN,dR,dNS)
+
+
         return np.array(dN + dR + [dNS])
             
     def check_decayOf(self,icomp):
@@ -179,7 +182,7 @@ class BoltzEqs(object):
         def event(x,y):
             NS = y[-1]
             T = getTemperature(x,NS)
-            comp = self.components[icomp]                     
+            comp = self.components[icomp]
             if comp.width(T) == 0. or not self.isActive[icomp]:
                 return 1            
             return y[icomp] + 100.

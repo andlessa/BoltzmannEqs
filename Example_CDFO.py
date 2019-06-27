@@ -5,7 +5,11 @@
 
 #First tell the system where to find the modules:
 import sys,os
-import logging as logger
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+
 
 
 def main(parameterFile,outputFile,showPlot=True):
@@ -19,7 +23,6 @@ def main(parameterFile,outputFile,showPlot=True):
     
     """
 
-    from configparser import ConfigParser
     from pyCode.component import Component
     from pyCode.boltzSolver import BoltzSolution
     from pyCode.AuxDecays import DecayList, Decay
@@ -28,40 +31,35 @@ def main(parameterFile,outputFile,showPlot=True):
     decays = DecayList()
     decayToDM = Decay(instate='Mediator',fstates=['DM','radiation'],br=1.)
     decays.addDecay(decayToDM)
-    decays.Xfraction = 0.1
-#     decays.width = 1e-15
-    decays.width = 0.0
+    decays.Xfraction = 0.
+    decays.width = 1e-15
 
     
-    parser = ConfigParser(inline_comment_prefixes=(';',))
-    if not parser.read(parameterFile):
-        logger.error("No such file or directory: '%s'" % parameterFile)
-        sys.exit()
 
     #Get the model parameters (or define them here):
     TRH = 1e5
-    TF = 1.
+    TF = 1.0
     
     def dummySigmaV(T,g,mass):
-        return g**2*np.exp(-2*mass/T)/T**2
+        return g**2*np.exp(-2*mass/T)/(T*mass)
 
-    def dummyConvertionRate(T,g,mass):
-        return g**2*np.exp(-mass/T)*T
+    def dummyConvertionRate(T,g,mass,dmass):
+        return g**2*np.exp(-dmass/T)*T**2/mass
 
     
-    #Define the components to be evolved and their properties:   
-#     dm = Component(label='DM',Type='thermal',dof=1,
-#                    mass=500.,
-#                    convertionRate= lambda T,other: dummyConvertionRate(T=T, g=1e-5, mass=500.))
-    
-    dm = Component(label='DM',Type='thermal',dof=1,
-                   mass=500.)    
-    mediator = Component(label='Mediator',Type='thermal',dof=-2,
+    #Define the components to be evolved and their properties:    
+    dm = Component(label='DM',Type='thermal',dof=-1,
+                   mass=500.,sigmav=lambda T: dummySigmaV(T=T, g=1e-10, mass=500.),
+                   convertionRate= lambda T,other: dummyConvertionRate(T=T, g=3e-8, mass=500.,dmass=10.),
+                   coSigmav= lambda T,other: dummySigmaV(T=T, g=1e-4, mass=500.),
+                   sigmavBSM = lambda T,other: dummySigmaV(T=T, g=1e-4, mass=500.))
+    mediator = Component(label='Mediator',Type='thermal',dof=1,
                    mass=510.,decays=decays,
-                   sigmav=lambda T: dummySigmaV(T=T, g=1., mass=510.))
+                   sigmav=lambda T: dummySigmaV(T=T, g=1e-2, mass=510.),
+                   convertionRate= lambda T,other: dummyConvertionRate(T=T, g=3e-8, mass=500.,dmass=10.),
+                   coSigmav= lambda T,other: dummySigmaV(T=T, g=1e-4, mass=510.),
+                   sigmavBSM = lambda T,other: dummySigmaV(T=T, g=1e-4, mass=510.))
     compList = [dm,mediator]
-    
-    
     
     
     #Evolve the equations from TR to TF
@@ -75,8 +73,8 @@ def main(parameterFile,outputFile,showPlot=True):
 #         AuxFuncs.printParameters(parser.items('parameters'),outputFile)
         solution.printSummary(outputFile)
         solution.printData(outputFile)
-    else:
-        solution.printSummary()
+#     else:
+    solution.printSummary()
     
     if showPlot:
         #Plot solutions

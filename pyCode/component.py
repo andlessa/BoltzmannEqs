@@ -131,7 +131,8 @@ class Component(object):
         Nth = 0.
         BRs = self.getBRs(T)
         neq = self.nEQ(T)
-        if not neq: return 0.
+        if not neq:
+            return 0.
         for decay in BRs:
             if not set(decay.fstateIDs).issubset(set(nratio.keys())): continue #Ignore particles not defined
             if not decay.br: continue  #Ignore decays with zero BRs            
@@ -142,7 +143,7 @@ class Component(object):
             if comp: Nth += decay.fstateIDs.count(comp.label)*nprod*decay.br
             else: Nth += nprod*decay.br
         
-        if comp and Nth > 0.:            
+        if comp and Nth > 0.:    
             norm = self.getTotalBRTo(T,comp)            
             return Nth/norm
         else: return Nth
@@ -195,7 +196,7 @@ class Component(object):
         if not 'thermal' in self.Type:
             return 0.
         
-        x = T/self.mass(T)       
+        x = T/self.mass(T) 
         if x < 0.1:
             neq = self.mass(T)**3*(x/(2*pi))**(3./2.)*exp(-1/x)*(1. + (15./8.)*x + (105./128.)*x**2) #Non-relativistic
         elif x < 1.5:            
@@ -268,10 +269,12 @@ class Component(object):
 
             totalProdRate = annTerm+convertion+bsmScatter+coannTerm
             if totalProdRate < 2.:  #Particle starts decoupled
+                logger.info("Particle %s starting decoupled" %self)
                 self.Tdecouple = T
                 initN =  1e-10*self.nEQ(T)
                 N = log(initN)
             else: #Particle starts coupled
+                logger.info("Particle %s starting in thermal equilibrium" %self)
                 initN =  self.nEQ(T)
                 N = log(initN)
             R = self.rEQ(T)
