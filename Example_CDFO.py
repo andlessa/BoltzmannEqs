@@ -4,7 +4,7 @@
 #and solve the boltzmann equations
 
 #First tell the system where to find the modules:
-import sys,os
+import os
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -27,44 +27,46 @@ def main(parameterFile,outputFile,showPlot=True):
     from pyCode.boltzSolver import BoltzSolution
     from pyCode.AuxDecays import DecayList, Decay
     import numpy as np
+    from scipy.interpolate import interp1d
     
     decays = DecayList()
     decayToDM = Decay(instate='Mediator',fstates=['DM','radiation'],br=1.)
     decays.addDecay(decayToDM)
-    decays.Xfraction = 0.
-    decays.width = 1e-15
+    decays.Xfraction = 0.1
+    decays.width = 2.5e-15
 
     
 
     #Get the model parameters (or define them here):
-    TRH = 1e5
-    TF = 1.0
+    TRH = 1e4
+    TF = 1e-3
     
     def dummySigmaV(T,g,mass):
-        return g**2*np.exp(-2*mass/T)/(T*mass)
+        return g**2*np.exp(-2*mass/T)/(T**2)
 
     def dummyConvertionRate(T,g,mass,dmass):
         return g**2*np.exp(-dmass/T)*T**2/mass
+    
+    data = np.genfromtxt('./width_and_medxs.dat',skip_header=5)
+    data = np.insert(data,0,[[0.,data[0,1]]],axis=0)
+    conv = 0.8579e17
+    sigmaVJan = np.vectorize(lambda T: np.exp(interp1d(data[:,0],np.log(data[:,1]*conv),fill_value=0.,bounds_error=False)(500./T)))        
 
     
     #Define the components to be evolved and their properties:    
-    dm = Component(label='DM',Type='thermal',dof=-1,
-                   mass=500.,sigmav=lambda T: dummySigmaV(T=T, g=1e-10, mass=500.),
-                   convertionRate= lambda T,other: dummyConvertionRate(T=T, g=3e-8, mass=500.,dmass=10.),
-                   coSigmav= lambda T,other: dummySigmaV(T=T, g=1e-4, mass=500.),
-                   sigmavBSM = lambda T,other: dummySigmaV(T=T, g=1e-4, mass=500.))
-    mediator = Component(label='Mediator',Type='thermal',dof=1,
+    dm = Component(label='DM',Type='thermal',dof=-2,
+                   mass=500.,coSigmav=lambda T,other: 1e-12*sigmaVJan(T))
+    mediator = Component(label='Mediator',Type='thermal',dof=6,
                    mass=510.,decays=decays,
-                   sigmav=lambda T: dummySigmaV(T=T, g=1e-2, mass=510.),
-                   convertionRate= lambda T,other: dummyConvertionRate(T=T, g=3e-8, mass=500.,dmass=10.),
-                   coSigmav= lambda T,other: dummySigmaV(T=T, g=1e-4, mass=510.),
-                   sigmavBSM = lambda T,other: dummySigmaV(T=T, g=1e-4, mass=510.))
+                   sigmav=sigmaVJan)
     compList = [dm,mediator]
     
     
     #Evolve the equations from TR to TF
-    solution = BoltzSolution(compList,TRH,TF,npoints=5000)
-    solution.Evolve()
+    solution = BoltzSolution(compList,TRH,TF,npoints=50000)
+    solved = solution.Evolve()
+    if not solved:
+        return
     
     #Print summary
     if outputFile:

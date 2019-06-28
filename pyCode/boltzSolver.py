@@ -93,7 +93,10 @@ class BoltzSolution(object):
                                 t_eval=tvals,method='BDF',
                                 events=self.boltz_eqs.events,max_step=maxstep)
         if r.status < 0:
-            logger.error(r.message)
+            NS = r.y[-1][-1]
+            T = getTemperature(r.t[-1],NS)
+            logger.error("Solution failed at temperature %1.3g" %T)
+            logger.error("Error message from solver: %s" %r.message)
             return False
         
         self.updateSolution(r)

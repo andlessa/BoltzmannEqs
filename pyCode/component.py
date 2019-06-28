@@ -116,14 +116,15 @@ class Component(object):
         return brTot
             
 
-    def getNTh(self,T,nratio,comp=None):
+    def getNTh(self,T,nDict,neqDict,comp=None):
         """        
         Computes the effective thermal number density at temperature T:
         If comp = None: Nth = neq[self]*sum_{decays} BR(self->a + b +...)*(n[a]/neq[a])*(n[b]/neq[b])* ...
         If comp = component: Nth = (neq[self]/Norm)*sum_{decays} N_component BR(self-> component + b +...)*(n[a]/neq[a])*(n[b]/neq[b])*...
           
         :param T: temperature (allows for T-dependent BRs)
-        :param nratio: Dictionary with ratios of number density to the equilibrium number density.
+        :param n: Dictionary of number densities
+        :param neq: Dictionary with equilibrium number densities
         :param comp: Component (if needed) to compute the weight X->Y+...                
         """
         
@@ -134,14 +135,18 @@ class Component(object):
         if not neq:
             return 0.
         for decay in BRs:
-            if not set(decay.fstateIDs).issubset(set(nratio.keys())): continue #Ignore particles not defined
-            if not decay.br: continue  #Ignore decays with zero BRs            
-            if comp and not comp.label in decay.fstateIDs: continue
+            if not decay.br:
+                continue  #Ignore decays with zero BRs
+            if comp and not comp.label in decay.fstateIDs:
+                continue
             nprod = neq
             for label in decay.fstateIDs:
-                if label in nratio: nprod *= nratio[label]
-            if comp: Nth += decay.fstateIDs.count(comp.label)*nprod*decay.br
-            else: Nth += nprod*decay.br
+                if label in nDict:
+                    nprod *= (nDict[label]/neqDict[label])
+            if comp:
+                Nth += decay.fstateIDs.count(comp.label)*nprod*decay.br
+            else:
+                Nth += nprod*decay.br
         
         if comp and Nth > 0.:    
             norm = self.getTotalBRTo(T,comp)            

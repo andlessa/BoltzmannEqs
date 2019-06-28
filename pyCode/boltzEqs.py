@@ -57,9 +57,10 @@ class BoltzEqs(object):
         logger.debug('Calling RHS with arguments:\n   x=%s,\n   y=%s\n and switches %s' %(x,y,isActive))
         n = []
         neq = []
+        nDict = {}
+        neqDict = {}
         rho = []
         R = []
-        nratio = {'radiation' : 1.}   #n/neq ratio dictionary
         NS = y[-1]
         T = getTemperature(x,NS)
         for i,comp in enumerate(self.components):
@@ -71,13 +72,11 @@ class BoltzEqs(object):
             else:
                 rhoi = Ri*ni
             n.append(ni)
-            neq.append(comp.nEQ(T))            
+            nDict[comp.label] = n[-1]
+            neq.append(comp.nEQ(T))
+            neqDict[comp.label] = neq[-1]
             rho.append(rhoi)
             R.append(Ri)
-            if neq[-1] > 0.:
-                nratio[comp.label] = ni/neq[-1]
-            else:
-                nratio[comp.label] = 0.
             logger.debug('RHS: Done computing component %s.\n   rho = %s and n = %s' %(comp,rhoi,ni))
         H = Hfunc(T,rho,isActive)
        
@@ -91,10 +90,10 @@ class BoltzEqs(object):
             N2th[i] = [0.]*len(self.components)
             Beff[i] = [0.]*len(self.components)                        
         for i,comp in enumerate(self.components):
-            N1th[i] = comp.getNTh(T,nratio)
+            N1th[i] = comp.getNTh(T,nDict,neqDict)
             for a,compA in enumerate(self.components):                                
                 if a == i or not isActive[a]: continue
-                N2th[a][i] = compA.getNTh(T,nratio,comp)
+                N2th[a][i] = compA.getNTh(T,nDict,neqDict,comp)
                 Beff[a][i] = compA.getTotalBRTo(T,comp)
         logger.debug('Done computing weights')
 # Derivative for entropy:
@@ -129,9 +128,9 @@ class BoltzEqs(object):
                 if thermalXsecs[0]:
                     coannTerm += thermalXsecs[0]*(neq[i]*neq[j]-n[i]*n[j])/H
                 if thermalXsecs[1]:
-                    bsmScatter += thermalXsecs[1]*(neq[i]*nratio[compj.label]-n[i])*(neq[i]*nratio[compj.label]+n[i])/H
+                    bsmScatter += thermalXsecs[1]*((neq[i]/neq[j])*n[j]-n[i])*((neq[i]/neq[j])*n[j]+n[i])/H
                 if thermalXsecs[2]:
-                    convertion += thermalXsecs[2]*(neq[i]*nratio[compj.label]-n[i])/H
+                    convertion += thermalXsecs[2]*((neq[i]/neq[j])*n[j]-n[i])/H
             annTotal = annTerm+coannTerm+bsmScatter+convertion 
             #Define approximate decoupling temperature (just used for printout)            
             if annTotal < 1e-10 and not comp.Tdecouple:
@@ -172,7 +171,7 @@ class BoltzEqs(object):
             if bigerror == 1:  logger.warning("Right-hand called with NaN values.")
             if bigerror == 2:  logger.warning("Right-hand side evaluated to NaN.")
 
-
+        logger.debug('dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(str(dN),str(dR),str(dNS)))
         return np.array(dN + dR + [dNS])
             
     def check_decayOf(self,icomp):
