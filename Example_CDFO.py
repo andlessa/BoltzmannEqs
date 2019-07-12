@@ -41,29 +41,58 @@ def main(parameterFile,outputFile,showPlot=True):
     TRH = 1e4
     TF = 1e-3
     
-    def dummySigmaV(T,g,mass):
-        return g**2*np.exp(-2*mass/T)/(T**2)
+    def nEQbottom(T):
+        Zeta3 = 1.20206
+        return 3*2*(3./4.)*Zeta3*T**3/np.pi**2
 
-    def dummyConvertionRate(T,g,mass,dmass):
-        return g**2*np.exp(-dmass/T)*T**2/mass
+    def nEQgluon(T):
+        Zeta3 = 1.20206
+        return 8*2*Zeta3*T**3/np.pi**2
     
+    #Annihilation rate for mediator
     data = np.genfromtxt('./width_and_medxs.dat',skip_header=5)
-    data = np.insert(data,0,[[0.,data[0,1]]],axis=0)
+#     data = np.insert(data,0,[[0.,data[0,1]]],axis=0)
     conv = 0.8579e17
-    sigmaVJan = np.vectorize(lambda T: np.exp(interp1d(data[:,0],np.log(data[:,1]*conv),fill_value=0.,bounds_error=False)(500./T)))        
+    sigmaVJan = np.vectorize(lambda T: np.exp(interp1d(data[:,0],np.log(data[:,1]*conv),
+                                                       fill_value='extrapolate',
+                                                       bounds_error=False)(500./T)))    
+    
+    #Conversion rates for DM and mediator: 
+    dofDM = -2 #Number of DM degrees of freedom (Majorana fermion)
+    dofMed = 3*2 #Number of Mediator degrees of freedom (complex colored scalar)
+    dataR = np.genfromtxt('./sigmav_conversion_bchi-sbotg_500_510_1.dat',skip_header=6,usecols=(0,4))    
+    cRateDMJan = np.vectorize(lambda T: nEQbottom(T)*np.exp(interp1d(dataR[:,0],np.log(dataR[:,1]*conv*(4.3e-7)**2),
+                                                                     fill_value='extrapolate',bounds_error=False)(500./T)))
+    cRateMedJan = np.vectorize(lambda T: nEQgluon(T)*abs(dofMed/dofDM)*np.exp(interp1d(dataR[:,0],np.log(dataR[:,1]*conv*(4.3e-7)**2),
+                                                                                       fill_value='extrapolate',
+                                                                                       bounds_error=False)(510./T)))
+
+#     cRateDMJan = np.vectorize(lambda T: nEQbottom(T)*interp1d(dataR[:,0],dataR[:,1]*conv,
+#                                                                      fill_value='extrapolate',
+#                                                                      bounds_error=False)(500./T))
+#     
+#     
+#     cRateMedJan = np.vectorize(lambda T: nEQgluon(T)*abs(dofMed/dofDM)*interp1d(dataR[:,0],dataR[:,1]*conv,
+#                                                                                        fill_value='extrapolate',
+#                                                                                        bounds_error=False)(510./T))
 
     
     #Define the components to be evolved and their properties:    
-    dm = Component(label='DM',Type='thermal',dof=-2,
-                   mass=500.,coSigmav=lambda T,other: 1e-12*sigmaVJan(T))
-    mediator = Component(label='Mediator',Type='thermal',dof=6,
+    dm = Component(label='DM',Type='thermal',dof=dofDM,
+                   mass=500.,
+                   coSigmav=lambda T,other: 1e-12*sigmaVJan(T)
+                    ,convertionRate=lambda T,other: cRateDMJan(T)
+                   )
+    mediator = Component(label='Mediator',Type='thermal',dof=dofMed,
                    mass=510.,decays=decays,
-                   sigmav=sigmaVJan)
+                   sigmav=sigmaVJan
+                    ,convertionRate=lambda T,other: cRateMedJan(T)
+                   )
     compList = [dm,mediator]
     
     
     #Evolve the equations from TR to TF
-    solution = BoltzSolution(compList,TRH,TF,npoints=50000)
+    solution = BoltzSolution(compList,TRH,TF,npoints=5000)
     solved = solution.Evolve()
     if not solved:
         return

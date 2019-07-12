@@ -130,7 +130,10 @@ class BoltzEqs(object):
                 if thermalXsecs[1]:
                     bsmScatter += thermalXsecs[1]*((neq[i]/neq[j])*n[j]-n[i])*((neq[i]/neq[j])*n[j]+n[i])/H
                 if thermalXsecs[2]:
-                    convertion += thermalXsecs[2]*((neq[i]/neq[j])*n[j]-n[i])/H
+                    if neq[j]:
+                      convertion += thermalXsecs[2]*((neq[i]/neq[j])*n[j]-n[i])/H
+                    else:
+                      convertion += thermalXsecs[2]*(0.*n[j]-n[i])/H
             annTotal = annTerm+coannTerm+bsmScatter+convertion 
             #Define approximate decoupling temperature (just used for printout)            
             if annTotal < 1e-10 and not comp.Tdecouple:
