@@ -16,6 +16,8 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 import numpy as np
+np.seterr(divide='ignore')
+np.seterr(over='ignore')
 from scipy.special import zetac
 Zeta3 = zetac(3.) + 1.
 # np.seterr(over='ignore')
@@ -55,127 +57,128 @@ class BoltzEqs(object):
 
         isActive = self.isActive
         logger.debug('Calling RHS with arguments:\n   x=%s,\n   y=%s\n and switches %s' %(x,y,isActive))
-        n = []
-        neq = []
-        nDict = {}
-        neqDict = {}
-        rho = []
-        R = []
+
+        #Store the number of components:
+        nComp = len(self.components)
+
+        #Ni = log(n_i/s_0)
+        Ni = y[:nComp]
+        #R = rho_i/n_i
+        Ri = y[nComp:2*nComp]
+        #NS = log(S/S_0)
         NS = y[-1]
+
+        #Get temperature from entropy and scale factor:
         T = getTemperature(x,NS)
+
+        logger.debug('RHS: Computing number and energy densities for %i components' %nComp)
+        #Current number densities:
+        n = np.exp(Ni)
+        #Current energy densities:
+        rho = n*Ri
+        #Special definition for coherently oscillating fields:
         for i,comp in enumerate(self.components):
-            logger.debug('RHS: Computing component %s' %comp)
-            ni = exp(y[i])
-            Ri = y[i + len(self.components)]
             if comp.Type == 'CO':
-                rhoi = comp.mass(T)*ni
-            else:
-                rhoi = Ri*ni
-            n.append(ni)
-            nDict[comp.label] = n[-1]
-            neq.append(comp.nEQ(T))
-            neqDict[comp.label] = neq[-1]
-            rho.append(rhoi)
-            R.append(Ri)
-            logger.debug('RHS: Done computing component %s.\n   rho = %s and n = %s' %(comp,rhoi,ni))
+                rho[i] = comp.mass(T)/Ri[i]
+
+        #Compute equilibrium densities:
+        neq = np.array([comp.nEQ(T) for comp in self.components])
+
+        #Compute ratio of equilibrium densities
+        #(helps with numerical instabilities)
+        #rNeq[i,j] = neq[i]/neq[j]
+        rNeq = np.array([[compi.rNeq(T,compj) for compj in self.components] for compi in self.components])
+
+        #Dictionary with label:index mapping:
+        labelsDict = dict([[comp.label,i] for i,comp in enumerate(self.components)])
+
+        #Compute Hubble factor:
+        isActive = self.isActive
         H = Hfunc(T,rho,isActive)
-       
-             
-#Auxiliary weights:
-        logger.debug('Computing weights')     
-        N1th = [0.]*len(self.components)
-        N2th = [0.]*len(self.components)
-        Beff = [0.]*len(self.components)
-        for i,comp in enumerate(self.components):
-            N2th[i] = [0.]*len(self.components)
-            Beff[i] = [0.]*len(self.components)                        
-        for i,comp in enumerate(self.components):
-            N1th[i] = comp.getNTh(T,nDict,neqDict)
-            for a,compA in enumerate(self.components):                                
-                if a == i or not isActive[a]: continue
-                N2th[a][i] = compA.getNTh(T,nDict,neqDict,comp)
-                Beff[a][i] = compA.getTotalBRTo(T,comp)
+        logger.debug('RHS: Done computing component energy and number densities')
+
+        #Auxiliary weights:
+        logger.debug('RHS: Computing weights')
+        #Effective equilibrium densities and BRs:
+        #NXth[i] = N^{th}_i:
+        NXth = np.array([comp.getNXTh(T,n,rNeq,labelsDict) for comp in self.components])
+        #NXYth[i,j] = N^{th}_{ij}:
+        NXYth = np.array([[compi.getNXYTh(T,n,rNeq,labelsDict,compj) for compj in self.components] for compi in self.components])
+        #Effective branching ratio (Beff[i,j] = B^{eff}_{ij}:
+        Beff = np.array([[compi.getTotalBRTo(T,compj) for compj in self.components] for compi in self.components])
         logger.debug('Done computing weights')
-# Derivative for entropy:
+
+        # Derivative for entropy:
         logger.debug('Computing entropy derivative')     
-        dNS = 0.        
+        dNS = 0.
         for i,comp in enumerate(self.components):
             if not isActive[i]: continue
-            dNS += comp.getBRX(T)*comp.width(T)*comp.mass(T)*(n[i]-N1th[i])*exp(3.*x - NS)/(H*T)
+            dNS += comp.getBRX(T)*comp.width(T)*comp.mass(T)*(n[i]-NXth[i])*exp(3.*x - NS)/(H*T)
         logger.debug('Done computing entropy derivative')
-             
-#Derivatives for the Ni=log(ni/s0) variables:
+
+        #Derivatives for the Ni=log(ni/s0) variables:
         logger.debug('Computing Ni derivatives')
-        dN = [0.]*len(self.components)        
-        for i,comp in enumerate(self.components):
-            if not isActive[i]:
-                continue
-            width = comp.width(T)
-            mass = comp.mass(T)
-            RHS = -3.*n[i]
-            RHS += -width*mass*(n[i] - N1th[i])/(H*R[i])    #Decay term
-            RHS += comp.getSource(T)/H  #Source term
-            annTerm = 0. #Annihilation term
-            coannTerm = 0. #Co-annihilation term
-            bsmScatter = 0. #2<->2 scattering between BSM components
-            convertion = 0. #i<->j convertion
-            annTerm = comp.getSIGV(T)*(neq[i] - n[i])*(neq[i] + n[i])/H
-            for j, compj in enumerate(self.components):
-                if j == i or not isActive[j]:
+        dN = np.zeros(nComp)
+        widths = np.array([comp.width(T) for comp in self.components])
+        masses = np.array([comp.mass(T) for comp in self.components])
+        #Expansion term:
+        RHS = -3*n
+        #Decay term:
+        RHS += -widths*masses*n/(H*Ri)
+        #Inverse decay term:
+        RHS += widths*masses*NXth/(H*Ri) #NXth should be finite if i -> j +..
+        #Annihilation term:
+        sigmaV = np.array([comp.getSIGV(T) for comp in self.components])
+        RHS += sigmaV*(neq - n)*(neq + n)/H
+        #Contributions from other BSM states:
+        for i,compi in enumerate(self.components):
+            for j,compj in enumerate(self.components):
+                # i + j <-> SM + SM:
+                RHS[i] += (neq[i]*neq[j]-n[i]*n[j])*compi.getCOSIGV(T,compj)/H #Co-annihilation
+                # i+i <-> j+j:
+                sigVjj = comp.getSIGVBSM(T,compj)
+                if sigVjj:
+                    RHS[i] += (rNeq[i,j]*n[j]-n[i])*(rNeq[i,j]*n[j]+n[i])*sigVjj/H #sigVjj*rNeq[i,j]**2 should be finite
+                # i+SM <-> j+SM:
+                cRate = comp.getConvertionRate(T,compj)
+                if cRate:
+                    RHS[i] += (rNeq[i,j]*n[j]-n[i])*cRate/H #cRate*rNeq[i,j] should be finite
+                # j <-> i +SM:
+                RHS[i] += Beff[j,i]*compj.mass(T)*compj.width(T)*(n[j]-NXYth[j,i])/(H*Ri[j]) #NXYth[j,i] should be finite if j -> i +...
+
+            if not self.isActive[i]:
+                if RHS[i] < 0.:
                     continue
-                thermalXsecs = [comp.getCOSIGV(T,compj),comp.getSIGVBSM(T,compj),
-                                comp.getConvertionRate(T,compj)]
-                if thermalXsecs[0]:
-                    coannTerm += thermalXsecs[0]*(neq[i]*neq[j]-n[i]*n[j])/H
-                if thermalXsecs[1]:
-                    bsmScatter += thermalXsecs[1]*((neq[i]/neq[j])*n[j]-n[i])*((neq[i]/neq[j])*n[j]+n[i])/H
-                if thermalXsecs[2]:
-                    if neq[j]:
-                      convertion += thermalXsecs[2]*((neq[i]/neq[j])*n[j]-n[i])/H
-                    else:
-                      convertion += thermalXsecs[2]*(0.*n[j]-n[i])/H
-            annTotal = annTerm+coannTerm+bsmScatter+convertion 
-            #Define approximate decoupling temperature (just used for printout)            
-            if annTotal < 1e-10 and not comp.Tdecouple:
-                comp.Tdecouple = T
-            elif annTotal > 1e-10 and comp.Tdecouple:
-                comp.Tdecouple = None  #Reset decoupling temperature if component becomes coupled
-            RHS += annTotal #Annihilation term
-            for a, compA in enumerate(self.components):
-                if not isActive[a]: continue
-                if a == i: continue                                
-                massA = compA.mass(T)
-                widthA = compA.width(T)
-                RHS += widthA*Beff[a][i]*massA*(n[a] - N2th[a][i])/(H*R[a])  #Injection term
-            dN[i] = RHS/n[i]    #Log equations
-            
+                else:
+                    logger.warning("Inactive component %s is being injected")
 
-        dR = [0.]*len(self.components)
-#Derivatives for the rho/n variables (only for thermal components):        
+            else:
+                dN[i] = np.float64(RHS[i])/np.float64(n[i])
+                if np.isinf(dN[i]):
+                    logger.warning("Infinity found at T=%1.2g. Will be replaced by a large number" %T)
+                    dN[i] = np.nan_to_num(dN[i])
+
+
+        RHS = np.zeros(nComp)
+        #Derivatives for the rho/n variables (only for thermal components):
         for i,comp in enumerate(self.components):
-            if not isActive[i] or comp.Type == 'CO': continue                 
-            mass = comp.mass(T)
-            RHS = -3.*getPressure(mass,rho[i],n[i])/n[i]  #Cooling term
-            for a, compA in enumerate(self.components):
-                if not isActive[a]: continue                
-                if a == i: continue                
-                massA = compA.mass(T)
-                widthA = compA.width(T)
-                RHS += widthA*Beff[a][i]*massA*(1./2. - R[i]/R[a])*(n[a]/n[i] - N2th[a][i]/n[i])/H  #Injection term
+            if not isActive[i] or comp.Type == 'CO':
+                continue
+            mass = masses[i]
+            RHS[i] = -3.*getPressure(mass,rho[i],n[i])  #Cooling term
+            for j, compj in enumerate(self.components):
+                if not isActive[j]: continue
+                if j == i: continue
+                massj = masses[j]
+                widthj = widths[j]
+                #Injection and inverse injection terms:
+                RHS[i] += widthj*Beff[j,i]*massj*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
             
-            dR[i] = RHS
+        dR = RHS/n
 
-        bigerror = False
-        for val in y:
-            if isnan(val) or abs(val) == float('inf'): bigerror = 1     
-        for val in np.array(dN + dR + [dNS]):
-            if not bigerror and (isnan(val) or abs(val) == float('inf')): bigerror = 2
-        if bigerror:
-            if bigerror == 1:  logger.warning("Right-hand called with NaN values.")
-            if bigerror == 2:  logger.warning("Right-hand side evaluated to NaN.")
-
+        dy = np.hstack((dN,dR,[dNS]))
         logger.debug('dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(str(dN),str(dR),str(dNS)))
-        return np.array(dN + dR + [dNS])
+        return dy
             
     def check_decayOf(self,icomp):
         """

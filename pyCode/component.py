@@ -108,7 +108,10 @@ class Component(object):
         Computes the total branching ratio to compoenent comp (sum BR(self -> comp + X..)*comp_multiplicity),
         including the multiplicity factor
         """
-        
+
+        if self is comp:
+            return 0.
+
         brTot = 0.
         for decay in self.getBRs(T):
             if not comp.label in decay.fstateIDs: continue
@@ -116,43 +119,88 @@ class Component(object):
         return brTot
             
 
-    def getNTh(self,T,nDict,neqDict,comp=None):
+    def getNXTh(self,T,n,rNeq,labelsDict):
         """        
-        Computes the effective thermal number density at temperature T:
-        If comp = None: Nth = neq[self]*sum_{decays} BR(self->a + b +...)*(n[a]/neq[a])*(n[b]/neq[b])* ...
-        If comp = component: Nth = (neq[self]/Norm)*sum_{decays} N_component BR(self-> component + b +...)*(n[a]/neq[a])*(n[b]/neq[b])*...
+        Computes the effective thermal number density of first type at temperature T:
           
         :param T: temperature (allows for T-dependent BRs)
-        :param n: Dictionary of number densities
-        :param neq: Dictionary with equilibrium number densities
-        :param comp: Component (if needed) to compute the weight X->Y+...                
+        :param n: list of number densities
+        :param rNeq: list with ratios of number densities
+        :param labelsDict: Dictionary with the component label -> index in n,rNeq mapping
+
+        :return: Effective thermal number density at temperature T of first type (N_X^{th})
         """
-        
-#Compute BRs:
+
+        #Compute BRs:
         Nth = 0.
         BRs = self.getBRs(T)
+        #Index for self:
+        i = labelsDict[self.label]
         neq = self.nEQ(T)
+        #If the thermal equilibrium density of self is zero,
+        #there is no inverse decay:
         if not neq:
             return 0.
+
         for decay in BRs:
+            nprod = 1.
             if not decay.br:
                 continue  #Ignore decays with zero BRs
-            if comp and not comp.label in decay.fstateIDs:
-                continue
-            nprod = neq
             for label in decay.fstateIDs:
-                if label in nDict:
-                    nprod *= (nDict[label]/neqDict[label])
-            if comp:
-                Nth += decay.fstateIDs.count(comp.label)*nprod*decay.br
-            else:
-                Nth += nprod*decay.br
-        
-        if comp and Nth > 0.:    
-            norm = self.getTotalBRTo(T,comp)            
-            return Nth/norm
-        else: return Nth
+                if label in labelsDict:
+                    j = labelsDict[label]
+                    nprod *= rNeq[i,j]*n[j]*neq*decay.br
+            Nth += nprod
 
+        Nth *= neq
+
+        return Nth
+
+    def getNXYTh(self,T,n,rNeq,labelsDict,comp):
+        """
+        Computes the effective thermal number density of second type at temperature T:
+
+        :param T: temperature (allows for T-dependent BRs)
+        :param n: list of number densities
+        :param rNeq: list with ratios of number densities
+        :param labelsDict: Dictionary with the component label -> index in n,rNeq mapping
+        :param comp: Component object.
+
+        :return: Effective thermal number density at temperature T of second type for self -> comp (N_{XY}^{th})
+        """
+
+        norm = comp.getTotalBRTo(T,self)
+        #If comp does not decay to self, return zero
+        if not norm:
+            return 0.
+
+        #Compute BRs:
+        Nth = 0.
+        BRs = comp.getBRs(T)
+        #Index for self:
+        j = labelsDict[comp.label]
+        neq = comp.nEQ(T)
+        #If the thermal equilibrium density of comp is zero,
+        #there is no inverse injection:
+        if not neq:
+            return 0.
+
+        for decay in BRs:
+            nprod = 1.
+            if not decay.br:
+                continue  #Ignore decays with zero BRs
+            if not self.label in decay.fstateIDs:
+                continue #Ignore decays which do not include self
+            for label in decay.fstateIDs:
+                if label in labelsDict:
+                    i = labelsDict[label]
+                    nprod *= rNeq[j,i]*n[i]*neq*decay.br
+
+            Nth += nprod*decay.fstateIDs.count(self.label)
+
+        Nth *= neq/norm
+
+        return Nth
 
     def getSIGV(self,T):
         """
@@ -169,6 +217,9 @@ class Component(object):
         at temperature T
         """
         
+        if other is self:
+            return 0.
+
         return self.coSigmav(T,other)
 
     def getConvertionRate(self,T,other):
@@ -176,7 +227,10 @@ class Component(object):
         Returns the thermally averaged annihilation rate self+SM -> other+SM
         at temperature T
         """
-        
+
+        if other is self:
+            return 0.
+
         return self.convertionRate(T,other)
 
     def getSIGVBSM(self,T,other):
@@ -185,15 +239,10 @@ class Component(object):
         at temperature T
         """
         
+        if other is self:
+            return 0.
+        
         return self.sigmavBSM(T,other)
-
-        
-    def getSource(self,T):
-        """
-        Computes the source term (C) at temperature T
-        """
-        
-        return self.source(T)
         
     def nEQ(self,T):
         """Returns the equilibrium number density at temperature T. Returns zero for non-thermal components"""
@@ -212,7 +261,32 @@ class Component(object):
             
         neq = neq*abs(self.dof)
         return neq
-    
+
+    def rNeq(self,T,other):
+        """Returns the ratio of equilibrium number densities at temperature T nEQ_self/nEQ_other"""
+
+        if not 'thermal' in self.Type:
+            return 0.
+
+        if self is other:
+            return 1.
+
+        x = T/self.mass(T)
+        y = T/other.mass(T)
+        if x < 0.1 and y < 0.1: #Both are non-relativistic
+            r = (self.mass(T)/other.mass(T))**3
+            r *= exp(1/y-1/x)
+            r *= (x/y)**(3./2.)
+            r *= (1. + (15./8.)*x + (105./128.)*x**2)/(1. + (15./8.)*y + (105./128.)*y**2)
+        else:
+            neqA = self.nEQ(T)
+            neqB = other.nEQ(T)
+            if not neqB:
+                return None
+            r = neqA/neqB
+
+        return r
+
     def rEQ(self,T):
         """Returns the ratio of equilibrium energy and number densities at temperature T,\
         assuming chemical potential = 0."""
