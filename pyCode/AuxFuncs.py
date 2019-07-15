@@ -245,6 +245,8 @@ def getTemperature(x,NS):
 def getPressure(mass, rho, n):
     """Computes the pressure for a component, given its mass, its energy density and its number density"""
 
+    if not rho or not n:
+        return 0.
     R = rho/n    
     if R > 11.5*mass: return n*(R/3)  # Ultra relativistic limit
     if R <= mass: return 0.  # Ultra non-relativistic limit

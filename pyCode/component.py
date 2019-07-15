@@ -141,7 +141,6 @@ class Component(object):
         #there is no inverse decay:
         if not neq:
             return 0.
-
         for decay in BRs:
             nprod = 1.
             if not decay.br:
@@ -149,7 +148,7 @@ class Component(object):
             for label in decay.fstateIDs:
                 if label in labelsDict:
                     j = labelsDict[label]
-                    nprod *= rNeq[i,j]*n[j]*neq*decay.br
+                    nprod *= rNeq[i,j]*n[j]*decay.br/neq
             Nth += nprod
 
         Nth *= neq

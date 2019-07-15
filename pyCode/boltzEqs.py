@@ -114,6 +114,10 @@ class BoltzEqs(object):
         for i,comp in enumerate(self.components):
             if not isActive[i]: continue
             dNS += comp.getBRX(T)*comp.width(T)*comp.mass(T)*(n[i]-NXth[i])*exp(3.*x - NS)/(H*T)
+        if np.isinf(dNS):
+            logger.warning("Infinity found in dNS at T=%1.2g. Will be replaced by a large number" %(T))
+            dNS = np.nan_to_num(dNS)
+
         logger.debug('Done computing entropy derivative')
 
         #Derivatives for the Ni=log(ni/s0) variables:
@@ -145,21 +149,20 @@ class BoltzEqs(object):
                     RHS[i] += (rNeq[i,j]*n[j]-n[i])*cRate/H #cRate*rNeq[i,j] should be finite
                 # j <-> i +SM:
                 RHS[i] += Beff[j,i]*compj.mass(T)*compj.width(T)*(n[j]-NXYth[j,i])/(H*Ri[j]) #NXYth[j,i] should be finite if j -> i +...
-
             if not self.isActive[i]:
                 if RHS[i] < 0.:
                     continue
                 else:
                     logger.warning("Inactive component %s is being injected")
-
-            else:
+            elif RHS[i]:
                 dN[i] = np.float64(RHS[i])/np.float64(n[i])
                 if np.isinf(dN[i]):
-                    logger.warning("Infinity found at T=%1.2g. Will be replaced by a large number" %T)
+                    logger.warning("Infinity found at in dN[%s] at T=%1.2g. Will be replaced by a large number" %(comp.label,T))
                     dN[i] = np.nan_to_num(dN[i])
 
 
         RHS = np.zeros(nComp)
+        dR = np.zeros(nComp)
         #Derivatives for the rho/n variables (only for thermal components):
         for i,comp in enumerate(self.components):
             if not isActive[i] or comp.Type == 'CO':
@@ -173,11 +176,16 @@ class BoltzEqs(object):
                 widthj = widths[j]
                 #Injection and inverse injection terms:
                 RHS[i] += widthj*Beff[j,i]*massj*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
-            
-        dR = RHS/n
+
+            if RHS[i]:
+                dR[i] = np.float64(RHS[i])/np.float64(n[i])
+                if np.isinf(dR[i]):
+                    logger.warning("Infinity found in dR[%s] at T=%1.2g. Will be replaced by a large number" %(comp.label,T))
+                    dR[i] = np.nan_to_num(dR[i])
 
         dy = np.hstack((dN,dR,[dNS]))
         logger.debug('dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(str(dN),str(dR),str(dNS)))
+
         return dy
             
     def check_decayOf(self,icomp):
