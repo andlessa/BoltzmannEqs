@@ -51,20 +51,41 @@ def main(parameterFile,outputFile,showPlot=True):
     
     #Annihilation rate for mediator
     data = np.genfromtxt('./width_and_medxs.dat',skip_header=5)
+    dataR = np.genfromtxt('./sigmav_conversion_bchi-sbotg_500_510_1.dat',skip_header=6,usecols=(0,4))
     conv = 0.8579e17
-    sigmaVJan = np.vectorize(lambda T: np.exp(interp1d(data[:,0],np.log(data[:,1]*conv),
-                                                       fill_value='extrapolate',
-                                                       bounds_error=False)(500./T)))    
-    
+
+    sLog = lambda x: interp1d(data[:,0],np.log(data[:,1]*conv),
+                        fill_value='extrapolate',bounds_error=False)(x)
+    cRateLog = lambda x: interp1d(dataR[:,0],np.log(dataR[:,1]*conv*(2.6e-7)**2),
+                        fill_value='extrapolate',bounds_error=False)(x)
+
     #Conversion rates for DM and mediator: 
     dofDM = -2 #Number of DM degrees of freedom (Majorana fermion)
-    dofMed = 3 #Number of Mediator degrees of freedom (complex colored scalar)
-    dataR = np.genfromtxt('./sigmav_conversion_bchi-sbotg_500_510_1.dat',skip_header=6,usecols=(0,4))    
-    cRateDMJan = np.vectorize(lambda T: nEQbottom(T)*np.exp(interp1d(dataR[:,0],np.log(dataR[:,1]*conv*(2.6e-7)**2),
-                                                                     fill_value='extrapolate',bounds_error=False)(500./T)))
-    cRateMedJan = np.vectorize(lambda T: nEQgluon(T)*abs(dofMed/dofDM)*np.exp(interp1d(dataR[:,0],np.log(dataR[:,1]*conv*(2.6e-7)**2),
-                                                                                       fill_value='extrapolate',
-                                                                                       bounds_error=False)(510./T)))
+    dofMed = 3*2 #Number of Mediator degrees of freedom (complex colored scalar)
+
+    @np.vectorize
+    def sigmaVJan(T):
+        x = 500./T
+        if x > data[:,0].max():
+            return 0.
+        sF = sLog(x)
+        return np.exp(sF)
+
+    @np.vectorize
+    def cRateDMJan(T):
+        x = 500./T
+        if x > dataR[:,0].max():
+            return 0.
+        sF = cRateLog(x)
+        return nEQbottom(T)*np.exp(sF)
+
+    @np.vectorize
+    def cRateMedJan(T):
+        x = 510./T
+        if x > dataR[:,0].max():
+            return 0.
+        sF = cRateLog(x)
+        return nEQgluon(T)*np.exp(sF)*abs(dofMed/dofDM)
 
     
     #Define the components to be evolved and their properties:    
@@ -82,7 +103,7 @@ def main(parameterFile,outputFile,showPlot=True):
     
     
     #Evolve the equations from TR to TF
-    solution = BoltzSolution(compList,TRH,TF,npoints=500)
+    solution = BoltzSolution(compList,TRH,TF,npoints=5000)
     solved = solution.Evolve()
     if not solved:
         return
