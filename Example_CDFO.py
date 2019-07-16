@@ -61,7 +61,7 @@ def main(parameterFile,outputFile,showPlot=True):
 
     #Conversion rates for DM and mediator: 
     dofDM = -2 #Number of DM degrees of freedom (Majorana fermion)
-    dofMed = 3*2 #Number of Mediator degrees of freedom (complex colored scalar)
+    dofMed = 3 #Number of Mediator degrees of freedom (complex colored scalar)
 
     @np.vectorize
     def sigmaVJan(T):
