@@ -11,7 +11,7 @@
 """
 
 from pyCode.AuxFuncs import Hfunc, getTemperature, getPressure
-from numpy import exp, log, isnan
+from numpy import exp, log
 import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -34,6 +34,32 @@ class BoltzEqs(object):
         #Define discontinuity events:            
         self.events = [self.check_decayOf(i) for i in range(len(compList))]
         self.events += [self.check_oscillationOf(i) for i in range(len(compList))]
+
+
+    def __getattr__(self, attr):
+        """
+        If self does not contain the attribute
+        and the attribute has not been defined for the components
+        return an array with the values for each component.
+        It also applies to methods.
+
+        :param attr: Attribute name
+
+        :return: Array with attribute values
+        """
+
+        if not all(hasattr(comp,attr) for comp in self.components):
+            raise AttributeError("Components do not have attribute ``%s''" %attr)
+
+
+        val = getattr(self.components[0],attr)
+        if not callable(val):
+            return np.array([getattr(br,attr) for br in self.components])
+
+        def call(*args, **kw):
+            return np.array([getattr(comp, attr)(*args, **kw) for comp in self.components])
+        return call
+
 
     def updateValues(self,x,y,isActive):
         """Replace the variables in self.components and set the new initial conditions."""        
@@ -82,7 +108,7 @@ class BoltzEqs(object):
                 rho[i] = comp.mass(T)/Ri[i]
 
         #Compute equilibrium densities:
-        neq = np.array([comp.nEQ(T) for comp in self.components])
+        neq = self.nEQ(T)
 
         #Compute ratio of equilibrium densities
         #(helps with numerical instabilities)
@@ -101,7 +127,7 @@ class BoltzEqs(object):
         logger.debug('RHS: Computing weights')
         #Effective equilibrium densities and BRs:
         #NXth[i] = N^{th}_i:
-        NXth = np.array([comp.getNXTh(T,n,rNeq,labelsDict) for comp in self.components])
+        NXth = self.getNXTh(T,n,rNeq,labelsDict)
         #NXYth[i,j] = N^{th}_{ij}:
         NXYth = np.array([[compi.getNXYTh(T,n,rNeq,labelsDict,compj) for compj in self.components] for compi in self.components])
         #Effective branching ratio (Beff[i,j] = B^{eff}_{ij}:
@@ -123,8 +149,8 @@ class BoltzEqs(object):
         #Derivatives for the Ni=log(ni/s0) variables:
         logger.debug('Computing Ni derivatives')
         dN = np.zeros(nComp)
-        widths = np.array([comp.width(T) for comp in self.components])
-        masses = np.array([comp.mass(T) for comp in self.components])
+        widths = self.width(T)
+        masses = self.mass(T)
         #Expansion term:
         RHS = -3*n
         #Decay term:
@@ -132,7 +158,7 @@ class BoltzEqs(object):
         #Inverse decay term:
         RHS += widths*masses*NXth/(H*Ri) #NXth should be finite if i -> j +..
         #Annihilation term:
-        sigmaV = np.array([comp.getSIGV(T) for comp in self.components])
+        sigmaV = self.getSIGV(T)
         RHS += sigmaV*(neq - n)*(neq + n)/H
         #Contributions from other BSM states:
         for i,compi in enumerate(self.components):
@@ -148,7 +174,8 @@ class BoltzEqs(object):
                 if cRate:
                     RHS[i] += (rNeq[i,j]*n[j]-n[i])*cRate/H #cRate*rNeq[i,j] should be finite
                 # j <-> i +SM:
-                RHS[i] += Beff[j,i]*compj.mass(T)*compj.width(T)*(n[j]-NXYth[j,i])/(H*Ri[j]) #NXYth[j,i] should be finite if j -> i +...
+                RHS[i] += Beff[j,i]*masses[j]*widths[j]*(n[j]-NXYth[j,i])/(H*Ri[j]) #NXYth[j,i] should be finite if j -> i +...
+
             if not self.isActive[i]:
                 if RHS[i] < 0.:
                     continue
@@ -184,7 +211,7 @@ class BoltzEqs(object):
                     dR[i] = np.nan_to_num(dR[i])
 
         dy = np.hstack((dN,dR,[dNS]))
-        logger.debug('dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(str(dN),str(dR),str(dNS)))
+        logger.debug('T = %1.23g, dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(T,str(dN),str(dR),str(dNS)))
 
         return dy
             
