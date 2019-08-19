@@ -24,7 +24,9 @@ Zeta3 = zetac(3.) + 1.
 
 
 class BoltzEqs(object):
-    """Class to hold the Boltzmann equations"""
+    """
+    Class to hold the Boltzmann equations
+    """
     
     #Sets the initial conditions
     def __init__(self,compList,x0=None,y0=None,isActive=None):

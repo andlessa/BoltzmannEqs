@@ -327,7 +327,7 @@ class Component(object):
         if self.Type != 'CO': return None
         else: return self.coherentAmplitute(T)
         
-    def getInitialCond(self,T,components=[]):
+    def guessInitialCond(self,T,components=[]):
         """
         Get initial conditions for component at temperature T, assuming the energy
         density is dominated by radiation.
@@ -335,45 +335,24 @@ class Component(object):
         
         H = sqrt(8.*pi**3*AuxFuncs.gSTAR(T)/90.)*T**2/MP
         
-        N = None
-        R = None
-                
-        if self.Type == 'thermal' or self.Type == 'weakthermal':
-            coannTerm = 0. #Co-annihilation term
-            bsmScatter = 0. #2<->2 scattering between BSM components
-            convertion = 0. #i<->j convertion
-            annTerm = self.getSIGV(T)*self.nEQ(T)/H #Annihilation term
-            for comp in components:
-                if comp is self:
-                    continue
-                if comp.Tdecouple:
-                    continue
-                coannTerm += self.getCOSIGV(T,comp)*self.nEQ(T)/H
-                bsmScatter += self.getSIGVBSM(T,comp)*self.nEQ(T)/H
-                convertion += self.getConvertionRate(T,comp)/H
+        coannTerm = 0. #Co-annihilation term
+        bsmScatter = 0. #2<->2 scattering between BSM components
+        convertion = 0. #i<->j convertion
+        annTerm = self.getSIGV(T)*self.nEQ(T)/H #Annihilation term
+        for comp in components:
+            if comp is self:
+                continue
+            if comp.Tdecouple:
+                continue
+            coannTerm += self.getCOSIGV(T,comp)*self.nEQ(T)/H
+            bsmScatter += self.getSIGVBSM(T,comp)*self.nEQ(T)/H
+            convertion += self.getConvertionRate(T,comp)/H
 
-            totalProdRate = annTerm+convertion+bsmScatter+coannTerm
-            if totalProdRate < 2.:  #Particle starts decoupled
-                logger.info("Particle %s starting decoupled" %self)
-                self.Tdecouple = T
-                initN =  1e-10*self.nEQ(T)
-                N = log(initN)
-            else: #Particle starts coupled
-                logger.info("Particle %s starting in thermal equilibrium" %self)
-                initN =  self.nEQ(T)
-                N = log(initN)
-            R = self.rEQ(T)
-        else:
-            self.Tdecouple = T  #CO particles are always decoupled
-            if self.isOscillating(T,H):  #Particle starts oscillating
-                self.Tosc = T
-                initN = self.getOscAmplitute(T)/self.mass(T)
-                N = log(initN)
-                R = self.mass(T)            
-            else:
-                self.active = False   #Deactivate component if it does not start oscillating 
-                N = 0.
-                R = 0.
-            
-        return N,R
+        totalProdRate = annTerm+convertion+bsmScatter+coannTerm
+        if totalProdRate < 2.:  #Particle starts decoupled
+            logger.info("Particle %s starting decoupled" %self)
+            return 1e-10*self.nEQ(T)
+        else: #Particle starts coupled
+            logger.info("Particle %s starting in thermal equilibrium" %self)
+            return self.nEQ(T)
         
