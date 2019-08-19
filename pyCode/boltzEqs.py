@@ -164,13 +164,15 @@ class BoltzEqs(object):
         for i,compi in enumerate(self.components):
             for j,compj in enumerate(self.components):
                 # i + j <-> SM + SM:
-                RHS[i] += (neq[i]*neq[j]-n[i]*n[j])*compi.getCOSIGV(T,compj)/H #Co-annihilation
+                sigVij = compi.getCOSIGV(T,compj)
+                if sigVij:
+                    RHS[i] += (neq[i]*neq[j]-n[i]*n[j])*sigVij/H #Co-annihilation
                 # i+i <-> j+j:
-                sigVjj = comp.getSIGVBSM(T,compj)
+                sigVjj = compi.getSIGVBSM(T,compj)
                 if sigVjj:
                     RHS[i] += (rNeq[i,j]*n[j]-n[i])*(rNeq[i,j]*n[j]+n[i])*sigVjj/H #sigVjj*rNeq[i,j]**2 should be finite
                 # i+SM <-> j+SM:
-                cRate = comp.getConvertionRate(T,compj)
+                cRate = compi.getConvertionRate(T,compj)
                 if cRate:
                     RHS[i] += (rNeq[i,j]*n[j]-n[i])*cRate/H #cRate*rNeq[i,j] should be finite
                 # j <-> i +SM:
@@ -180,7 +182,7 @@ class BoltzEqs(object):
                 if RHS[i] < 0.:
                     continue
                 else:
-                    logger.warning("Inactive component %s is being injected")
+                    logger.warning("Inactive component %s is being injected" %compi.label)
             elif RHS[i]:
                 dN[i] = np.float64(RHS[i])/np.float64(n[i])
                 if np.isinf(dN[i]):

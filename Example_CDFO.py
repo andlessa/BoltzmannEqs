@@ -39,7 +39,7 @@ def main(parameterFile,outputFile,showPlot=True):
 
     #Get the model parameters (or define them here):
     TRH = 1e4
-    TF = 1e-3
+    TF = 1
     
     def nEQbottom(T):
         Zeta3 = 1.20206
