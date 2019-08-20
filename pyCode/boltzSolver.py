@@ -363,7 +363,7 @@ class BoltzSolution(object):
 
         sigV = self.components[icomp].getSIGV(T)
         nEQ = self.components[icomp].nEQ(T)
-        return 1. - nEQ*sigV/H
+        return 10. - nEQ*sigV/H
 
         
     def updateSolution(self,r):
