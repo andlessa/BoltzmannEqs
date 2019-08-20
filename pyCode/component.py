@@ -11,7 +11,7 @@
 
 from pyCode.AuxDecays import DecayList
 from scipy.special import kn,zetac
-from numpy import exp,log,sqrt,pi
+from numpy import exp,sqrt,pi
 from  pyCode import AuxFuncs
 from types import FunctionType
 import logging
@@ -250,7 +250,7 @@ class Component(object):
         if not 'thermal' in self.Type:
             return 0.
         
-        x = T/self.mass(T) 
+        x = T/self.mass(T)
         if x < 0.1:
             neq = self.mass(T)**3*(x/(2*pi))**(3./2.)*exp(-1/x)*(1. + (15./8.)*x + (105./128.)*x**2) #Non-relativistic
         elif x < 1.5:            

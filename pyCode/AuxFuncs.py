@@ -11,8 +11,8 @@
 """
 
 import os
-from scipy import integrate, interpolate, optimize
-from numpy import exp, sqrt, log, pi, log10, arange
+from scipy import integrate, interpolate
+from numpy import exp, sqrt, log, pi, log10, logspace
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -144,7 +144,8 @@ def getOmega(comp,rho,n,T):
     rhoh2 = 8.0992*10.**(-47)   # value of rho critic divided by h^2
     dx = (1./3.)*log(gSTARS(T)/gSTARS(Ttoday)) + log(T/Ttoday)   #dx = log(R/R_today), where R is the scale factor
     nToday = n*exp(-3.*dx)
-    ns = log((2*pi**2/45)*T**3)  #entropy (constant) 
+    s0 = (2*pi**2/45)*T**3
+    ns = 0.  #log(entropy) (constant) 
     
     if comp.Type == 'CO': return nToday*comp.mass(Ttoday)/rhoh2  #CO components have trivial (non-relativistic) solution 
                
@@ -153,10 +154,11 @@ def getOmega(comp,rho,n,T):
     Pmin = getPressure(comp.mass(Ttoday),Rmin*nToday,nToday)
       
            
-    if abs(Pmin - Rmin*nToday/3.)/(Rmin*nToday/3.) < 0.01: RToday = Rmin  #Relativistic component today
+    if abs(Pmin - Rmin*nToday/3.)/(Rmin*nToday/3.) < 0.01:
+        RToday = Rmin  #Relativistic component today
     else:
         def Rfunc(R,x):            
-            TF = getTemperature(x,ns)
+            TF = getTemperature(x,ns,s0)
             nF = n*exp(-3*x)   #Number density at x (decoupled solution)
             rhoF = R*nF         #Energy density at x                        
             return -3*getPressure(comp.mass(TF),rhoF,nF)/nF
@@ -211,7 +213,7 @@ def getFunctions(pclFile):
     logger.info("Computing auxiliary functions. This calculation is done only once and the results will be stored in %s.\n" %pclFile)
     
     #Get points to evaluate gSTAR
-    Tpts = [10**i for i in arange(log10(Tmin),log10(Tmax),0.01)]
+    Tpts = logspace(log10(Tmin),log10(Tmax),num=2000)
     #Evaluate gSTAR and gSTARS at these points
     gSTARpts = [gSTARexact(T) for T in Tpts]
     gSTARSpts = [gSTARSexact(T) for T in Tpts]
@@ -230,11 +232,11 @@ def getFunctions(pclFile):
     pickle.dump(Tfunc,f)
     f.close()
 
-def getTemperature(x,NS):
+def getTemperature(x,NS,S0=1.):
     
     xmin = log((2*pi**2/45.)*gSTARS(Tmin)*Tmin**3)
     xmax = log((2*pi**2/45.)*gSTARS(Tmax)*Tmax**3)
-    xeff = NS - 3.*x
+    xeff = NS + log(S0) - 3.*x
     if xeff < xmin:  #For T < Tmin, g* is constant
         return ((45./(2*pi**2))*exp(xeff)/gSTARS(Tmin))**(1./3.)
     elif xeff > xmax: #For T > Tmax, g* is constant
@@ -339,25 +341,6 @@ def gSTARSexact(T):
         return gSTARexact(T)
     else:  # Correct for neutrino decoupling:        
         return gSTARexact(T) - (7. / 8.) * 6.*(4. / 11.) ** (4. / 3.) + (7. / 8.) * 6.*(4. / 11.)
-
-def getTexact(x,NS):
-    """Computes the temperature for the thermal bath from xeff = NS - 3*x, where
-    x = log(R) and NS = log(S)."""
-
-    xeff = NS - 3*x
-    
-    def TfuncA(T):
-        """Auxiliary function, its zero implicitly determines T"""        
-        return ((2.*pi**2)/45)*gSTARSexact(T)*T**3 - exp(xeff)
-
-    Tmax = (45./(2.*pi**2))**(1./3.)*exp(xeff/3)  # Upper limit on T (since gSTARS > 1 always)
-    Tmin = (45./(2.*pi**2*230.))**(1./3.)*exp(xeff/3)  # Lower limit on T (since gSTARS < 225 always)
-    
-    if gSTARSexact(Tmin) == gSTARSexact(Tmax):
-        return (((2.*pi**2)/45)*gSTARSexact(Tmin))**(-1./3.)*exp(xeff/3)
-            
-    return optimize.brenth(TfuncA, Tmin, Tmax)
-
 
 
 #Load auxiliary (pre-computed) functions:

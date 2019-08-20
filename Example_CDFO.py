@@ -101,10 +101,9 @@ def main(parameterFile,outputFile,showPlot=True):
                    )
     compList = [dm,mediator]
     
-    
     #Evolve the equations from TR to TF
-    solution = BoltzSolution(compList,TRH,TF,npoints=5000)
-    solved = solution.Evolve()
+    solution = BoltzSolution(compList,TRH)
+    solved = solution.EvolveTo(TF,npoints=5000)
     if not solved:
         return
     
@@ -117,7 +116,7 @@ def main(parameterFile,outputFile,showPlot=True):
         solution.printData(outputFile)
 #     else:
     solution.printSummary()
-    
+     
     if showPlot:
         #Plot solutions
         import matplotlib.pyplot as plt   
