@@ -40,7 +40,8 @@ class BoltzSolution(object):
                 def fSuppressed(x,y,icomp=i):
                     return y[icomp]+200.
                 def fEquilibrium(x,y,icomp=i):
-                    return self.checkThermalEQ(x,y,icomp)
+                    return 1.
+#                     return self.checkThermalEQ(x,y,icomp)
                 self.events.append(fSuppressed) #Stop evolution particle if its number is too small
                 self.events.append(fEquilibrium) #Stop evolution if particle is decoupling
         #Set flag so integration stops when any event occurs:
@@ -263,8 +264,8 @@ class BoltzSolution(object):
         RHS = -3*n
         for i,compi in enumerate(self.components):
             #If particle is deep in thermal equilibrium, ignore other contributions
-            if compi.thermalEQ:
-                continue
+#             if compi.thermalEQ:
+#                 continue
             #Decay term:
             RHS += -widths*masses*n/(H*Ri)
             #Inverse decay term:
@@ -272,7 +273,6 @@ class BoltzSolution(object):
             #Annihilation term:
             sigmaV = self.getSIGV(T)
             RHS += sigmaV*(neq - n)*(neq + n)/H
-            
             #Contributions from other BSM states:
             for j,compj in enumerate(self.components):
                 # i + j <-> SM + SM:
@@ -314,8 +314,8 @@ class BoltzSolution(object):
             mass = masses[i]
             RHS[i] = -3.*getPressure(mass,rho[i],n[i])  #Cooling term
             #If particle is deep in thermal equilibrium, ignore other contributions
-            if compi.thermalEQ:
-                continue            
+#             if compi.thermalEQ:
+#                 continue            
             for j, compj in enumerate(self.components):
                 if not isActive[j]:
                     continue
