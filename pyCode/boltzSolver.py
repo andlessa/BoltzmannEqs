@@ -242,13 +242,15 @@ class BoltzSolution(object):
         Beff = np.array([[compi.getTotalBRTo(T,compj) for compj in self.components] for compi in self.components])
         logger.debug('Done computing weights')
 
+        widths = self.width(T)
+        masses = self.mass(T)
+        BRX = self.getBRX(T)
+        sigmaV = self.getSIGV(T)
+        
+        
         # Derivative for entropy:
         logger.debug('Computing entropy derivative')     
-        dNS = 0.
-        for i,comp in enumerate(self.components):
-            if not isActive[i]:
-                continue
-            dNS += comp.getBRX(T)*comp.width(T)*comp.mass(T)*(n[i]-NXth[i])*exp(3.*x - NS)/(H*T*self.normS)
+        dNS = np.sum(isActive*BRX*widths*masses*(n-NXth))*exp(3.*x - NS)/(H*T*self.normS)
         if np.isinf(dNS):
             logger.warning("Infinity found in dNS at T=%1.2g. Will be replaced by a large number" %(T))
             dNS = np.nan_to_num(dNS)
@@ -258,38 +260,27 @@ class BoltzSolution(object):
         #Derivatives for the Ni=log(ni/s0) variables:
         logger.debug('Computing Ni derivatives')
         dN = np.zeros(nComp)
-        widths = self.width(T)
-        masses = self.mass(T)
         #Expansion term:
         RHS = -3*n
-        for i,compi in enumerate(self.components):
-            #If particle is deep in thermal equilibrium, ignore other contributions
-#             if compi.thermalEQ:
-#                 continue
-            #Decay term:
-            RHS += -widths*masses*n/(H*Ri)
-            #Inverse decay term:
-            RHS += widths*masses*NXth/(H*Ri) #NXth should be finite if i -> j +..
-            #Annihilation term:
-            sigmaV = self.getSIGV(T)
-            RHS += sigmaV*(neq - n)*(neq + n)/H
-            #Contributions from other BSM states:
-            for j,compj in enumerate(self.components):
-                # i + j <-> SM + SM:
-                sigVij = compi.getCOSIGV(T,compj)
-                if sigVij:
-                    RHS[i] += (neq[i]*neq[j]-n[i]*n[j])*sigVij/H #Co-annihilation
-                # i+i <-> j+j:
-                sigVjj = compi.getSIGVBSM(T,compj)
-                if sigVjj:
-                    RHS[i] += (rNeq[i,j]*n[j]-n[i])*(rNeq[i,j]*n[j]+n[i])*sigVjj/H #sigVjj*rNeq[i,j]**2 should be finite
-                # i+SM <-> j+SM:
-                cRate = compi.getConvertionRate(T,compj)
-                if cRate:
-                    RHS[i] += (rNeq[i,j]*n[j]-n[i])*cRate/H #cRate*rNeq[i,j] should be finite
-                # j <-> i +SM:
-                RHS[i] += Beff[j,i]*masses[j]*widths[j]*(n[j]-NXYth[j,i])/(H*Ri[j]) #NXYth[j,i] should be finite if j -> i +...
+        #Decay term:
+        RHS -= isActive*widths*masses*n/(H*Ri)
+        #Inverse decay term:
+        RHS += isActive*widths*masses*NXth/(H*Ri) #NXth should be finite if i -> j +..
+        #Annihilation term:            
+        RHS += isActive*sigmaV*(neq - n)*(neq + n)/H
+        # i + j <-> SM + SM:
+        sigVij = [[compi.getCOSIGV(T,compj) for compj in self.components] for compi in self.components]
+        RHS += isActive*np.einsum('ij,ij->i',sigVij,np.outer(neq,neq)-np.outer(n,n))/H
+        # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
+        sigVjj = [[compi.getSIGVBSM(T,compj) for compj in self.components] for compi in self.components]
+        RHS += (np.einsum('ij,j,ij->i',rNeq**2,n**2,sigVjj)-n**2*np.einsum('ij->i',sigVjj))/H
+        # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
+        cRate = [[compi.getConvertionRate(T,compj) for compj in self.components] for compi in self.components]
+        RHS += isActive*(np.einsum('ij,j,ij->i',rNeq,n,cRate)-n*np.einsum('ij->i',cRate))/H
+        # j <-> i +SM (#NXYth[j,i] should be finite if j -> i +...)
+        RHS += (np.einsum('ji,j,j,j->i',Beff,masses/Ri,widths,n)-np.einsum('ji,j,j,ji->i',Beff,masses/Ri,widths,NXYth))/H
 
+        for i,compi in enumerate(self.components):
             if not isActive[i]:
                 if RHS[i] < 0.:
                     continue
@@ -338,7 +329,155 @@ class BoltzSolution(object):
         logger.debug('T = %1.23g, dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(T,str(dN),str(dR),str(dNS)))
 
         return dy
-    
+
+#     def jac(self,x,y):
+#         """
+#         Computes the jacobian for the set of differential equations (df_i/dy_j for dy/dx = f).
+#         Returns a matrix with the derivatives. The result relies on a numerical approximation
+#         for the derivatives of thermal quantities (T-dependent)
+#         
+#         :param x: x variable (x = log(R/R0))
+#         :param y: variables being evolved (y = [Ni,Ri,NS])
+#         
+#         :return: 2-D array with the derivatives 
+#         """ 
+#     
+#     
+#         isActive = self.active
+#         #Store the number of components:
+#         nComp = len(self.components)
+# 
+#         #Ni = log(n_i/s_0)
+#         Ni = y[:nComp]
+#         #R = rho_i/n_i
+#         Ri = y[nComp:2*nComp]
+#         #NS = log(S/S_0)
+#         NS = y[-1]
+# 
+#         #Get temperature from entropy and scale factor:
+#         T = getTemperature(x,NS,self.normS)
+# 
+#         #Current number densities:
+#         n = self.norm*np.exp(Ni)
+#         #Current energy densities:
+#         rho = n*Ri
+# 
+#         #Compute equilibrium densities:
+#         neq = self.nEQ(T)
+# 
+#         #Compute ratio of equilibrium densities
+#         #(helps with numerical instabilities)
+#         #rNeq[i,j] = neq[i]/neq[j]
+#         rNeq = np.array([[compi.rNeq(T,compj) for compj in self.components] for compi in self.components])
+# 
+#         #Dictionary with label:index mapping:
+#         labelsDict = dict([[comp.label,i] for i,comp in enumerate(self.components)])
+# 
+#         #Compute Hubble factor:
+#         H = Hfunc(T,rho,isActive)
+# 
+#         #Auxiliary weights:
+#         #Effective equilibrium densities and BRs:
+#         #NXth[i] = N^{th}_i:
+#         NXth = self.getNXTh(T,n,rNeq,labelsDict)
+#         #NXYth[i,j] = N^{th}_{ij}:
+#         NXYth = np.array([[compi.getNXYTh(T,n,rNeq,labelsDict,compj) for compj in self.components] for compi in self.components])
+#         #Effective branching ratio (Beff[i,j] = B^{eff}_{ij}:
+#         Beff = np.array([[compi.getTotalBRTo(T,compj) for compj in self.components] for compi in self.components])
+#         
+#         widths = self.width(T)
+#         masses = self.mass(T)
+#         BRX = self.getBRX(T)
+#         
+#         delta = np.identity(nComp)
+#         
+#         #Jacobian for entropy:     
+#         dFS = np.zeros(2*nComp+1)
+#         FS = np.sum(isActive*BRX*widths*masses*(n-NXth))*exp(3.*x - NS)/(H*T*self.normS)
+#         dFS[:nComp] = np.einsum('i,i,i,i,il->l',isActive,BRX,widths,masses,delta-dNX)*exp(3.*x - NS)/(H*T)
+#         dFS[-1] = -FS + (T/3.)*dFSdT
+#         
+#         #Derivatives for the Ni=log(ni/s0) variables:
+#         logger.debug('Computing Ni derivatives')
+#         dN = np.zeros(nComp)
+#         #Expansion term:
+#         RHS = -3*n
+#         for i,compi in enumerate(self.components):
+#             #If particle is deep in thermal equilibrium, ignore other contributions
+# #             if compi.thermalEQ:
+# #                 continue
+#             #Decay term:
+#             RHS += -widths*masses*n/(H*Ri)
+#             #Inverse decay term:
+#             RHS += widths*masses*NXth/(H*Ri) #NXth should be finite if i -> j +..
+#             #Annihilation term:
+#             sigmaV = self.getSIGV(T)
+#             RHS += sigmaV*(neq - n)*(neq + n)/H
+#             #Contributions from other BSM states:
+#             for j,compj in enumerate(self.components):
+#                 # i + j <-> SM + SM:
+#                 sigVij = compi.getCOSIGV(T,compj)
+#                 if sigVij:
+#                     RHS[i] += (neq[i]*neq[j]-n[i]*n[j])*sigVij/H #Co-annihilation
+#                 # i+i <-> j+j:
+#                 sigVjj = compi.getSIGVBSM(T,compj)
+#                 if sigVjj:
+#                     RHS[i] += (rNeq[i,j]*n[j]-n[i])*(rNeq[i,j]*n[j]+n[i])*sigVjj/H #sigVjj*rNeq[i,j]**2 should be finite
+#                 # i+SM <-> j+SM:
+#                 cRate = compi.getConvertionRate(T,compj)
+#                 if cRate:
+#                     RHS[i] += (rNeq[i,j]*n[j]-n[i])*cRate/H #cRate*rNeq[i,j] should be finite
+#                 # j <-> i +SM:
+#                 RHS[i] += Beff[j,i]*masses[j]*widths[j]*(n[j]-NXYth[j,i])/(H*Ri[j]) #NXYth[j,i] should be finite if j -> i +...
+# 
+#             if not isActive[i]:
+#                 if RHS[i] < 0.:
+#                     continue
+#                 else:
+#                     logger.warning("Inactive component %s is being injected" %compi.label)
+#                     
+#         for i,compi in enumerate(self.components):
+#             if not isActive[i]:
+#                 continue
+#             dN[i] = np.float64(RHS[i])/np.float64(n[i])
+#             if np.isinf(dN[i]):
+#                 logger.warning("Infinity found at in dN[%s] at T=%1.2g. Will be replaced by a large number" %(comp.label,T))
+#                 dN[i] = np.nan_to_num(dN[i])
+# 
+# 
+#         RHS = np.zeros(nComp)
+#         dR = np.zeros(nComp)
+#         #Derivatives for the rho/n variables (only for thermal components):
+#         for i,comp in enumerate(self.components):
+#             if not isActive[i]:
+#                 continue
+#             mass = masses[i]
+#             RHS[i] = -3.*getPressure(mass,rho[i],n[i])  #Cooling term
+#             #If particle is deep in thermal equilibrium, ignore other contributions
+# #             if compi.thermalEQ:
+# #                 continue            
+#             for j, compj in enumerate(self.components):
+#                 if not isActive[j]:
+#                     continue
+#                 if j == i:
+#                     continue
+#                 massj = masses[j]
+#                 widthj = widths[j]
+#                 #Injection and inverse injection terms:
+#                 RHS[i] += widthj*Beff[j,i]*massj*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
+# 
+#         for i,compi in enumerate(self.components):
+#             if not isActive[i]:
+#                 continue    
+#             dR[i] = np.float64(RHS[i])/np.float64(n[i])
+#             if np.isinf(dR[i]):
+#                 logger.warning("Infinity found in dR[%s] at T=%1.2g. Will be replaced by a large number" %(comp.label,T))
+#                 dR[i] = np.nan_to_num(dR[i])
+# 
+#         dy = np.hstack((dN,dR,[dNS]))
+#         logger.debug('T = %1.23g, dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(T,str(dN),str(dR),str(dNS)))
+# 
+#         return dy    
           
     def checkThermalEQ(self,x,y,icomp):
         
