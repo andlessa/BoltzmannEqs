@@ -287,14 +287,7 @@ class BoltzSolution(object):
                 else:
                     logger.warning("Inactive component %s is being injected" %compi.label)
                     
-        for i,compi in enumerate(self.components):
-            if not isActive[i]:
-                continue
-            dN[i] = np.float64(RHS[i])/np.float64(n[i])
-            if np.isinf(dN[i]):
-                logger.warning("Infinity found at in dN[%s] at T=%1.2g. Will be replaced by a large number" %(comp.label,T))
-                dN[i] = np.nan_to_num(dN[i])
-
+        np.divide(RHS,n,out=dN,where=isActive)
 
         RHS = np.zeros(nComp)
         dR = np.zeros(nComp)
@@ -317,13 +310,7 @@ class BoltzSolution(object):
                 #Injection and inverse injection terms:
                 RHS[i] += widthj*Beff[j,i]*massj*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
 
-        for i,compi in enumerate(self.components):
-            if not isActive[i]:
-                continue    
-            dR[i] = np.float64(RHS[i])/np.float64(n[i])
-            if np.isinf(dR[i]):
-                logger.warning("Infinity found in dR[%s] at T=%1.2g. Will be replaced by a large number" %(comp.label,T))
-                dR[i] = np.nan_to_num(dR[i])
+        np.divide(RHS,n,out=dR,where=isActive)
 
         dy = np.hstack((dN,dR,[dNS]))
         logger.debug('T = %1.23g, dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(T,str(dN),str(dR),str(dNS)))
@@ -335,47 +322,47 @@ class BoltzSolution(object):
 #         Computes the jacobian for the set of differential equations (df_i/dy_j for dy/dx = f).
 #         Returns a matrix with the derivatives. The result relies on a numerical approximation
 #         for the derivatives of thermal quantities (T-dependent)
-#         
+#          
 #         :param x: x variable (x = log(R/R0))
 #         :param y: variables being evolved (y = [Ni,Ri,NS])
-#         
+#          
 #         :return: 2-D array with the derivatives 
 #         """ 
-#     
-#     
+#      
+#      
 #         isActive = self.active
 #         #Store the number of components:
 #         nComp = len(self.components)
-# 
+#  
 #         #Ni = log(n_i/s_0)
 #         Ni = y[:nComp]
 #         #R = rho_i/n_i
 #         Ri = y[nComp:2*nComp]
 #         #NS = log(S/S_0)
 #         NS = y[-1]
-# 
+#  
 #         #Get temperature from entropy and scale factor:
 #         T = getTemperature(x,NS,self.normS)
-# 
+#  
 #         #Current number densities:
 #         n = self.norm*np.exp(Ni)
 #         #Current energy densities:
 #         rho = n*Ri
-# 
+#  
 #         #Compute equilibrium densities:
 #         neq = self.nEQ(T)
-# 
+#  
 #         #Compute ratio of equilibrium densities
 #         #(helps with numerical instabilities)
 #         #rNeq[i,j] = neq[i]/neq[j]
 #         rNeq = np.array([[compi.rNeq(T,compj) for compj in self.components] for compi in self.components])
-# 
+#  
 #         #Dictionary with label:index mapping:
 #         labelsDict = dict([[comp.label,i] for i,comp in enumerate(self.components)])
-# 
+#  
 #         #Compute Hubble factor:
 #         H = Hfunc(T,rho,isActive)
-# 
+#  
 #         #Auxiliary weights:
 #         #Effective equilibrium densities and BRs:
 #         #NXth[i] = N^{th}_i:
@@ -384,19 +371,19 @@ class BoltzSolution(object):
 #         NXYth = np.array([[compi.getNXYTh(T,n,rNeq,labelsDict,compj) for compj in self.components] for compi in self.components])
 #         #Effective branching ratio (Beff[i,j] = B^{eff}_{ij}:
 #         Beff = np.array([[compi.getTotalBRTo(T,compj) for compj in self.components] for compi in self.components])
-#         
+#          
 #         widths = self.width(T)
 #         masses = self.mass(T)
 #         BRX = self.getBRX(T)
-#         
+#          
 #         delta = np.identity(nComp)
-#         
+#          
 #         #Jacobian for entropy:     
 #         dFS = np.zeros(2*nComp+1)
 #         FS = np.sum(isActive*BRX*widths*masses*(n-NXth))*exp(3.*x - NS)/(H*T*self.normS)
 #         dFS[:nComp] = np.einsum('i,i,i,i,il->l',isActive,BRX,widths,masses,delta-dNX)*exp(3.*x - NS)/(H*T)
 #         dFS[-1] = -FS + (T/3.)*dFSdT
-#         
+#          
 #         #Derivatives for the Ni=log(ni/s0) variables:
 #         logger.debug('Computing Ni derivatives')
 #         dN = np.zeros(nComp)
@@ -429,13 +416,13 @@ class BoltzSolution(object):
 #                     RHS[i] += (rNeq[i,j]*n[j]-n[i])*cRate/H #cRate*rNeq[i,j] should be finite
 #                 # j <-> i +SM:
 #                 RHS[i] += Beff[j,i]*masses[j]*widths[j]*(n[j]-NXYth[j,i])/(H*Ri[j]) #NXYth[j,i] should be finite if j -> i +...
-# 
+#  
 #             if not isActive[i]:
 #                 if RHS[i] < 0.:
 #                     continue
 #                 else:
 #                     logger.warning("Inactive component %s is being injected" %compi.label)
-#                     
+#                      
 #         for i,compi in enumerate(self.components):
 #             if not isActive[i]:
 #                 continue
@@ -443,8 +430,8 @@ class BoltzSolution(object):
 #             if np.isinf(dN[i]):
 #                 logger.warning("Infinity found at in dN[%s] at T=%1.2g. Will be replaced by a large number" %(comp.label,T))
 #                 dN[i] = np.nan_to_num(dN[i])
-# 
-# 
+#  
+#  
 #         RHS = np.zeros(nComp)
 #         dR = np.zeros(nComp)
 #         #Derivatives for the rho/n variables (only for thermal components):
@@ -465,7 +452,7 @@ class BoltzSolution(object):
 #                 widthj = widths[j]
 #                 #Injection and inverse injection terms:
 #                 RHS[i] += widthj*Beff[j,i]*massj*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
-# 
+#  
 #         for i,compi in enumerate(self.components):
 #             if not isActive[i]:
 #                 continue    
@@ -473,10 +460,10 @@ class BoltzSolution(object):
 #             if np.isinf(dR[i]):
 #                 logger.warning("Infinity found in dR[%s] at T=%1.2g. Will be replaced by a large number" %(comp.label,T))
 #                 dR[i] = np.nan_to_num(dR[i])
-# 
+#  
 #         dy = np.hstack((dN,dR,[dNS]))
 #         logger.debug('T = %1.23g, dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(T,str(dN),str(dR),str(dNS)))
-# 
+#  
 #         return dy    
           
     def checkThermalEQ(self,x,y,icomp):
