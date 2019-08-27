@@ -29,8 +29,8 @@ def main(parameterFile,outputFile,showPlot=True):
     import numpy as np
     from scipy.interpolate import interp1d
     
-    lamb = 4.3e-7
-#     lamb = 2.6e-7
+#     lamb = 4.3e-7
+    lamb = 2.6e-7
 #     lamb = 0.17
     decays = DecayList()
     decayToDM = Decay(instate='Mediator',fstates=['DM','radiation'],br=1.)
@@ -95,12 +95,12 @@ def main(parameterFile,outputFile,showPlot=True):
                    mass=500.
                     ,coSigmav=lambda T,other: 1e-12*sigmaVJan(T)
                     ,sigmav=lambda T: 1e-12*sigmaVJan(T)
-#                     ,convertionRate=lambda T,other: cRateDMJan(T)
+                    ,convertionRate=lambda T,other: cRateDMJan(T)
                    )
     mediator = Component(label='Mediator',Type='thermal',dof=dofMed,
                    mass=510.,decays=decays,
                    sigmav=sigmaVJan
-#                     ,convertionRate=lambda T,other: cRateMedJan(T)
+                    ,convertionRate=lambda T,other: cRateMedJan(T)
                    )
     compList = [dm,mediator]
     
