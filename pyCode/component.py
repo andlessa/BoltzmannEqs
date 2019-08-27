@@ -143,13 +143,17 @@ class Component(object):
             return 0.
         for decay in BRs:
             nprod = 1.
+            norm = 1.
             if not decay.br:
                 continue  #Ignore decays with zero BRs
             for label in decay.fstateIDs:
                 if label in labelsDict:
                     j = labelsDict[label]
-                    nprod *= rNeq[i,j]*n[j]/neq
-            Nth += nprod*decay.br
+                    norm *= neq
+                    nprod *= rNeq[i,j]*n[j]
+            if not norm:
+                return 0.
+            Nth += nprod*decay.br/norm
 
         Nth *= neq
 
