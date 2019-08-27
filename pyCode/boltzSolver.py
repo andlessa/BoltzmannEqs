@@ -230,6 +230,7 @@ class BoltzSolution(object):
         #Compute Hubble factor:
         H = Hfunc(T,rho,isActive)
         logger.debug('RHS: Done computing component energy and number densities')
+        logger.debug('n = %s, rho = %s, neq = %s' %(n,rho,neq))
 
         #Auxiliary weights:
         logger.debug('RHS: Computing weights')
@@ -246,8 +247,7 @@ class BoltzSolution(object):
         masses = self.mass(T)
         BRX = self.getBRX(T)
         sigmaV = self.getSIGV(T)
-        
-        
+
         # Derivative for entropy:
         logger.debug('Computing entropy derivative')     
         dNS = np.sum(isActive*BRX*widths*masses*(n-NXth))*exp(3.*x - NS)/(H*T*self.normS)

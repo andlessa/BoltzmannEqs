@@ -29,14 +29,13 @@ def main(parameterFile,outputFile,showPlot=True):
     import numpy as np
     from scipy.interpolate import interp1d
     
-    lamb = 2.6e-17
+    lamb = 2.6e-7
 #     lamb = 0.17
     decays = DecayList()
     decayToDM = Decay(instate='Mediator',fstates=['DM','radiation'],br=1.)
     decays.addDecay(decayToDM)
-    decays.Xfraction = 0.
+    decays.Xfraction = 0.1
     decays.width = 2.49e-15*(lamb/4.3e-7)**2
-
     
 
     #Get the model parameters (or define them here):

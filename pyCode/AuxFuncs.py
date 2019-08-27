@@ -213,7 +213,7 @@ def getFunctions(pclFile):
     logger.info("Computing auxiliary functions. This calculation is done only once and the results will be stored in %s.\n" %pclFile)
     
     #Get points to evaluate gSTAR
-    Tpts = logspace(log10(Tmin),log10(Tmax),num=2000)
+    Tpts = logspace(log10(Tmin),log10(Tmax),num=2000,endpoint=False)
     #Evaluate gSTAR and gSTARS at these points
     gSTARpts = [gSTARexact(T) for T in Tpts]
     gSTARSpts = [gSTARSexact(T) for T in Tpts]
