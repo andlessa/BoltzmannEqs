@@ -38,7 +38,10 @@ class BoltzSolution(object):
                 self.events.append(lambda x,y: -1)
             else:
                 def fSuppressed(x,y,icomp=i):
-                    return y[icomp]+200.
+                    if self.components[icomp].active:
+                        return y[icomp]+100.
+                    else:
+                        return 1.
                 def fEquilibrium(x,y,icomp=i):
                     return 1.
 #                     return self.checkThermalEQ(x,y,icomp)
@@ -173,7 +176,7 @@ class BoltzSolution(object):
                 else:
                     logger.info("Integration stopped because the number density for %s became too small at x=%s (T = %1.3g GeV)" %(comp.label,str(evt),self.T[-1]))
                     comp.active = False
-                    
+                     
         if continueEvolution:
             self.EvolveTo(TF, npoints-self.x.size, dx)
         else:
@@ -222,7 +225,8 @@ class BoltzSolution(object):
         #Compute ratio of equilibrium densities
         #(helps with numerical instabilities)
         #rNeq[i,j] = neq[i]/neq[j]
-        rNeq = np.array([[compi.rNeq(T,compj) for compj in self.components] for compi in self.components])
+        rNeq = np.array([[compi.rNeq(T,compj) if compi.active and compj.active else 0. for compj in self.components] 
+                         for compi in self.components])
 
         #Dictionary with label:index mapping:
         labelsDict = dict([[comp.label,i] for i,comp in enumerate(self.components)])
@@ -238,9 +242,11 @@ class BoltzSolution(object):
         #NXth[i] = N^{th}_i:
         NXth = self.getNXTh(T,n,rNeq,labelsDict)
         #NXYth[i,j] = N^{th}_{ij}:
-        NXYth = np.array([[compi.getNXYTh(T,n,rNeq,labelsDict,compj) for compj in self.components] for compi in self.components])
+        NXYth = np.array([[compi.getNXYTh(T,n,rNeq,labelsDict,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
+                          for compi in self.components])
         #Effective branching ratio (Beff[i,j] = B^{eff}_{ij}:
-        Beff = np.array([[compi.getTotalBRTo(T,compj) for compj in self.components] for compi in self.components])
+        Beff = np.array([[compi.getTotalBRTo(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
+                         for compi in self.components])
         logger.debug('Done computing weights')
 
         widths = self.width(T)
@@ -263,29 +269,29 @@ class BoltzSolution(object):
         #Expansion term:
         RHS = -3*n
         #Decay term:
-        RHS -= isActive*widths*masses*n/(H*Ri)
+        RHS -= widths*masses*n/(H*Ri)
         #Inverse decay term:
-        RHS += isActive*widths*masses*NXth/(H*Ri) #NXth should be finite if i -> j +..
+        RHS += widths*masses*NXth/(H*Ri) #NXth should be finite if i -> j +..
         #Annihilation term:            
-        RHS += isActive*sigmaV*(neq - n)*(neq + n)/H
+        RHS += sigmaV*(neq - n)*(neq + n)/H
         # i + j <-> SM + SM:
-        sigVij = [[compi.getCOSIGV(T,compj) for compj in self.components] for compi in self.components]
-        RHS += isActive*np.einsum('ij,ij->i',sigVij,np.outer(neq,neq)-np.outer(n,n))/H
+        sigVij = [[compi.getCOSIGV(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
+                  for compi in self.components]
+        RHS += np.einsum('ij,ij->i',sigVij,np.outer(neq,neq)-np.outer(n,n))/H
         # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
-        sigVjj = [[compi.getSIGVBSM(T,compj) for compj in self.components] for compi in self.components]
+        sigVjj = [[compi.getSIGVBSM(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
+                  for compi in self.components]
         RHS += (np.einsum('ij,j,ij->i',rNeq**2,n**2,sigVjj)-n**2*np.einsum('ij->i',sigVjj))/H
         # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
-        cRate = [[compi.getConvertionRate(T,compj) for compj in self.components] for compi in self.components]
-        RHS += isActive*(np.einsum('ij,j,ij->i',rNeq,n,cRate)-n*np.einsum('ij->i',cRate))/H
+        cRate = [[compi.getConvertionRate(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
+                 for compi in self.components]
+        RHS += (np.einsum('ij,j,ij->i',rNeq,n,cRate)-n*np.einsum('ij->i',cRate))/H
         # j <-> i +SM (#NXYth[j,i] should be finite if j -> i +...)
         RHS += (np.einsum('ji,j,j,j->i',Beff,masses/Ri,widths,n)-np.einsum('ji,j,j,ji->i',Beff,masses/Ri,widths,NXYth))/H
 
         for i,compi in enumerate(self.components):
-            if not isActive[i]:
-                if RHS[i] < 0.:
-                    continue
-                else:
-                    logger.warning("Inactive component %s is being injected" %compi.label)
+            if not isActive[i] and RHS[i] > 0.:
+                logger.warning("Inactive component %s is being injected" %compi.label)
                     
         np.divide(RHS,n,out=dN,where=isActive)
 
@@ -331,13 +337,15 @@ class BoltzSolution(object):
         #Get temperature from entropy and scale factor:
         T = getTemperature(x,NS,self.normS)
         n = self.norm*np.exp(Ni)
+        nEQ = self.components[icomp].nEQ(T)
+        
         #Current energy densities:
         rho = n*Ri
         #Compute Hubble factor:
         H = Hfunc(T,rho,self.active)        
 
         sigV = self.components[icomp].getSIGV(T)
-        nEQ = self.components[icomp].nEQ(T)
+        
         return 10. - nEQ*sigV/H
 
         
