@@ -29,12 +29,13 @@ def main(parameterFile,outputFile,showPlot=True):
     import numpy as np
     from scipy.interpolate import interp1d
     
+    lamb = 2.6e-7
+#     lamb = 0.17
     decays = DecayList()
     decayToDM = Decay(instate='Mediator',fstates=['DM','radiation'],br=1.)
     decays.addDecay(decayToDM)
     decays.Xfraction = 0.1
-    decays.width = 2.5e-15*(2.6e-7/4.3e-7)**2
-
+    decays.width = 2.49e-15*(lamb/4.3e-7)**2
     
 
     #Get the model parameters (or define them here):
@@ -56,7 +57,7 @@ def main(parameterFile,outputFile,showPlot=True):
 
     sLog = lambda x: interp1d(data[:,0],np.log(data[:,1]*conv),
                         fill_value='extrapolate',bounds_error=False)(x)
-    cRateLog = lambda x: interp1d(dataR[:,0],np.log(dataR[:,1]*conv*(2.6e-7)**2),
+    cRateLog = lambda x: interp1d(dataR[:,0],np.log(dataR[:,1]*conv*(lamb)**2),
                         fill_value='extrapolate',bounds_error=False)(x)
 
     #Conversion rates for DM and mediator: 
@@ -101,10 +102,9 @@ def main(parameterFile,outputFile,showPlot=True):
                    )
     compList = [dm,mediator]
     
-    
     #Evolve the equations from TR to TF
-    solution = BoltzSolution(compList,TRH,TF,npoints=5000)
-    solved = solution.Evolve()
+    solution = BoltzSolution(compList,TRH)
+    solved = solution.EvolveTo(TF,npoints=5000)
     if not solved:
         return
     
