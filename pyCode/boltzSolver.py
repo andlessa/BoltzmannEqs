@@ -66,14 +66,14 @@ class BoltzSolution(object):
         sigV = self.getSIGV(T0)
         neq = self.nEQ(T0)
         #Thermal equilibrium condition (if >1 particle is in thermal equilibrium):
-        thermalEQ = neq*sigV/H        
+        thermalEQ = neq*sigV/H
         for i,comp in enumerate(self.components):
             comp.active = True
             if not hasattr(comp,'n') or not len(comp.n):
                 if thermalEQ[i] > 1:
                     comp.n = np.array([neq[i]])
                 else:
-                    comp.n = np.array([1e-10*neq[i]])
+                    comp.n = np.array([1e-20*neq[i]])
                 comp.rho = comp.n*comp.rEQ(T0)
             else: #Remove all entries from components except the last
                 if len(comp.n) > 1:
@@ -130,7 +130,7 @@ class BoltzSolution(object):
         self.norm = self.n[:,-1] #Set normalization (ni0) for each component
         self.normS = self.S[-1] #Set normalization (S0) for entropy
         
-    def EvolveTo(self,TF,npoints=100,dx=300.):
+    def EvolveTo(self,TF,npoints=100,dx=None):
         """
         Evolve the components in component list from the re-heat temperature T0 to TF
         For simplicity we set  R0 = s0 = 1 (with respect to the notes).
@@ -150,7 +150,9 @@ class BoltzSolution(object):
         tvals = np.linspace(x0,xf,npoints)
         y0 = self.y0
         logger.debug('Evolving from %1.3g to %1.3g with %i points' %(x0,xf,len(tvals)))
-        maxstep = (xf-x0)/dx
+        maxstep = np.inf
+        if dx:
+            maxstep = (xf-x0)/dx
         r = integrate.solve_ivp(self.rhs,t_span=(x0,xf),y0=y0,
                                 t_eval=tvals,method='BDF',
                                 events=self.events,max_step=maxstep)
@@ -172,9 +174,11 @@ class BoltzSolution(object):
                 continueEvolution = True
                 if np.mod(i,2):
                     logger.info("Integration stopped because %s left thermal equilibrium at x=%s (T = %1.3g GeV)" %(comp.label,str(evt),self.T[-1]))
+                    comp.Tdecouple = self.T[-1]
                     comp.thermalEQ = False
                 else:
                     logger.info("Integration stopped because the number density for %s became too small at x=%s (T = %1.3g GeV)" %(comp.label,str(evt),self.T[-1]))
+                    comp.Tdecay = self.T[-1]
                     comp.active = False
                      
         if continueEvolution:
@@ -328,22 +332,23 @@ class BoltzSolution(object):
         if not coupled or not active:
             return 1.0
         
-        #Ni = log(n_i/ni0)
-        Ni = y[:self.ncomp]
-        #R = rho_i/n_i
-        Ri = y[self.ncomp:2*self.ncomp]
         #NS = log(S/S_0)
         NS = y[-1]
         #Get temperature from entropy and scale factor:
         T = getTemperature(x,NS,self.normS)
-        n = self.norm*np.exp(Ni)
-        nEQ = self.components[icomp].nEQ(T)
-        
-        #Current energy densities:
-        rho = n*Ri
+        nEQ = self.nEQ(T)
+        if not y is None:
+            Ni = y[:self.ncomp]
+            n = self.norm*np.exp(Ni)
+            Ri = y[self.ncomp:2*self.ncomp]
+            rho = n*Ri
+        else:
+            n = nEQ
+            rho = n*self.rEQ(T)
+
         #Compute Hubble factor:
         H = Hfunc(T,rho,self.active)        
-
+        #Compute relevant thermal equilibrium terms:
         sigV = self.components[icomp].getSIGV(T)
         
         return 10. - nEQ*sigV/H
@@ -415,7 +420,7 @@ class BoltzSolution(object):
                 tag = '(@TF)'
             else:
                 tag = '(@decay)'
-            f.write('# %s: T(osc)= %s | T(decouple)~= %s | T(decay)~= %s | Omega h^2 %s = %1.2f\n' %(comp.label,comp.Tosc,
+            f.write('# %s: T(osc)= %s | T(decouple)~= %s | T(decay)~= %s | Omega h^2 %s = %1.4g\n' %(comp.label,comp.Tosc,
                                                                                           comp.Tdecouple,comp.Tdecay,tag,omega))
             f.write('# \n')
         
