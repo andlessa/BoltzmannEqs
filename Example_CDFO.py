@@ -94,7 +94,7 @@ def main(parameterFile,outputFile,showPlot=True):
     dm = Component(label='DM',Type='thermal',dof=dofDM,
                    mass=500.
                     ,coSigmav=lambda T,other: 1e-12*sigmaVJan(T)
-#                     ,sigmav=lambda T: 1e-12*sigmaVJan(T)
+                    ,sigmav=lambda T: 1e-10*sigmaVJan(T)
                     ,convertionRate=lambda T,other: cRateDMJan(T)
                    )
     mediator = Component(label='Mediator',Type='thermal',dof=dofMed,
@@ -106,7 +106,7 @@ def main(parameterFile,outputFile,showPlot=True):
     
     #Evolve the equations from TR to TF
     solution = BoltzSolution(compList,TRH)
-    solved = solution.EvolveTo(TF,npoints=50000)
+    solved = solution.EvolveTo(TF,npoints=5000)
     if not solved:
         return
     
