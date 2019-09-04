@@ -30,8 +30,6 @@ def main(parameterFile,outputFile,showPlot=True):
     from scipy.interpolate import interp1d
     
     lamb = 4.3e-7
-#     lamb = 2.6e-7
-#     lamb = 0.17
     decays = DecayList()
     decayToDM = Decay(instate='Mediator',fstates=['DM','radiation'],br=1.)
     decays.addDecay(decayToDM)
@@ -79,7 +77,7 @@ def main(parameterFile,outputFile,showPlot=True):
         if x > dataR[:,0].max():
             return 0.
         sF = cRateLog(x)
-        return nEQbottom(T)*np.exp(sF)
+        return 2*nEQbottom(T)*np.exp(sF)
 
     @np.vectorize
     def cRateMedJan(T):
@@ -87,14 +85,14 @@ def main(parameterFile,outputFile,showPlot=True):
         if x > dataR[:,0].max():
             return 0.
         sF = cRateLog(x)
-        return nEQgluon(T)*np.exp(sF)*abs(dofMed/dofDM)*np.exp((510.-500.)/T)
+        return 2*nEQgluon(T)*np.exp(sF)*abs(dofMed/dofDM)*np.exp((510.-500.)/T)
 
     
     #Define the components to be evolved and their properties:    
     dm = Component(label='DM',Type='thermal',dof=dofDM,
                    mass=500.
-                    ,coSigmav=lambda T,other: 1e-12*sigmaVJan(T)
-                    ,sigmav=lambda T: 1e-12*sigmaVJan(T)
+                    ,coSigmav=lambda T,other: 1e-10*sigmaVJan(T)
+                    ,sigmav=lambda T: 1e-10*sigmaVJan(T)
 #                     ,convertionRate=lambda T,other: cRateDMJan(T)
                    )
     mediator = Component(label='Mediator',Type='thermal',dof=dofMed,
@@ -106,7 +104,7 @@ def main(parameterFile,outputFile,showPlot=True):
     
     #Evolve the equations from TR to TF
     solution = BoltzSolution(compList,TRH)
-    solved = solution.EvolveTo(TF,npoints=50000,dx=1000)
+    solved = solution.EvolveTo(TF,npoints=5000)
     if not solved:
         return
     
@@ -114,25 +112,10 @@ def main(parameterFile,outputFile,showPlot=True):
     if outputFile:
         if os.path.isfile(outputFile):
             os.remove(outputFile)
-#         AuxFuncs.printParameters(parser.items('parameters'),outputFile)
         solution.printSummary(outputFile)
         solution.printData(outputFile)
-#     else:
     solution.printSummary()
     
-    if showPlot:
-        #Plot solutions
-        import matplotlib.pyplot as plt   
-        R = solution.solutionDict['R']
-        for comp in compList:
-#             n = solution.solutionDict['n_'+comp.label][-1]
-            rho = solution.solutionDict['rho_'+comp.label]
-            plt.plot(R,rho,label=comp.label)
-        plt.plot(R,solution.solutionDict['T'],label='T')
-        plt.legend()
-        plt.yscale('log')
-        plt.xscale('log')
-        plt.show()
 
 if __name__ == "__main__":
 

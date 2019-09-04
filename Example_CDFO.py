@@ -29,7 +29,6 @@ def main(parameterFile,outputFile,showPlot=True):
     import numpy as np
     from scipy.interpolate import interp1d
     
-#     lamb = 4.3e-7
     lamb = 2.6e-7
 #     lamb = 0.17
     decays = DecayList()
@@ -93,7 +92,7 @@ def main(parameterFile,outputFile,showPlot=True):
     #Define the components to be evolved and their properties:    
     dm = Component(label='DM',Type='thermal',dof=dofDM,
                    mass=500.
-                    ,coSigmav=lambda T,other: 1e-12*sigmaVJan(T)
+                    ,coSigmav=lambda T,other: 1e-10*sigmaVJan(T)
                     ,sigmav=lambda T: 1e-10*sigmaVJan(T)
                     ,convertionRate=lambda T,other: cRateDMJan(T)
                    )
