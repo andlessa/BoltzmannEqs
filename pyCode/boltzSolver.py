@@ -131,7 +131,7 @@ class BoltzSolution(object):
         self.norm = self.n[:,-1] #Set normalization (ni0) for each component
         self.normS = self.S[-1] #Set normalization (S0) for entropy
         
-    def EvolveTo(self,TF,npoints=100,dx=None):
+    def EvolveTo(self,TF,npoints=5000,dx=None):
         """
         Evolve the components in component list from the re-heat temperature T0 to TF
         For simplicity we set  R0 = s0 = 1 (with respect to the notes).
@@ -155,7 +155,7 @@ class BoltzSolution(object):
         if dx:
             maxstep = (xf-x0)/dx
         r = integrate.solve_ivp(self.rhs,t_span=(x0,xf),y0=y0,
-                                t_eval=tvals,method='BDF',
+                                t_eval=tvals,method='BDF',dense_output=True,
                                 events=self.events,max_step=maxstep)
         
         if r.status < 0:
