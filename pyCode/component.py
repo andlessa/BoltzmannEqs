@@ -305,8 +305,10 @@ class Component(object):
         if x > 1.675:   #Ultra relativistic
             if self.dof < 0: return (7./6.)*pi**4*T/(30.*Zeta3)  #Fermions
             else: return pi**4*T/(30.*Zeta3)    #Bosons
-        else:                                                   #Non-relativistic/relativistic
+        elif x > 1e-2:  #Non-relativistic/relativistic transition
             return (kn(1,1/x)/kn(2,1/x))*self.mass(T) + 3.*T
+        else: #Non-relativistic
+            return (1.-3.*x/2+15.*x**2/8)*self.mass(T) + 3.*T #Non-relativistic limit of bessel function ratio
     
     def isOscillating(self,T,H):
         """Checks if the component is coherent oscillating. If it is a thermal field,
