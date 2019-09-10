@@ -226,12 +226,14 @@ class BoltzSolution(object):
 
         #Compute equilibrium densities:
         neq = self.nEQ(T)
+        rEQ = self.rEQ(T)
         
         #Force equilibrium densities for components in thermal equilibrium:
         coupled = np.array([not comp.Tdecouple for comp in self.components])
+        Ri[np.where(coupled)] = rEQ[np.where(coupled)]
+        Ni[np.where(coupled)] = np.log(neq[np.where(coupled)]/self.norm[np.where(coupled)])
         n[np.where(coupled)] = neq[np.where(coupled)]
         rho[np.where(coupled)] = (neq*rEQ)[np.where(coupled)]
-        Ri[np.where(coupled)] = rEQ[np.where(coupled)]
 
         #Compute ratio of equilibrium densities
         #(helps with numerical instabilities)
