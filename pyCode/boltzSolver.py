@@ -43,8 +43,8 @@ class BoltzSolution(object):
                     else:
                         return 1.
                 def fEquilibrium(x,y,icomp=i):
-#                     return 1.
-                    return self.checkThermalEQ(x,y,icomp)
+                    return 1.
+#                     return self.checkThermalEQ(x,y,icomp)
                 self.events.append(fSuppressed) #Stop evolution particle if its number is too small
                 self.events.append(fEquilibrium) #Stop evolution if particle is decoupling
         #Set flag so integration stops when any event occurs:
@@ -82,16 +82,6 @@ class BoltzSolution(object):
                 comp.n = comp.n[-1:] 
                 comp.rho = comp.rho[-1:]
 
-        #Set thermal equilibrium flags:
-        neq = self.nEQ(self.T[-1])
-        for i,comp in enumerate(self.components):        
-            if comp.n[-1] != neq[i] and abs(comp.n[-1]-neq[i])/neq[i] > 1e-4:
-                logger.info("Particle %s starting decoupled" %comp)
-                comp.thermalEQ = False
-            else:
-                logger.info("Particle %s starting in thermal equilibrium" %comp)
-                comp.thermalEQ = True                
-            
         logger.info("Initial conditions computed in %s s" %(time.time()-t0))
         
     def __getattr__(self, attr):
@@ -156,7 +146,7 @@ class BoltzSolution(object):
             maxstep = (xf-x0)/dx
         r = integrate.solve_ivp(self.rhs,t_span=(x0,xf),y0=y0,
                                 t_eval=tvals,method='BDF',dense_output=True,
-                                events=self.events,max_step=maxstep)
+                                events=self.events,max_step=maxstep,jac=self.jac)
         
         if r.status < 0:
             NS = r.y[-1][-1]
@@ -176,7 +166,6 @@ class BoltzSolution(object):
                 if np.mod(i,2):
                     logger.info("Integration restarted because %s left thermal equilibrium at x=%s (T = %1.3g GeV)" %(comp.label,str(evt),self.T[-1]))
                     comp.Tdecouple = self.T[-1]
-                    comp.thermalEQ = False
                 else:
                     logger.info("Integration restarted because the number density for %s became too small at x=%s (T = %1.3g GeV)" %(comp.label,str(evt),self.T[-1]))
                     comp.Tdecay = self.T[-1]
@@ -226,14 +215,6 @@ class BoltzSolution(object):
 
         #Compute equilibrium densities:
         neq = self.nEQ(T)
-        rEQ = self.rEQ(T)
-        
-        #Force equilibrium densities for components in thermal equilibrium:
-        coupled = np.array([not comp.Tdecouple for comp in self.components])
-        Ri[np.where(coupled)] = rEQ[np.where(coupled)]
-        Ni[np.where(coupled)] = np.log(neq[np.where(coupled)]/self.norm[np.where(coupled)])
-        n[np.where(coupled)] = neq[np.where(coupled)]
-        rho[np.where(coupled)] = (neq*rEQ)[np.where(coupled)]
 
         #Compute ratio of equilibrium densities
         #(helps with numerical instabilities)
@@ -254,12 +235,6 @@ class BoltzSolution(object):
         #Effective equilibrium densities and BRs:
         #NXth[i] = N^{th}_i:
         NXth = self.getNXTh(T,n,rNeq,labelsDict)
-        #NXYth[i,j] = N^{th}_{ij}:
-        NXYth = np.array([[compi.getNXYTh(T,n,rNeq,labelsDict,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                          for compi in self.components])
-        #Effective branching ratio (Beff[i,j] = B^{eff}_{ij}:
-        Beff = np.array([[compi.getTotalBRTo(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                         for compi in self.components])
         logger.debug('Done computing weights')
 
         widths = self.width(T)
@@ -287,28 +262,7 @@ class BoltzSolution(object):
         RHS += widths*masses*NXth/(H*Ri) #NXth should be finite if i -> j +..
         #Annihilation term:            
         RHS += sigmaV*(neq - n)*(neq + n)/H
-        # i + j <-> SM + SM:
-        sigVij = [[compi.getCOSIGV(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                  for compi in self.components]
-        RHS += np.einsum('ij,ij->i',sigVij,np.outer(neq,neq)-np.outer(n,n))/H
-        # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
-        sigVjj = [[compi.getSIGVBSM(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                  for compi in self.components]
-        RHS += (np.einsum('ij,j,ij->i',rNeq**2,n**2,sigVjj)-n**2*np.einsum('ij->i',sigVjj))/H
-        # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
-        cRate = [[compi.getConvertionRate(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                 for compi in self.components]
-        RHS += (np.einsum('ij,j,ij->i',rNeq,n,cRate)-n*np.einsum('ij->i',cRate))/H
-        # j <-> i +SM (#NXYth[j,i] should be finite if j -> i +...)
-        RHS += (np.einsum('ji,j,j,j->i',Beff,masses/Ri,widths,n)-np.einsum('ji,j,j,ji->i',Beff,masses/Ri,widths,NXYth))/H
-
-        for i,compi in enumerate(self.components):
-            if not isActive[i] and RHS[i] > 0.:
-                logger.warning("Inactive component %s is being injected" %compi.label)
-                    
         np.divide(RHS,n,out=dN,where=isActive)
-	#Approximate derivative for thermal distribution:
-        dN[np.where(coupled)] = (dNS/(3*T)-1/T)*Ri[np.where(coupled)]
 
         RHS = np.zeros(nComp)
         dR = np.zeros(nComp)
@@ -323,31 +277,26 @@ class BoltzSolution(object):
                     continue
                 if j == i:
                     continue
-                massj = masses[j]
-                widthj = widths[j]
-                #Injection and inverse injection terms:
-                RHS[i] += widthj*Beff[j,i]*massj*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
 
         np.divide(RHS,n,out=dR,where=isActive)
-	#Approximate derivative for thermal distribution:
-        dR[np.where(coupled)] = (dNS/3-1)*((mass**2-Ri**2)/T + 3*Ri + 3*T)[np.where(coupled)]
 
         dy = np.hstack((dN,dR,[dNS]))
         logger.debug('T = %1.23g, dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(T,str(dN),str(dR),str(dNS)))
 
         return dy
 
-          
-    def checkThermalEQ(self,x,y,icomp):
+
+    def jac(self,x,y):
+        """
+        Computes the Jacobian for the y  equations.
+        """
         
-        coupled = self.components[icomp].thermalEQ
-        active = self.components[icomp].active
-        if not coupled or not active:
-            return 1.0
-        
+        isActive = self.active
+        logger.debug('Calling RHS with arguments:\n   x=%s,\n   y=%s\n and switches %s' %(x,y,isActive))
+
         #Store the number of components:
         nComp = len(self.components)
-        isActive = self.active
+
         #Ni = log(n_i/s_0)
         Ni = y[:nComp]
         #R = rho_i/n_i
@@ -357,67 +306,56 @@ class BoltzSolution(object):
 
         #Get temperature from entropy and scale factor:
         T = getTemperature(x,NS,self.normS)
+        
+        logger.debug('RHS: Computing number and energy densities for %i components' %nComp)
         #Current number densities:
         n = self.norm*np.exp(Ni)
         #Current energy densities:
         rho = n*Ri
+
         #Compute equilibrium densities:
         neq = self.nEQ(T)
-        #Compute ratio of equilibrium densities
-        #(helps with numerical instabilities)
-        #rNeq[i,j] = neq[i]/neq[j]
-#         rNeq = np.array([[compi.rNeq(T,compj) if compi.active and compj.active else 0. for compj in self.components] 
-#                          for compi in self.components])
-#         #Dictionary with label:index mapping:
-#         labelsDict = dict([[comp.label,i] for i,comp in enumerate(self.components)])
+
         #Compute Hubble factor:
         H = Hfunc(T,rho,isActive)
-        #Effective equilibrium densities and BRs:
-        #NXth[i] = N^{th}_i:
-#         NXth = self.getNXTh(T,n,rNeq,labelsDict)
-#         #NXYth[i,j] = N^{th}_{ij}:
-#         NXYth = np.array([[compi.getNXYTh(T,n,rNeq,labelsDict,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-#                           for compi in self.components])
-#         #Effective branching ratio (Beff[i,j] = B^{eff}_{ij}:
-#         Beff = np.array([[compi.getTotalBRTo(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-#                          for compi in self.components])
-
-#         widths = self.width(T)
-#         masses = self.mass(T)
 
         sigmaV = self.getSIGV(T)
-        sigVij = [[compi.getCOSIGV(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                  for compi in self.components]
-        sigVjj = [[compi.getSIGVBSM(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                  for compi in self.components]
-        cRate = [[compi.getConvertionRate(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                 for compi in self.components]
 
-        #Compute thermal equilibrium force:
-        Feq = np.zeros(nComp)
-        #Annihilation term:            
-        Feq += 2*sigmaV*neq
-        # i + j <-> SM + SM:
-        Feq += np.einsum('ij,j->i',sigVij,neq)
-        # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
-        Feq += np.einsum('i,j,ij->i',neq,1+(n/neq)**2,sigVjj)
-        # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
-        Feq += np.einsum('j,ij->i',n/neq,cRate)
-        Feq = abs(Feq/H)
+        #Derivative for equations:
+        delta = np.identity(nComp)
+        
+        #Derivative for number equations:
+        dFNidNj = -np.einsum('ij,i,i,i->ij',delta,(neq/n)**2+1,sigmaV,n)/H
+        dFNidRj = np.zeros((nComp,nComp))
+        dFNidNS = np.zeros(nComp)
+        
+        #Derivative for energy ratio equations:
+        dFRidNj = np.zeros((nComp,nComp))
+        dFRidRj = np.zeros((nComp,nComp))
+        dFRidNS = np.zeros(nComp)
+        
+        #Derivative for entropy equation:
+        dFNSdNj = np.zeros(nComp)
+        dFNSdRj = np.zeros(nComp)
+        dFNSdNS = 0.
 
-        #Compute the non-equilibrium forces:
-        Ft = np.zeros(nComp)
-        # i + j <-> SM + SM:
-        Ft += np.einsum('ij,j->i',sigVij,neq-n)
-        # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
-        Ft += np.einsum('i,j,ij->i',neq,(n/neq)**2-1,sigVjj)
-        # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
-        Ft += np.einsum('j,ij->i',n/neq-1,cRate)
+        # Full Jacobian:
+        JAC = np.zeros((nComp*2+1,nComp*2+1))
+        JAC[:nComp,:nComp] = dFNidNj
+        JAC[:nComp,nComp:2*nComp] = dFNidRj
+        JAC[:nComp,2*nComp] = dFNidNS
         
-        #Add expansion term:
-        Ft = abs(Ft/H)+3
+        JAC[3:2*nComp,:3] = dFRidNj
+        JAC[3:2*nComp,3:2*nComp] = dFRidRj
+        JAC[3:2*nComp,2*nComp] = dFRidNS
         
-        return (1e3*Ft/Feq-1.)[icomp]
+        JAC[2*nComp,:nComp] = dFNSdNj
+        JAC[2*nComp,nComp:2*nComp] = dFNSdRj
+        JAC[2*nComp,2*nComp] = dFNSdNS
+
+        return JAC
+
+          
 
   
     def updateSolution(self,r):
@@ -443,14 +381,11 @@ class BoltzSolution(object):
         self.T = np.hstack((self.T,Tvalues))
         
         #Store the number and energy densities for each component:
-	#(if the particle is coupled, use the equilibrium densities)
+        #(if the particle is coupled, use the equilibrium densities)
         for icomp,comp in enumerate(self.components):
             if not comp.active:
                 n = np.array([np.nan]*len(r.t))
                 rho = np.array([np.nan]*len(r.t))
-            elif not comp.Tdecouple:
-                n = np.array([comp.nEQ(T) for T in Tvalues])
-                rho = n*np.array([comp.rEQ(T) for T in Tvalues])
             else:
                 n = exp(r.y[icomp,:])*self.norm[icomp]
                 rho = n*r.y[icomp+self.ncomp,:]

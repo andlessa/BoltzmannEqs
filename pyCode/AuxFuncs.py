@@ -139,6 +139,7 @@ def getOmega(comp,rho,n,T):
     """
     
     if comp.Tdecay and comp.Tdecay > T: return 0.
+    if not n or not rho: return 0.
     
     Ttoday = 2.3697*10**(-13)*2.725/2.75  #Temperature today
     rhoh2 = 8.0992*10.**(-47)   # value of rho critic divided by h^2
@@ -148,7 +149,8 @@ def getOmega(comp,rho,n,T):
     ns = 0.  #log(entropy) (constant) 
     
     if comp.Type == 'CO': return nToday*comp.mass(Ttoday)/rhoh2  #CO components have trivial (non-relativistic) solution 
-               
+    
+    
     R0 = rho/n    
     Rmin = R0*exp(-dx)    #Minimum value for rho/n(Ttoday) (happens if component is relativistic today)
     Pmin = getPressure(comp.mass(Ttoday),Rmin*nToday,nToday)
