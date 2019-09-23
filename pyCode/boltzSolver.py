@@ -292,7 +292,7 @@ class BoltzSolution(object):
         """
         
         isActive = self.active
-        logger.debug('Calling RHS with arguments:\n   x=%s,\n   y=%s\n and switches %s' %(x,y,isActive))
+        logger.debug('Calling Jacobian with arguments:\n   x=%s,\n   y=%s\n and switches %s' %(x,y,isActive))
 
         #Store the number of components:
         nComp = len(self.components)
@@ -307,7 +307,6 @@ class BoltzSolution(object):
         #Get temperature from entropy and scale factor:
         T = getTemperature(x,NS,self.normS)
         
-        logger.debug('RHS: Computing number and energy densities for %i components' %nComp)
         #Current number densities:
         n = self.norm*np.exp(Ni)
         #Current energy densities:
