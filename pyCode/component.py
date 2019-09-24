@@ -10,8 +10,11 @@
 """
 
 from pyCode.AuxDecays import DecayList
+from pyCode.AuxFuncs import getTemperature,gSTARSf
+from scipy import integrate
 from sympy import exp,besselk,pi,sqrt,Heaviside
 from mpmath import apery as Zeta3
+import numpy as np
 from  pyCode import AuxFuncs
 from types import FunctionType
 import logging
@@ -245,6 +248,28 @@ class Component(object):
             return 0.
         
         return self.sigmavBSM(T,other)
+    
+    def getPressure(self,T,rho, n):
+        """
+        Computes the pressure for a component at temperature T, given its energy and number densities.
+        """
+    
+        mass = self.mass(T)
+        if not rho or not n:
+            return 0.
+        R = rho/n    
+        if R > 11.5*mass: return n*(R/3)  # Ultra relativistic limit
+        if R <= mass: return 0.  # Ultra non-relativistic limit
+        
+    # Expansion coefficients for relativistic/non-relativistic transition    
+        aV = [-0.345998, 0.234319, -0.0953434, 0.023657, -0.00360707, 0.000329645, -0.0000165549, 3.51085*10.**(-7)]    
+        Prel = n*(R/3)  # Relativistic pressure
+        Pnonrel = (2.*mass/3.)*(R/mass - 1.)  # Non-relativistic pressure
+        Pnonrel += mass*sum([ai*(R/mass - 1.)**(i+2)  for i, ai in enumerate(aV)])
+        Pnonrel *= n
+            
+        return min(Prel, Pnonrel)  # If P2 > P1, it means ultra relativistic limit applies -> use P1
+    
         
     def nEQ(self,T):
         """Returns the equilibrium number density at temperature T. Returns zero for non-thermal components"""
@@ -335,3 +360,57 @@ class Component(object):
             return self.nEQ(T)
         
     
+    def getOmega(self,rho,n,T):
+        """
+        Compute relic density today, given the component, number density and energy density
+        at temperature T.
+        """
+        
+        if self.Tdecay and self.Tdecay > T: return 0.
+        if not n or not rho: return 0.
+        
+        Ttoday = 2.3697*10**(-13)*2.725/2.75  #Temperature today
+        rhoh2 = 8.0992*10.**(-47)   # value of rho critic divided by h^2
+        dx = (1./3.)*np.log(gSTARSf(T)/gSTARSf(Ttoday)) + np.log(T/Ttoday)   #dx = log(R/R_today), where R is the scale factor
+        nToday = n*exp(-3.*dx)
+        s0 = (2*pi**2/45)*T**3
+        ns = 0.  #log(entropy) (constant) 
+        
+        
+        R0 = rho/n    
+        Rmin = R0*exp(-dx)    #Minimum value for rho/n(Ttoday) (happens if component is relativistic today)
+        Pmin = self.getPressure(Ttoday,Rmin*nToday,nToday)
+        
+        if abs(Pmin - Rmin*nToday/3.)/(Rmin*nToday/3.) < 0.01:
+            RToday = Rmin  #Relativistic component today
+        else:
+            def Rfunc(R,x):            
+                TF = getTemperature(x,ns,s0)
+                nF = n*exp(-3*x)   #Number density at x (decoupled solution)
+                rhoF = R*nF         #Energy density at x                        
+                return -3*self.getPressure(TF,rhoF,nF)/nF
+            RToday = integrate.odeint(Rfunc, R0, [0.,24.], atol = self.mass(Ttoday)/10.)[1][0]  #Solve decoupled ODE for R=rho/n
+       
+        return RToday*nToday/rhoh2
+    
+    def getDNeff(self,rho,n,T):
+        """
+        Computes the contribution from the component to the number of effective neutrinos at temperature T.
+        Gives zero if T > 1 MeV (where neutrinos are still coupled).
+        """
+    
+    #Ignore component if it has decayed before TF        
+        if self.Tdecay and self.Tdecay > T:
+            return 0.
+    #Get the number and energy densities of comp at T:
+        mass = self.mass(T)
+        if T > 10.**(-3):
+            return 0.    
+        if mass == 0. or (n and rho and rho/(n*mass) > 2.):
+            rhoRel = rho    
+        else:
+            rhoRel = 0.
+        DNeff = rhoRel/(((pi**2)/15)*(7./8.)*((4./11.)**(4./3.))*T**4)
+        
+        return DNeff    
+        

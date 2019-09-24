@@ -353,9 +353,6 @@ class BoltzSolution(object):
         JAC[2*nComp,2*nComp] = dFNSdNS
 
         return JAC
-
-          
-
   
     def updateSolution(self,r):
         """
@@ -391,79 +388,3 @@ class BoltzSolution(object):
             comp.n = np.hstack((comp.n,n))
             comp.rho = np.hstack((comp.rho,rho))
 
-    def printSummary(self,outFile=None):
-        """
-        Prints basic summary of solutions.
-        """
-        #Solution summary:
-        if outFile:
-            if hasattr(outFile,'write'):
-                f = outFile    
-            else:    
-                f = open(outFile,'a')
-        else:
-            f = sys.stdout
-            
-        T = self.T
-        TF = T[-1]
-        f.write('#-------------\n')
-        f.write('# Summary\n')
-        f.write('# TF=%1.2g\n' %TF)
-        for comp in self.components:
-            if comp.Tdecay:
-                Tlast = max(comp.Tdecay,TF)
-            else:
-                Tlast = TF
-            #Get point closest to Tlast    
-            i = (np.abs(T - Tlast)).argmin()                    
-            rhoF = comp.rho[i]
-            nF = comp.n[i]
-            Tfinal = T[i]
-            omega = getOmega(comp,rhoF,nF,Tfinal)        
-            if not comp.Tdecay:
-                tag = '(@TF)'
-            else:
-                tag = '(@decay)'
-            f.write('# %s: T(decouple)~= %s | T(decay)~= %s | Omega h^2 %s = %1.4g\n' %(comp.label,
-                                                                                          comp.Tdecouple,comp.Tdecay,tag,omega))
-            f.write('# \n')
-        
-        DNeff = 0.
-        for comp in self.components:
-            rho = comp.rho[-1]
-            n = comp.n[-1]
-            DNeff += getDNeff(comp, rho, n, TF)
-                    
-        f.write('# Delta Neff (T = %1.2g) = %1.2g \n' %(TF,DNeff))
-        f.write('#-------------\n')
-        f.close()
-    
-    def printData(self,outFile=None):
-        """
-        Prints the evolution of number and energy densities of the species to the outputFile 
-        """
-        
-        if outFile:
-            if hasattr(outFile,'write'):
-                f = outFile    
-            else:    
-                f = open(outFile,'a')
-            header = ['x','T','R','S']
-            values = [getattr(self,label) for label in header]
-            for comp in self.components:
-                header += ['n_%s' %comp.label,'rho_%s' %comp.label]
-                values.append(comp.n)
-                values.append(comp.rho)
-
-            maxLength = max([len(s) for s in header])
-            header = ' '.join(str(x).center(maxLength) for x in header)
-            if any(len(v) != len(values[0]) for v in values):
-                logger.error("Data has distinct lengths and can not be written to file.")
-                f.close()
-                return False
-            data = np.column_stack(values)
-            f.write('#--------------\n')
-            np.savetxt(f,data,delimiter=' ',header = header,fmt=('{:^%i}'%(maxLength-5)).format('%1.4E'))
-            f.write('#--------------\n')    
-            f.close()
-        
