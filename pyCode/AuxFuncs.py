@@ -12,7 +12,8 @@
 
 import os
 from scipy import integrate, interpolate
-from numpy import exp, sqrt, log, pi, log10, logspace
+from sympy import Function
+from numpy import logspace, log10,exp,sqrt,log, pi 
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -239,12 +240,28 @@ def getTemperature(x,NS,S0=1.):
     xmin = log((2*pi**2/45.)*gSTARS(Tmin)*Tmin**3)
     xmax = log((2*pi**2/45.)*gSTARS(Tmax)*Tmax**3)
     xeff = NS + log(S0) - 3.*x
+        
     if xeff < xmin:  #For T < Tmin, g* is constant
         return ((45./(2*pi**2))*exp(xeff)/gSTARS(Tmin))**(1./3.)
     elif xeff > xmax: #For T > Tmax, g* is constant
         return ((45./(2*pi**2))*exp(xeff)/gSTARS(Tmax))**(1./3.)
     else:    
-        return Tfunc(xeff)
+        return float(Tfunc(xeff))
+
+class T(Function):
+    """
+    Defines a sympy function for the temperature.
+    It will be undefined, unless evaluated numerically.
+    Its derivative ignores changes in gSTARS, so it is defined to be T/3.
+    """
+
+    _imp_ = staticmethod(getTemperature)
+
+    def fdiff(self, argindex=2):
+        if argindex != 2:
+            return 0
+        else:
+            return self/3
 
 def getPressure(mass, rho, n):
     """Computes the pressure for a component, given its mass, its energy density and its number density"""

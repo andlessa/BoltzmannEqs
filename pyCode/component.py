@@ -10,8 +10,8 @@
 """
 
 from pyCode.AuxDecays import DecayList
-from scipy.special import kn,zetac
-from numpy import exp,sqrt,pi
+from sympy import exp,besselk,pi,sqrt,Heaviside
+from mpmath import apery as Zeta3
 from  pyCode import AuxFuncs
 from types import FunctionType
 import logging
@@ -19,7 +19,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 MP = 1.22*10**19
-Zeta3 = zetac(3.) + 1.
 
 Types = ['thermal','CO', 'weakthermal']
 
@@ -117,8 +116,7 @@ class Component(object):
             if not comp.label in decay.fstateIDs: continue
             brTot += decay.fstateIDs.count(comp.label)*decay.br
         return brTot
-            
-
+    
     def getNXTh(self,T,n,rNeq,labelsDict):
         """        
         Computes the effective thermal number density of first type at temperature T:
@@ -251,21 +249,17 @@ class Component(object):
     def nEQ(self,T):
         """Returns the equilibrium number density at temperature T. Returns zero for non-thermal components"""
         
-        if not 'thermal' in self.Type:
-            return 0.
+        mass = self.mass(T)
+        x = T/mass
+        dof = self.dof
+    
+        neq = Heaviside(0.1-x,1.)*(mass**3*(x/(2*pi))**(3./2.)*exp(-1/x)*(1. + (15./8.)*x + (105./128.)*x**2))
+        neq += Heaviside(1.5-x,1.)*Heaviside(x-0.1,0.)*(mass**3*x*besselk(2,1/x)/(2*pi**2))
+        neq += Heaviside(x-1.5,0.)*(Heaviside(dof,1.)*(Zeta3*T**3/pi**2)+Heaviside(-dof,0.)*(3./4.)*(Zeta3*T**3/pi**2))
+        neq = neq*abs(dof)
         
-        x = T/self.mass(T)
-        if x < 0.1:
-            neq = self.mass(T)**3*(x/(2*pi))**(3./2.)*exp(-1/x)*(1. + (15./8.)*x + (105./128.)*x**2) #Non-relativistic
-        elif x < 1.5:            
-            neq = self.mass(T)**3*x*kn(2,1/x)/(2*pi**2) #Non-relativistic/relativistic
-        else:
-            if self.dof > 0: neq = Zeta3*T**3/pi**2   #Relativistic Bosons
-            if self.dof < 0: neq = (3./4.)*Zeta3*T**3/pi**2   #Relativistic Fermions
-            
-        neq = neq*abs(self.dof)
         return neq
-
+    
     def rNeq(self,T,other):
         """
         Returns the ratio of equilibrium number densities at temperature T nEQ_self/nEQ_other.
@@ -274,65 +268,43 @@ class Component(object):
         since the Boltzmann suppression exponentials partially cancel.
         """
 
-        if not 'thermal' in self.Type:
-            return 0.
-
         if self is other:
             return 1.
 
         x = T/self.mass(T)
         y = T/other.mass(T)
-        if x < 0.1 and y < 0.1: #Both are non-relativistic
-            r = (self.mass(T)/other.mass(T))**3
-            r *= exp(1/y-1/x)
-            r *= (x/y)**(3./2.)
-            r *= (1. + (15./8.)*x + (105./128.)*x**2)/(1. + (15./8.)*y + (105./128.)*y**2)
-            r *= abs(self.dof)/abs(other.dof)
-        else:
-            neqA = self.nEQ(T)
-            neqB = other.nEQ(T)
-            if not neqB:
-                return None
-            r = neqA/neqB
+        r_rel = Heaviside(0.1-x,1.)*Heaviside(0.1-y,1.)
+        r_rel *= (self.mass(T)/other.mass(T))**3
+        r_rel *= exp(1/y-1/x)
+        r_rel *= (x/y)**(3./2.)
+        r_rel *= (1. + (15./8.)*x + (105./128.)*x**2)/(1. + (15./8.)*y + (105./128.)*y**2)
+        r_rel *= abs(self.dof)/abs(other.dof)
+        
+        r_gen = (1.-Heaviside(0.1-x,1.)*Heaviside(0.1-y,1.))                
+        r_gen *= self.nEQ(T)/other.nEQ(T)
 
-        return r
+        return r_rel + r_gen
 
     def rEQ(self,T):
         """Returns the ratio of equilibrium energy and number densities at temperature T,\
         assuming chemical potential = 0."""
 
         x = T/self.mass(T)
-        if x > 1.675:   #Ultra relativistic
-            if self.dof < 0: return (7./6.)*pi**4*T/(30.*Zeta3)  #Fermions
-            else: return pi**4*T/(30.*Zeta3)    #Bosons
-        elif x > 1e-2:  #Non-relativistic/relativistic transition
-            return (kn(1,1/x)/kn(2,1/x))*self.mass(T) + 3.*T
-        else: #Non-relativistic
-            return (1.-3.*x/2+15.*x**2/8)*self.mass(T) + 3.*T #Non-relativistic limit of bessel function ratio
+        dof = self.dof
+        
+        #Ultra relativistic
+        r_rel = Heaviside(x-1.675,1)*(Heaviside(dof,1)*pi**4*T/(30.*Zeta3) #Bosons
+                                    + Heaviside(-dof,0)*(7./6.)*pi**4*T/(30.*Zeta3)) #Femions
+        
+        #Non-relativistic/relativistic transition
+        r_nrel = Heaviside(x-1e-2,1)*Heaviside(1.675-x,0)*((besselk(1,1/x)/besselk(2,1/x))*self.mass(T) + 3.*T)
+        
+        #Non-relativistic
+        r_nnrel = Heaviside(1e-2-x,0)*((1.-3.*x/2+15.*x**2/8)*self.mass(T) + 3.*T)
     
-    def isOscillating(self,T,H):
-        """Checks if the component is coherent oscillating. If it is a thermal field,
-        it returns False. If it is a CO oscillating field and if
-        self.active AND 3*H(T) < self.mass, returns True."""
-        
-        if self.Type == 'CO' and self.active:
-            if H*3. < self.mass(T): return True
-            else: return False
-        else: return False
+        return r_rel+r_nrel+r_nnrel
 
-    def hasDecayed(self):
-        """Checks if the component has fully decayed"""
-        
-        return False   #!!!!FIX!!!!
-        
-        
-    def getOscAmplitute(self,T):
-        """Computes the oscillation amplitude for the component at temperature T.
-        If the component is of Type thermal, returns None."""
-        
-        if self.Type != 'CO': return None
-        else: return self.coherentAmplitute(T)
-        
+    
     def guessInitialCond(self,T,components=[]):
         """
         Get initial conditions for component at temperature T, assuming the energy
@@ -362,3 +334,4 @@ class Component(object):
             logger.info("Particle %s starting in thermal equilibrium" %self)
             return self.nEQ(T)
         
+    
