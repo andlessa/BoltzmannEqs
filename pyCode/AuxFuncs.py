@@ -42,55 +42,25 @@ class interp1d_picklable:
 
     def __setstate__(self, state):
         self.f = interpolate.interp1d(state[0], state[1], **state[2])
-        
-class gSTAR(Function):
-    """
-    Defines a sympy function for the effective number of relativistic
-    degrees of freedom for the energy density.
-    It will be undefined, unless evaluated numerically.
-    Its derivative is always taken to be zero, since it is a
-    smooth function.
-    """
 
-    _imp_ = staticmethod(gSTARf)
-
-    def fdiff(self, argindex=1):
-        return 0
-
-class gSTARS(Function):
-    """
-    Defines a sympy function for the effective number of relativistic
-    degrees of freedom for the entropy.
-    It will be undefined, unless evaluated numerically.
-    Its derivative is always taken to be zero, since it is a
-    smooth function.
-    """
-
-    _imp_ = staticmethod(gSTARSf)
-
-    def fdiff(self, argindex=1):
-        return 0
-
-def Hfunc(T, rhoTot):
-    """Compute the Hubble parameter, given the temperature and total energy density"""
-    
-    MP = 1.22*10**19
-    
-    rhoRad = (pi**2/30)*gSTAR(T)*T**4  # thermal bath's energy density    
-    rho = rhoRad+rhoTot
-    H = sqrt(8*pi*rho/3)/MP
-    
-    return H
-
-def getFunctions(pclFile):
+def getFunctions(pclFile='gFunctions.pcl'):
     """
     Computes the g*(T), g*s(T) and temperature functions and saves
     them to a pickle file. Ignores all BSM effects to these functions
     :param pclFile: Name of pickle file to dump the functions
     """
     
-    logger.info("Computing auxiliary functions. This calculation is done only once and the results will be stored in %s.\n" %pclFile)
+    #Load auxiliary (pre-computed) functions:
+    if os.path.isfile(pclFile):
+        logger.info("Loading aux functions. Ignoring BSM corrections to g* and g*_S")
+        f = open(pclFile,'rb')
+        gSTAR = pickle.load(f)
+        gSTARS = pickle.load(f)
+        Tfunc = pickle.load(f)
+        f.close()
+        return Tfunc,gSTAR,gSTARS
     
+    logger.info("Computing auxiliary functions. This calculation is done only once and the results will be stored in %s.\n" %pclFile)    
     #Get points to evaluate gSTAR
     Tpts = logspace(log10(Tmin),log10(Tmax),num=2000,endpoint=False)
     #Evaluate gSTAR and gSTARS at these points
@@ -110,34 +80,8 @@ def getFunctions(pclFile):
     pickle.dump(gSTARS,f)
     pickle.dump(Tfunc,f)
     f.close()
-
-def getTemperature(x,NS,S0=1.):
     
-    xmin = log((2*pi**2/45.)*gSTARS(Tmin)*Tmin**3)
-    xmax = log((2*pi**2/45.)*gSTARS(Tmax)*Tmax**3)
-    xeff = NS + log(S0) - 3.*x
-        
-    if xeff < xmin:  #For T < Tmin, g* is constant
-        return ((45./(2*pi**2))*exp(xeff)/gSTARS(Tmin))**(1./3.)
-    elif xeff > xmax: #For T > Tmax, g* is constant
-        return ((45./(2*pi**2))*exp(xeff)/gSTARS(Tmax))**(1./3.)
-    else:    
-        return float(Tfunc(xeff))
-
-class T(Function):
-    """
-    Defines a sympy function for the temperature.
-    It will be undefined, unless evaluated numerically.
-    Its derivative ignores changes in gSTARS, so it is defined to be T/3.
-    """
-
-    _imp_ = staticmethod(getTemperature)
-
-    def fdiff(self, argindex=2):
-        if argindex != 2:
-            return 0
-        else:
-            return self/3
+    return getFunctions(pclFile)
 
 def gstarFunc(x, dof):
     """
@@ -220,13 +164,3 @@ def gSTARSexact(T):
         return gSTARexact(T) - (7. / 8.) * 6.*(4. / 11.) ** (4. / 3.) + (7. / 8.) * 6.*(4. / 11.)
 
 
-#Load auxiliary (pre-computed) functions:
-if not os.path.isfile('gFunctions.pcl'):
-    getFunctions('gFunctions.pcl')
- 
-f = open('gFunctions.pcl','rb')
-logger.info("Loading aux functions. Ignoring BSM corrections to g* and g*_S")
-gSTARf = pickle.load(f)
-gSTARSf = pickle.load(f)
-Tfunc = pickle.load(f)
-f.close()

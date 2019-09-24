@@ -10,12 +10,11 @@
 """
 
 from pyCode.AuxDecays import DecayList
-from pyCode.AuxFuncs import getTemperature,gSTARSf
+from pyCode.EqFunctions import getTemperature,gSTAR,gSTARS
 from scipy import integrate
 from sympy import exp,besselk,pi,sqrt,Heaviside
 from mpmath import apery as Zeta3
 import numpy as np
-from  pyCode import AuxFuncs
 from types import FunctionType
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -336,7 +335,7 @@ class Component(object):
         density is dominated by radiation.
         """
         
-        H = sqrt(8.*pi**3*AuxFuncs.gSTAR(T)/90.)*T**2/MP
+        H = sqrt(8.*pi**3*gSTAR(T)/90.)*T**2/MP
         
         coannTerm = 0. #Co-annihilation term
         bsmScatter = 0. #2<->2 scattering between BSM components
@@ -371,7 +370,7 @@ class Component(object):
         
         Ttoday = 2.3697*10**(-13)*2.725/2.75  #Temperature today
         rhoh2 = 8.0992*10.**(-47)   # value of rho critic divided by h^2
-        dx = (1./3.)*np.log(gSTARSf(T)/gSTARSf(Ttoday)) + np.log(T/Ttoday)   #dx = log(R/R_today), where R is the scale factor
+        dx = (1./3.)*np.log(gSTARS(T)/gSTARS(Ttoday)) + np.log(T/Ttoday)   #dx = log(R/R_today), where R is the scale factor
         nToday = n*exp(-3.*dx)
         s0 = (2*pi**2/45)*T**3
         ns = 0.  #log(entropy) (constant) 

@@ -10,8 +10,9 @@
 
 """
 
-import sys
-from pyCode.AuxFuncs import gSTARS, gSTAR, getTemperature, getOmega, getDNeff, getPressure, Hfunc
+from pyCode.EqFunctions import gSTARS, gSTAR
+from pyCode.EqFunctions import H as Hfunc
+from pyCode.EqFunctions import T as Tfunc
 from numpy import log,pi,exp
 import numpy as np
 from scipy import integrate
@@ -150,7 +151,7 @@ class BoltzSolution(object):
         
         if r.status < 0:
             NS = r.y[-1][-1]
-            T = getTemperature(r.t[-1],NS,self.normS)
+            T = Tfunc(r.t[-1],NS,self.normS)
             logger.error("Solution failed at temperature %1.3g" %T)
             logger.error("Error message from solver: %s" %r.message)
             return False
@@ -205,7 +206,7 @@ class BoltzSolution(object):
         NS = y[-1]
 
         #Get temperature from entropy and scale factor:
-        T = getTemperature(x,NS,self.normS)
+        T = Tfunc(x,NS,self.normS)
         
         logger.debug('RHS: Computing number and energy densities for %i components' %nComp)
         #Current number densities:
@@ -270,8 +271,7 @@ class BoltzSolution(object):
         for i,comp in enumerate(self.components):
             if not isActive[i]:
                 continue
-            mass = masses[i]
-            RHS[i] = -3.*getPressure(mass,rho[i],n[i])  #Cooling term
+            RHS[i] = -3.*comp.getPressure(T,rho[i],n[i])  #Cooling term
             for j, compj in enumerate(self.components):
                 if not isActive[j]:
                     continue
@@ -305,7 +305,7 @@ class BoltzSolution(object):
         NS = y[-1]
 
         #Get temperature from entropy and scale factor:
-        T = getTemperature(x,NS,self.normS)
+        T = Tfunc(x,NS,self.normS)
         
         #Current number densities:
         n = self.norm*np.exp(Ni)
@@ -373,7 +373,7 @@ class BoltzSolution(object):
         self.S = np.hstack((self.S,S))        
         #Store T-values
         NSvalues = r.y[-1,:]
-        Tvalues = np.array([getTemperature(x,NSvalues[i],self.normS) for i,x in enumerate(r.t)])
+        Tvalues = np.array([Tfunc(x,NSvalues[i],self.normS) for i,x in enumerate(r.t)])
         self.T = np.hstack((self.T,Tvalues))
         
         #Store the number and energy densities for each component:
