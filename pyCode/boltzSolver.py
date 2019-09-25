@@ -11,7 +11,6 @@
 """
 
 from pyCode.EqFunctions import gSTARS, gSTAR
-from pyCode.EqFunctions import H as Hfunc
 from pyCode.EqFunctions import T as Tfunc
 import sympy as sp
 import numpy as np
@@ -182,7 +181,22 @@ class BoltzSolution(object):
         return True
     
     def getRHS(self,doJacobian=True):
-
+        
+        """
+        Obtain numerical functions for evaluating the right-hand side
+        of the Boltzmann equations and its Jacobian (if required).
+        First the algebraic equations are defined using Ni,Ri,NS and
+        x as sympy variables. Derivatives of discontinuos or non-analytic
+        functions are not explicitly computed and only evaluated numerically.
+        
+        :param doJacobian: Boolean specifying if the Jacobian of the differential
+                           equations should be computed. If False, will return
+                           None for the jacobian function.
+                           
+        :return: The RHS and Jacobian functions to be evaluated numerically.
+        
+        """
+        
         #Store the number of components:
         nComp = len(self.components)
 
@@ -262,17 +276,21 @@ class BoltzSolution(object):
         yv = np.hstack((N,R,[NS])) #y-variables
         
         #Convert the algebraic equation in a numerical equation:
-        #(discoti
-        rhs = sp.lambdify([x,yv],dy, modules=[{'DiracDelta' : lambda z: 0., 
-                                               'M_P' : 1.22e19},
-                                               'numpy','sympy'])
-        
-        
+        rhsf = sp.lambdify([x,yv],dy, 
+                          modules=[{'M_P' : 1.22e19},'numpy','sympy'])
+
         logger.debug('Done computing equations')
-
-        return dy
         
-
+        #Compute the Jacobian (if required)
+        if doJacobian:
+            jac = sp.Matrix(dy).jacobian(yv).tolist()
+            jacf = sp.lambdify([x,yv],jac,
+                               modules=[{'M_P' : 1.22e19},'numpy','sympy'])
+            logger.debug('Done computing Jacobian')
+        else:
+            jacf = None
+            
+        return rhsf,jacf
 
     
     def rhs(self,x,y):

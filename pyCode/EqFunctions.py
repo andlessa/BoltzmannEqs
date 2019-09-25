@@ -77,7 +77,7 @@ def dnEQdTf(T,mass,dof):
 
     return neq
 
-def Pnf(self,R,mass):
+def Pnf(R,mass):
     """
     Computes the ratio of pressure and number density
     for a component given the ratio of its energy and number densities and
