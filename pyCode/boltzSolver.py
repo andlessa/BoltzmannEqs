@@ -13,7 +13,7 @@
 from pyCode.EqFunctions import gSTARS, gSTAR
 from pyCode.EqFunctions import H as Hfunc
 from pyCode.EqFunctions import T as Tfunc
-from numpy import log,pi,exp
+import sympy as sp
 import numpy as np
 from scipy import integrate
 import logging
@@ -108,7 +108,6 @@ class BoltzSolution(object):
             return np.array([getattr(comp, attr)(*args, **kw) for comp in self.components])
         return call
 
-
     def setInitialCond(self):
         """
         Use the last entries in the entrory and the components number and energy density values
@@ -182,6 +181,99 @@ class BoltzSolution(object):
     
         return True
     
+    def getRHS(self,doJacobian=True):
+
+        #Store the number of components:
+        nComp = len(self.components)
+
+        #Define variables:        
+        N = np.array(sp.symbols('N:%d'%nComp))
+        R = np.array(sp.symbols('R:%d'%nComp))
+        NS = sp.symbols('N_S')
+        x = sp.symbols('x')
+        T = Tfunc(x,NS,self.normS)
+        
+        #Planck constant:
+        MP = sp.symbols('M_P')
+        
+        #Current number densities:
+        n = self.norm*np.array([sp.exp(Ni) for Ni in N])
+        #Current energy densities:
+        rho = n*R
+        
+        #Compute equilibrium densities:
+        neq = self.nEQ(T)
+        
+        #Compute ratio of equilibrium densities
+        #(helps with numerical instabilities)
+        #rNeq[i,j] = neq[i]/neq[j]
+        rNeq = np.array([[compi.rNeq(T,compj) if compi.active and compj.active else 0. for compj in self.components] 
+                         for compi in self.components])
+        
+        #Dictionary with label:index mapping:
+        labelsDict = dict([[comp.label,i] for i,comp in enumerate(self.components)])
+        isActive = self.active
+        
+        #Compute Hubble factor:
+        rhoTot = np.sum(rho,where=isActive,initial=0)
+        rhoRad = (sp.pi**2/30)*gSTAR(T)*T**4  # thermal bath's energy density    
+        rho = rhoRad+rhoTot
+        H = sp.sqrt(8*sp.pi*rho/3)/MP
+                
+        #Auxiliary weights:
+        #Effective equilibrium densities and BRs:
+        #NXth[i] = N^{th}_i:
+        NXth = self.getNXTh(T,n,rNeq,labelsDict)
+        widths = self.width(T)
+        masses = self.mass(T)
+        BRX = self.getBRX(T)
+        sigmaV = self.getSIGV(T)
+        
+        # Derivative for entropy:
+        dNS = np.sum(isActive*BRX*widths*masses*(n-NXth))*sp.exp(3.*x - NS)/(H*T*self.normS)
+        
+        #Derivatives for the Ni=log(ni/s0) variables:
+        #Expansion term:
+        RHS = -3*n
+        #Decay term:
+        RHS -= widths*masses*n/(H*R)
+        #Inverse decay term:
+        RHS += widths*masses*NXth/(H*R) #NXth should be finite if i -> j +..
+        #Annihilation term:            
+        RHS += sigmaV*(neq - n)*(neq + n)/H
+        dN = sp.sympify(np.zeros(nComp)).as_mutable()
+        for i,rhs in enumerate(RHS):
+            if isActive[i]:
+                dN[i] = rhs/n[i]
+
+        RHS = sp.sympify(np.zeros(nComp)).as_mutable()
+        #Derivatives for the rho/n variables (only for thermal components):
+        for i,comp in enumerate(self.components):
+            if not isActive[i]:
+                continue
+            RHS[i] = -3.*n[i]*comp.Pn(T,R[i])  #Cooling term
+
+        dR = sp.sympify(np.zeros(nComp)).as_mutable()
+        for i,rhs in enumerate(RHS):
+            if isActive[i]:
+                dR[i] = rhs/n[i]
+
+        dy = np.hstack((dN,dR,[dNS])) #Derivatives
+        yv = np.hstack((N,R,[NS])) #y-variables
+        
+        #Convert the algebraic equation in a numerical equation:
+        #(discoti
+        rhs = sp.lambdify([x,yv],dy, modules=[{'DiracDelta' : lambda z: 0., 
+                                               'M_P' : 1.22e19},
+                                               'numpy','sympy'])
+        
+        
+        logger.debug('Done computing equations')
+
+        return dy
+        
+
+
     
     def rhs(self,x,y):
         """

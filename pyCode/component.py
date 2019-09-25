@@ -10,17 +10,13 @@
 """
 
 from pyCode.AuxDecays import DecayList
-from pyCode.EqFunctions import getTemperature,gSTAR,gSTARS
+from pyCode.EqFunctions import Tf,gSTAR,gSTARS,nEQ,rNeq,rEQ,Pn
 from scipy import integrate
-from sympy import exp,besselk,pi,sqrt,Heaviside
-from mpmath import apery as Zeta3
 import numpy as np
 from types import FunctionType
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-MP = 1.22*10**19
 
 Types = ['thermal','CO', 'weakthermal']
 
@@ -248,41 +244,26 @@ class Component(object):
         
         return self.sigmavBSM(T,other)
     
-    def getPressure(self,T,rho, n):
+    def Pn(self,T,R):
         """
-        Computes the pressure for a component at temperature T, given its energy and number densities.
+        Computes the ratio of pressure and number density
+        for a component given the ratio of its energy and number densities.
         """
-    
-        mass = self.mass(T)
-        if not rho or not n:
-            return 0.
-        R = rho/n    
-        if R > 11.5*mass: return n*(R/3)  # Ultra relativistic limit
-        if R <= mass: return 0.  # Ultra non-relativistic limit
         
-    # Expansion coefficients for relativistic/non-relativistic transition    
-        aV = [-0.345998, 0.234319, -0.0953434, 0.023657, -0.00360707, 0.000329645, -0.0000165549, 3.51085*10.**(-7)]    
-        Prel = n*(R/3)  # Relativistic pressure
-        Pnonrel = (2.*mass/3.)*(R/mass - 1.)  # Non-relativistic pressure
-        Pnonrel += mass*sum([ai*(R/mass - 1.)**(i+2)  for i, ai in enumerate(aV)])
-        Pnonrel *= n
-            
-        return min(Prel, Pnonrel)  # If P2 > P1, it means ultra relativistic limit applies -> use P1
+        mass = self.mass(T)
+        
+        return Pn(R,mass)
     
         
     def nEQ(self,T):
-        """Returns the equilibrium number density at temperature T. Returns zero for non-thermal components"""
+        """
+        Returns the equilibrium number density at temperature T.
+        """
         
         mass = self.mass(T)
-        x = T/mass
         dof = self.dof
-    
-        neq = Heaviside(0.1-x,1.)*(mass**3*(x/(2*pi))**(3./2.)*exp(-1/x)*(1. + (15./8.)*x + (105./128.)*x**2))
-        neq += Heaviside(1.5-x,1.)*Heaviside(x-0.1,0.)*(mass**3*x*besselk(2,1/x)/(2*pi**2))
-        neq += Heaviside(x-1.5,0.)*(Heaviside(dof,1.)*(Zeta3*T**3/pi**2)+Heaviside(-dof,0.)*(3./4.)*(Zeta3*T**3/pi**2))
-        neq = neq*abs(dof)
         
-        return neq
+        return nEQ(T,mass,dof)
     
     def rNeq(self,T,other):
         """
@@ -294,39 +275,24 @@ class Component(object):
 
         if self is other:
             return 1.
-
-        x = T/self.mass(T)
-        y = T/other.mass(T)
-        r_rel = Heaviside(0.1-x,1.)*Heaviside(0.1-y,1.)
-        r_rel *= (self.mass(T)/other.mass(T))**3
-        r_rel *= exp(1/y-1/x)
-        r_rel *= (x/y)**(3./2.)
-        r_rel *= (1. + (15./8.)*x + (105./128.)*x**2)/(1. + (15./8.)*y + (105./128.)*y**2)
-        r_rel *= abs(self.dof)/abs(other.dof)
         
-        r_gen = (1.-Heaviside(0.1-x,1.)*Heaviside(0.1-y,1.))                
-        r_gen *= self.nEQ(T)/other.nEQ(T)
-
-        return r_rel + r_gen
-
-    def rEQ(self,T):
-        """Returns the ratio of equilibrium energy and number densities at temperature T,\
-        assuming chemical potential = 0."""
-
-        x = T/self.mass(T)
-        dof = self.dof
+        massA = self.mass(T)
+        massB = other.mass(T)
+        dofA = self.dof
+        dofB = other.dof
         
-        #Ultra relativistic
-        r_rel = Heaviside(x-1.675,1)*(Heaviside(dof,1)*pi**4*T/(30.*Zeta3) #Bosons
-                                    + Heaviside(-dof,0)*(7./6.)*pi**4*T/(30.*Zeta3)) #Femions
-        
-        #Non-relativistic/relativistic transition
-        r_nrel = Heaviside(x-1e-2,1)*Heaviside(1.675-x,0)*((besselk(1,1/x)/besselk(2,1/x))*self.mass(T) + 3.*T)
-        
-        #Non-relativistic
-        r_nnrel = Heaviside(1e-2-x,0)*((1.-3.*x/2+15.*x**2/8)*self.mass(T) + 3.*T)
+        return rNeq(T,massA,dofA,massB,dofB)
     
-        return r_rel+r_nrel+r_nnrel
+    def rEQ(self,T):
+        """
+        Returns the ratio of equilibrium energy and number densities at temperature T,
+        assuming chemical potential = 0.
+        """
+
+        mass = self.mass(T)
+        dof = self.dof
+    
+        return rEQ(T,mass,dof)
 
     
     def guessInitialCond(self,T,components=[]):
@@ -335,7 +301,9 @@ class Component(object):
         density is dominated by radiation.
         """
         
-        H = sqrt(8.*pi**3*gSTAR(T)/90.)*T**2/MP
+        MP = 1.22e19
+        
+        H = np.sqrt(8.*np.pi**3*gSTAR(T)/90.)*T**2/MP
         
         coannTerm = 0. #Co-annihilation term
         bsmScatter = 0. #2<->2 scattering between BSM components
@@ -371,21 +339,21 @@ class Component(object):
         Ttoday = 2.3697*10**(-13)*2.725/2.75  #Temperature today
         rhoh2 = 8.0992*10.**(-47)   # value of rho critic divided by h^2
         dx = (1./3.)*np.log(gSTARS(T)/gSTARS(Ttoday)) + np.log(T/Ttoday)   #dx = log(R/R_today), where R is the scale factor
-        nToday = n*exp(-3.*dx)
-        s0 = (2*pi**2/45)*T**3
+        nToday = n*np.exp(-3.*dx)
+        s0 = (2*np.pi**2/45)*T**3
         ns = 0.  #log(entropy) (constant) 
         
         
         R0 = rho/n    
-        Rmin = R0*exp(-dx)    #Minimum value for rho/n(Ttoday) (happens if component is relativistic today)
+        Rmin = R0*np.exp(-dx)    #Minimum value for rho/n(Ttoday) (happens if component is relativistic today)
         Pmin = self.getPressure(Ttoday,Rmin*nToday,nToday)
         
         if abs(Pmin - Rmin*nToday/3.)/(Rmin*nToday/3.) < 0.01:
             RToday = Rmin  #Relativistic component today
         else:
             def Rfunc(R,x):            
-                TF = getTemperature(x,ns,s0)
-                nF = n*exp(-3*x)   #Number density at x (decoupled solution)
+                TF = Tf(x,ns,s0)
+                nF = n*np.exp(-3*x)   #Number density at x (decoupled solution)
                 rhoF = R*nF         #Energy density at x                        
                 return -3*self.getPressure(TF,rhoF,nF)/nF
             RToday = integrate.odeint(Rfunc, R0, [0.,24.], atol = self.mass(Ttoday)/10.)[1][0]  #Solve decoupled ODE for R=rho/n
@@ -409,7 +377,7 @@ class Component(object):
             rhoRel = rho    
         else:
             rhoRel = 0.
-        DNeff = rhoRel/(((pi**2)/15)*(7./8.)*((4./11.)**(4./3.))*T**4)
+        DNeff = rhoRel/(((np.pi**2)/15)*(7./8.)*((4./11.)**(4./3.))*T**4)
         
         return DNeff    
         
