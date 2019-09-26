@@ -12,7 +12,9 @@
 from pyCode.AuxDecays import DecayList
 from pyCode.EqFunctions import Tf,gSTAR,gSTARS,nEQ,rNeq,rEQ,Pn
 from scipy import integrate
+from scipy.misc import derivative
 import numpy as np
+import sympy as sp
 from types import FunctionType
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -46,7 +48,7 @@ class Component(object):
         self.Tdecay = None
         self.Tosc = None
         self.Tdecouple = None
-        self.sigmav = sigmav
+#         self.sigmav = sigmav
         self.coSigmav = coSigmav
         self.convertionRate = convertionRate
         self.sigmavBSM = sigmavBSM
@@ -74,6 +76,15 @@ class Component(object):
         else:
             logger.error("Decays must be a DecayList object or a function of T")
             return False
+
+        dsigmavdT = lambda T: derivative(sigmav, T, dx=1e-6)
+        class sV(sp.Function):
+            _imp_ = staticmethod(sigmav)
+            def fdiff(self, argindex=1):
+                return dsVdT(self.args[0])
+        class dsVdT(sp.Function):
+            _imp_ = staticmethod(dsigmavdT)
+        self.sigmav = sV
 
     def __str__(self):
         
