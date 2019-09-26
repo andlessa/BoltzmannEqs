@@ -81,9 +81,15 @@ class Component(object):
         class sV(sp.Function):
             _imp_ = staticmethod(sigmav)
             def fdiff(self, argindex=1):
-                return dsVdT(self.args[0])
+                if argindex == 1:
+                    return dsVdT(self.args[0])
+                else:
+                    return 0.
         class dsVdT(sp.Function):
             _imp_ = staticmethod(dsigmavdT)
+
+        sV.__name__ = "sV%s" %(self.label)
+        dsVdT.__name__ = "dsVdT%s" %(self.label)
         self.sigmav = sV
 
     def __str__(self):
