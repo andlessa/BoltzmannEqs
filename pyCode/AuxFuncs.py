@@ -198,7 +198,7 @@ def Hfunc(T, rhov, isActive):
         rhoActive.append(rho)  # energy density of each active component     
     rhoRad = (pi**2/30)*gSTAR(T)*T** 4  # thermal bath's energy density    
     rhoActive.append(rhoRad)
-    rhoTot = sum(rhoActive)  # Total energy density    
+    rhoTot = sum(rhoActive)  # Total energy density
     H = sqrt(8*pi*rhoTot/3)/MP
     
     return H

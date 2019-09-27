@@ -105,7 +105,8 @@ def main(parameterFile,outputFile,showPlot=True):
     
     #Evolve the equations from TR to TF
     solution = BoltzSolution(compList,TRH)
-    solved = solution.EvolveTo(TF,npoints=5000)
+    solved = solution.EvolveTo(500.,npoints=5000,atol=1e-10,rtol=1e-3)
+    solved = solution.EvolveTo(TF,npoints=5000,atol=1e-10,rtol=1e-5)
     if not solved:
         return
     
