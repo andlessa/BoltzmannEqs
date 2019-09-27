@@ -10,7 +10,7 @@
 """
 
 from pyCode.AuxDecays import DecayList
-from pyCode.EqFunctions import Tf,gSTAR,gSTARS,nEQ,rNeq,rEQ,Pn
+from pyCode.EqFunctions import Tf,gSTAR,nEQ,rNeq,rEQ,Pn,gSTARSf,Pnf,rEQf,nEQf,rNeqf
 from scipy import integrate
 from scipy.misc import derivative
 import numpy as np
@@ -39,8 +39,7 @@ class Component(object):
     
     def __init__(self,label,Type,dof,mass,decays=DecayList(),
                  sigmav = lambda x: 0., coSigmav = lambda x,y: 0.,
-                 convertionRate = lambda x,y: 0., sigmavBSM = lambda x,y: 0.,
-                 source = lambda x: 0., coherentAmplitute = lambda x: 0.):
+                 convertionRate = lambda x,y: 0., sigmavBSM = lambda x,y: 0.):
         self.label = label
         self.Type = Type
         self.active = True
@@ -48,12 +47,10 @@ class Component(object):
         self.Tdecay = None
         self.Tosc = None
         self.Tdecouple = None
-#         self.sigmav = sigmav
-        self.coSigmav = coSigmav
-        self.convertionRate = convertionRate
-        self.sigmavBSM = sigmavBSM
-        self.source = source
-        self.coherentAmplitude = coherentAmplitute
+        self.sigmavF = sigmav
+        self.coSigmavF = coSigmav
+        self.convertionRateF = convertionRate
+        self.sigmavBSMF = sigmavBSM
 
         if not Type or type(Type) != type(str()) or not Type in Types:
             logger.error("Please define proper particle Type (not "+str(Type)+"). \n Possible Types are: "+str(Types))
@@ -77,9 +74,9 @@ class Component(object):
             logger.error("Decays must be a DecayList object or a function of T")
             return False
 
-        dsigmavdT = lambda T: derivative(sigmav, T, dx=1e-6)
+        dsigmavdT = lambda T: derivative(self.sigmavF, T, dx=1e-6)
         class sV(sp.Function):
-            _imp_ = staticmethod(sigmav)
+            _imp_ = staticmethod(self.sigmavF)
             def fdiff(self, argindex=1):
                 if argindex == 1:
                     return dsVdT(self.args[0])
@@ -227,7 +224,6 @@ class Component(object):
         
         return self.sigmav(T)
 
-
     def getCOSIGV(self,T,other):
         """
         Returns the thermally averaged co-annihilation cross-section self+other -> SM + SM
@@ -270,8 +266,7 @@ class Component(object):
         mass = self.mass(T)
         
         return Pn(R,mass)
-    
-        
+            
     def nEQ(self,T):
         """
         Returns the equilibrium number density at temperature T.
@@ -281,6 +276,16 @@ class Component(object):
         dof = self.dof
         
         return nEQ(T,mass,dof)
+    
+    def nEQf(self,T):
+        """
+        Numerically compute the equilibrium number density at temperature T.
+        """
+        
+        mass = self.mass(T)
+        dof = self.dof
+        
+        return nEQf(T,mass,dof)    
     
     def rNeq(self,T,other):
         """
@@ -299,6 +304,24 @@ class Component(object):
         dofB = other.dof
         
         return rNeq(T,massA,dofA,massB,dofB)
+
+    def rNeqf(self,T,other):
+        """
+        Numerically compute the ratio of equilibrium number densities at temperature T nEQ_self/nEQ_other.
+        If both species are Boltzmann suppressed (T << mass) and nearly degenerate,
+        it provides a better approximation than taking the ratio of equilibrium densities,
+        since the Boltzmann suppression exponentials partially cancel.
+        """
+
+        if self is other:
+            return 1.
+        
+        massA = self.mass(T)
+        massB = other.mass(T)
+        dofA = self.dof
+        dofB = other.dof
+        
+        return rNeqf(T,massA,dofA,massB,dofB)    
     
     def rEQ(self,T):
         """
@@ -310,7 +333,17 @@ class Component(object):
         dof = self.dof
     
         return rEQ(T,mass,dof)
+    
+    def rEQf(self,T):
+        """
+        Numerically compute the ratio of equilibrium energy and number densities at temperature T,
+        assuming chemical potential = 0.
+        """
 
+        mass = self.mass(T)
+        dof = self.dof
+    
+        return rEQf(T,mass,dof)    
     
     def guessInitialCond(self,T,components=[]):
         """
@@ -342,8 +375,7 @@ class Component(object):
         else: #Particle starts coupled
             logger.info("Particle %s starting in thermal equilibrium" %self)
             return self.nEQ(T)
-        
-    
+           
     def getOmega(self,rho,n,T):
         """
         Compute relic density today, given the component, number density and energy density
@@ -355,7 +387,7 @@ class Component(object):
         
         Ttoday = 2.3697*10**(-13)*2.725/2.75  #Temperature today
         rhoh2 = 8.0992*10.**(-47)   # value of rho critic divided by h^2
-        dx = (1./3.)*np.log(gSTARS(T)/gSTARS(Ttoday)) + np.log(T/Ttoday)   #dx = log(R/R_today), where R is the scale factor
+        dx = (1./3.)*np.log(gSTARSf(T)/gSTARSf(Ttoday)) + np.log(T/Ttoday)   #dx = log(R/R_today), where R is the scale factor
         nToday = n*np.exp(-3.*dx)
         s0 = (2*np.pi**2/45)*T**3
         ns = 0.  #log(entropy) (constant) 
@@ -363,16 +395,14 @@ class Component(object):
         
         R0 = rho/n    
         Rmin = R0*np.exp(-dx)    #Minimum value for rho/n(Ttoday) (happens if component is relativistic today)
-        Pmin = self.getPressure(Ttoday,Rmin*nToday,nToday)
+        Pmin = nToday*Pnf(Ttoday,Rmin)
         
         if abs(Pmin - Rmin*nToday/3.)/(Rmin*nToday/3.) < 0.01:
             RToday = Rmin  #Relativistic component today
         else:
             def Rfunc(R,x):            
-                TF = Tf(x,ns,s0)
-                nF = n*np.exp(-3*x)   #Number density at x (decoupled solution)
-                rhoF = R*nF         #Energy density at x                        
-                return -3*self.getPressure(TF,rhoF,nF)/nF
+                TF = Tf(x,ns,s0)                        
+                return -3*Pnf(TF,R)
             RToday = integrate.odeint(Rfunc, R0, [0.,24.], atol = self.mass(Ttoday)/10.)[1][0]  #Solve decoupled ODE for R=rho/n
        
         return RToday*nToday/rhoh2

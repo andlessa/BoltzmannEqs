@@ -10,8 +10,9 @@
 
 """
 
-from pyCode.EqFunctions import gSTARS, gSTAR, gSTARf
+from pyCode.EqFunctions import gSTAR, gSTARf,gSTARSf,Tf
 from pyCode.EqFunctions import T as Tfunc
+from pyCode.printerTools import printData,printSummary
 import sympy as sp
 import numpy as np
 from scipy import integrate
@@ -53,7 +54,7 @@ class BoltzSolution(object):
         
         t0 = time.time()
         #Compute initial values for variables:
-        self.S = np.array([(2*np.pi**2/45)*gSTARS(T0)*T0**3])
+        self.S = np.array([(2*np.pi**2/45)*gSTARSf(T0)*T0**3])
         self.T = np.array([T0])
         self.x = np.array([0.])
         self.R = np.array([1.])
@@ -63,8 +64,8 @@ class BoltzSolution(object):
         #equilibrium condition:
         MP = 1.22*10**19
         H = np.sqrt(8.*np.pi**3*gSTARf(T0)/90.)*T0**2/MP
-        sigV = self.getSIGV(T0)
-        neq = self.nEQ(T0)
+        sigV = self.sigmavF(T0)
+        neq = self.nEQf(T0)
         #Thermal equilibrium condition (if >1 particle is in thermal equilibrium):
         thermalEQ = neq*sigV/H
         for i,comp in enumerate(self.components):
@@ -75,7 +76,7 @@ class BoltzSolution(object):
                 else:
                     comp.n = np.array([1e-20*neq[i]])
                     comp.Tdecouple = T0
-                comp.rho = comp.n*comp.rEQ(T0)
+                comp.rho = comp.n*comp.rEQf(T0)
             else: #Remove all entries from components except the last
                 if len(comp.n) > 1:
                     logger.info("Resetting %s's number and energy densities to last value")
@@ -120,7 +121,8 @@ class BoltzSolution(object):
         self.norm = self.n[:,-1] #Set normalization (ni0) for each component
         self.normS = self.S[-1] #Set normalization (S0) for entropy
         
-    def EvolveTo(self,TF,npoints=5000,dx=None,doJacobian=True):
+    def EvolveTo(self,TF,npoints=5000,dx=None,doJacobian=True,
+                 atol=1e-6,rtol=1e-3):
         """
         Evolve the components in component list from the re-heat temperature T0 to TF
         For simplicity we set  R0 = s0 = 1 (with respect to the notes).
@@ -139,21 +141,21 @@ class BoltzSolution(object):
         T0 = self.T[0]
         x0 = self.x[-1]
         #Estimate the final value of x (x=log(R/R0)) assuming conservation of entropy
-        xf = np.log(T0/TF) + (1./3.)*np.log(gSTARS(T0)/gSTARS(TF)) #Evolve till late times
+        xf = np.log(T0/TF) + (1./3.)*np.log(gSTARSf(T0)/gSTARSf(TF)) #Evolve till late times
         tvals = np.linspace(x0,xf,npoints)
         y0 = self.y0
         logger.debug('Evolving from %1.3g to %1.3g with %i points' %(x0,xf,len(tvals)))
         maxstep = np.inf
         if dx:
             maxstep = (xf-x0)/dx
-        r = integrate.solve_ivp(self.rhs,t_span=(x0,xf),y0=y0,
+        r = integrate.solve_ivp(self.rhs,t_span=(x0,xf),y0=y0,atol=atol,rtol=rtol,
                                 t_eval=tvals,method='BDF',dense_output=True,
                                 events=self.events,max_step=maxstep,jac=self.jac)
         
         if r.status < 0:
             NS = r.y[-1][-1]
-            T = Tfunc(r.t[-1],NS,self.normS)
-            logger.error("Solution failed at temperature %1.3g" %T)
+            Tfail = Tf(r.t[-1],NS,self.normS)
+            logger.error("Solution failed at temperature %1.3g" %Tfail)
             logger.error("Error message from solver: %s" %r.message)
             return False
 
@@ -181,7 +183,7 @@ class BoltzSolution(object):
                 logger.error(r.message)
                 return False
     
-        return True
+        return r
     
     def getRHS(self,doJacobian=True):
         
@@ -292,7 +294,7 @@ class BoltzSolution(object):
             logger.debug('Done computing Jacobian')
         else:
             jacf = None
-            
+
         return rhsf,jacf
 
     
@@ -486,7 +488,7 @@ class BoltzSolution(object):
         self.S = np.hstack((self.S,S))        
         #Store T-values
         NSvalues = r.y[-1,:]
-        Tvalues = np.array([Tfunc(x,NSvalues[i],self.normS) for i,x in enumerate(r.t)])
+        Tvalues = np.array([Tf(x,NSvalues[i],self.normS) for i,x in enumerate(r.t)])
         self.T = np.hstack((self.T,Tvalues))
         
         #Store the number and energy densities for each component:
@@ -500,4 +502,11 @@ class BoltzSolution(object):
                 rho = n*r.y[icomp+self.ncomp,:]
             comp.n = np.hstack((comp.n,n))
             comp.rho = np.hstack((comp.rho,rho))
+
+
+    def printSummary(self,outFile=None):
+        printSummary(self, outFile)
+        
+    def printData(self,outFile=None):
+        printData(self, outFile)  
 

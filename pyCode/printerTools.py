@@ -93,7 +93,6 @@ def printData(solution,outFile=None):
         np.savetxt(f,data,delimiter=' ',header = header,fmt=('{:^%i}'%(maxLength-5)).format('%1.4E'))
         f.write('#--------------\n')    
         f.close()
-
         
 def printParameters(parameters,outFile=None):
     """
