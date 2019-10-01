@@ -74,6 +74,7 @@ class Component(object):
             logger.error("Decays must be a DecayList object or a function of T")
             return False
 
+        #Self-annihilation
         dsigmavdT = lambda T: derivative(self.sigmavF, T, dx=1e-6)
         class sV(sp.Function):
             _imp_ = staticmethod(self.sigmavF)
@@ -84,10 +85,61 @@ class Component(object):
                     return 0.
         class dsVdT(sp.Function):
             _imp_ = staticmethod(dsigmavdT)
-
         sV.__name__ = "sV%s" %(self.label)
         dsVdT.__name__ = "dsVdT%s" %(self.label)
         self.sigmav = sV
+        
+        #Co-annihilation
+        dcoSigmavdT = lambda T,other: derivative(self.coSigmavF, T, args=(other,), dx=1e-6)
+        class cosV(sp.Function):
+            _imp_ = staticmethod(self.coSigmavF)
+            nargs = 2
+            def fdiff(self, argindex=1):
+                if argindex == 1:
+                    return dcosVdT(self.args[0],self.args[1])
+                else:
+                    return 0.
+        class dcosVdT(sp.Function):
+            _imp_ = staticmethod(dcoSigmavdT)            
+            nargs = 2            
+        cosV.__name__ = "cosV%s" %(self.label)
+        dcosVdT.__name__ = "dcosVdT%s" %(self.label)
+        self.coSigmav = cosV
+        
+        #Convertion rate
+        dconvertionRatedT = lambda T,other: derivative(self.convertionRateF, T, args=(other,), dx=1e-6)
+        class cRate(sp.Function):
+            _imp_ = staticmethod(self.convertionRateF)            
+            nargs = 2            
+            def fdiff(self, argindex=1):
+                if argindex == 1:
+                    return dcosVdT(self.args[0],self.args[1])
+                else:
+                    return 0.
+        class dcRatedT(sp.Function):
+            _imp_ = staticmethod(dconvertionRatedT)
+            nargs = 2
+        cRate.__name__ = "cRate%s" %(self.label)
+        dcRatedT.__name__ = "dcRatedT%s" %(self.label)
+        self.convertionRate = cRate
+        
+        #BSM<->BSM annihilation
+        dsigmaVBSMdT = lambda T,other: derivative(self.sigmavBSMF, T, args=(other,), dx=1e-6)
+        class sVBSM(sp.Function):
+            _imp_ = staticmethod(self.sigmavBSMF)
+            nargs = 2
+            def fdiff(self, argindex=1):
+                if argindex == 1:
+                    return dcosVdT(self.args[0],self.args[1])
+                else:
+                    return 0.
+        class dsVBSMdT(sp.Function):
+            _imp_ = staticmethod(dsigmaVBSMdT)
+            nargs = 2
+        sVBSM.__name__ = "sVBSM%s" %(self.label)
+        dsVBSMdT.__name__ = "dsVBSMdT%s" %(self.label)
+        self.sigmavBSM = sVBSM               
+                
 
     def __str__(self):
         

@@ -134,7 +134,7 @@ class BoltzSolution(object):
         self.setInitialCond()
         
         #Define Boltzmann equations and the jacobian (if required)
-        self.rhs, self.jac = self.getRHS(doJacobian) 
+        self.rhs, self.jac = self.getRHS(doJacobian)
 
         t0 = time.time()
         #Solve differential equations:
@@ -243,6 +243,12 @@ class BoltzSolution(object):
         #Effective equilibrium densities and BRs:
         #NXth[i] = N^{th}_i:
         NXth = self.getNXTh(T,n,rNeq,labelsDict)
+        #NXYth[i,j] = N^{th}_{ij}:
+        NXYth = np.array([[compi.getNXYTh(T,n,rNeq,labelsDict,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
+                          for compi in self.components])
+        #Effective branching ratio (Beff[i,j] = B^{eff}_{ij}:
+        Beff = np.array([[compi.getTotalBRTo(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
+                         for compi in self.components])        
         widths = self.width(T)
         masses = self.mass(T)
         BRX = self.getBRX(T)
@@ -254,23 +260,70 @@ class BoltzSolution(object):
         #Derivatives for the Ni=log(ni/s0) variables:
         #Expansion term:
         RHS = -3*n
-        #Decay term:
-        RHS -= widths*masses*n/(H*R)
-        #Inverse decay term:
-        RHS += widths*masses*NXth/(H*R) #NXth should be finite if i -> j +..
         #Annihilation term:            
         RHS += sigmaV*(neq - n)*(neq + n)/H
+        # i + j <-> SM + SM:
+        for i,compi in enumerate(self.components):
+            for j,compj in enumerate(self.components):
+                if i == j or not compj.active:
+                    continue
+                sigVij = compi.getCOSIGV(T,compj)
+                if not sigVij:
+                    continue
+                RHS += (neq[i]*neq[j]-n[i]*n[j])*sigVij/H
+        # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
+        for i,compi in enumerate(self.components):
+            for j,compj in enumerate(self.components):
+                if i == j or not compj.active:
+                    continue
+                sigVjj = compi.getSIGVBSM(T,compj)
+                if not sigVjj:
+                    continue
+                RHS += (rNeq[i,j]**2*n[j]**2-n[i]**2)*sigVjj/H
+        # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
+        for i,compi in enumerate(self.components):
+            for j,compj in enumerate(self.components):
+                if i == j or not compj.active:
+                    continue
+                cRate = compi.getConvertionRate(T,compj)
+                if not cRate:
+                    continue
+                RHS += (rNeq[i,j]*n[j]-n[i])*cRate/H
+        # j <-> i +SM (#NXYth[j,i] should be finite if j -> i +...)
+        for i,compi in enumerate(self.components):
+            for j,compj in enumerate(self.components):
+                if i == j or not compj.active:
+                    continue
+                cRate = compi.getConvertionRate(T,compj)
+                if not cRate:
+                    continue
+                RHS += Beff[j,i]*widths[j]*masses[j]*(n[j]-NXYth[j,i])/(H*R[j])
+        #Decay and inverse decay terms:
+        RHS -= widths*masses*(n-NXth)/(H*R) #NXth should be finite if i -> j +.. 
+
+
+        for i,compi in enumerate(self.components):
+            if not isActive[i] and RHS[i] > 0.:
+                logger.warning("Inactive component %s is being injected" %compi.label)
+        
         dN = sp.sympify(np.zeros(nComp)).as_mutable()
         for i,rhs in enumerate(RHS):
             if isActive[i]:
                 dN[i] = rhs/n[i]
 
+
+        #Derivatives for the Ri=rhoi/ni variables:
         RHS = sp.sympify(np.zeros(nComp)).as_mutable()
         #Derivatives for the rho/n variables (only for thermal components):
         for i,comp in enumerate(self.components):
             if not isActive[i]:
                 continue
             RHS[i] = -3.*n[i]*comp.Pn(T,R[i])  #Cooling term
+            for j, compj in enumerate(self.components):
+                if i == j or not compj.active:
+                    continue
+                #Injection and inverse injection terms:
+                RHS[i] += Beff[j,i]*widths[j]*masses[j]*(1./2. - R[i]/R[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
 
         dR = sp.sympify(np.zeros(nComp)).as_mutable()
         for i,rhs in enumerate(RHS):
@@ -282,7 +335,7 @@ class BoltzSolution(object):
         
         #Convert the algebraic equation in a numerical equation:
         rhsf = sp.lambdify([x,yv],dy, 
-                          modules=[{'M_P' : 1.22e19},'numpy','sympy'])
+                          modules=[{'M_P' : 1.22e19},labelsDict,'numpy','sympy'])
 
         logger.debug('Done computing equations')
         
@@ -290,185 +343,13 @@ class BoltzSolution(object):
         if doJacobian:
             jac = sp.Matrix(dy).jacobian(yv).tolist()
             jacf = sp.lambdify([x,yv],jac,
-                               modules=[{'M_P' : 1.22e19},'numpy','sympy'])
+                               modules=[{'M_P' : 1.22e19},labelsDict,'numpy','sympy'])
             logger.debug('Done computing Jacobian')
         else:
             jacf = None
 
         return rhsf,jacf
 
-    
-#     def rhs(self,x,y):
-#         """
-#         Defines the derivatives of the y variables at point x = log(R/R0).
-#         active = [True/False,...] is a list of switches to activate/deactivate components
-#         If a component is not active it does not evolve and its decay and
-#         energy density does not contribute to the other components.
-#         For simplicity we set  R0 = s0 = 1 (with respect to the notes).
-#         """
-# 
-#         isActive = self.active
-#         logger.debug('Calling RHS with arguments:\n   x=%s,\n   y=%s\n and switches %s' %(x,y,isActive))
-# 
-#         #Store the number of components:
-#         nComp = len(self.components)
-# 
-#         #Ni = log(n_i/s_0)
-#         Ni = y[:nComp]
-#         #R = rho_i/n_i
-#         Ri = y[nComp:2*nComp]
-#         #NS = log(S/S_0)
-#         NS = y[-1]
-# 
-#         #Get temperature from entropy and scale factor:
-#         T = Tfunc(x,NS,self.normS)
-#         
-#         logger.debug('RHS: Computing number and energy densities for %i components' %nComp)
-#         #Current number densities:
-#         n = self.norm*np.exp(Ni)
-#         #Current energy densities:
-#         rho = n*Ri
-# 
-#         #Compute equilibrium densities:
-#         neq = self.nEQ(T)
-# 
-#         #Compute ratio of equilibrium densities
-#         #(helps with numerical instabilities)
-#         #rNeq[i,j] = neq[i]/neq[j]
-#         rNeq = np.array([[compi.rNeq(T,compj) if compi.active and compj.active else 0. for compj in self.components] 
-#                          for compi in self.components])
-# 
-#         #Dictionary with label:index mapping:
-#         labelsDict = dict([[comp.label,i] for i,comp in enumerate(self.components)])
-# 
-#         #Compute Hubble factor:
-#         H = Hfunc(T,rho,isActive)
-#         logger.debug('RHS: Done computing component energy and number densities')
-#         logger.debug('n = %s, rho = %s, neq = %s' %(n,rho,neq))
-# 
-#         #Auxiliary weights:
-#         logger.debug('RHS: Computing weights')
-#         #Effective equilibrium densities and BRs:
-#         #NXth[i] = N^{th}_i:
-#         NXth = self.getNXTh(T,n,rNeq,labelsDict)
-#         logger.debug('Done computing weights')
-# 
-#         widths = self.width(T)
-#         masses = self.mass(T)
-#         BRX = self.getBRX(T)
-#         sigmaV = self.getSIGV(T)
-# 
-#         # Derivative for entropy:
-#         logger.debug('Computing entropy derivative')     
-#         dNS = np.sum(isActive*BRX*widths*masses*(n-NXth))*exp(3.*x - NS)/(H*T*self.normS)
-#         if np.isinf(dNS):
-#             logger.warning("Infinity found in dNS at T=%1.2g. Will be replaced by a large number" %(T))
-#             dNS = np.nan_to_num(dNS)
-# 
-#         logger.debug('Done computing entropy derivative')
-# 
-#         #Derivatives for the Ni=log(ni/s0) variables:
-#         logger.debug('Computing Ni derivatives')
-#         dN = np.zeros(nComp)
-#         #Expansion term:
-#         RHS = -3*n
-#         #Decay term:
-#         RHS -= widths*masses*n/(H*Ri)
-#         #Inverse decay term:
-#         RHS += widths*masses*NXth/(H*Ri) #NXth should be finite if i -> j +..
-#         #Annihilation term:            
-#         RHS += sigmaV*(neq - n)*(neq + n)/H
-#         np.divide(RHS,n,out=dN,where=isActive)
-# 
-#         RHS = np.zeros(nComp)
-#         dR = np.zeros(nComp)
-#         #Derivatives for the rho/n variables (only for thermal components):
-#         for i,comp in enumerate(self.components):
-#             if not isActive[i]:
-#                 continue
-#             RHS[i] = -3.*comp.getPressure(T,rho[i],n[i])  #Cooling term
-#             for j, compj in enumerate(self.components):
-#                 if not isActive[j]:
-#                     continue
-#                 if j == i:
-#                     continue
-# 
-#         np.divide(RHS,n,out=dR,where=isActive)
-# 
-#         dy = np.hstack((dN,dR,[dNS]))
-#         logger.debug('T = %1.23g, dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(T,str(dN),str(dR),str(dNS)))
-# 
-#         return dy
-
-
-#     def jac(self,x,y):
-#         """
-#         Computes the Jacobian for the y  equations.
-#         """
-#         
-#         isActive = self.active
-#         logger.debug('Calling Jacobian with arguments:\n   x=%s,\n   y=%s\n and switches %s' %(x,y,isActive))
-# 
-#         #Store the number of components:
-#         nComp = len(self.components)
-# 
-#         #Ni = log(n_i/s_0)
-#         Ni = y[:nComp]
-#         #R = rho_i/n_i
-#         Ri = y[nComp:2*nComp]
-#         #NS = log(S/S_0)
-#         NS = y[-1]
-# 
-#         #Get temperature from entropy and scale factor:
-#         T = Tfunc(x,NS,self.normS)
-#         
-#         #Current number densities:
-#         n = self.norm*np.exp(Ni)
-#         #Current energy densities:
-#         rho = n*Ri
-# 
-#         #Compute equilibrium densities:
-#         neq = self.nEQ(T)
-# 
-#         #Compute Hubble factor:
-#         H = Hfunc(T,rho,isActive)
-# 
-#         sigmaV = self.getSIGV(T)
-# 
-#         #Derivative for equations:
-#         delta = np.identity(nComp)
-#         
-#         #Derivative for number equations:
-#         dFNidNj = -np.einsum('ij,i,i,i->ij',delta,(neq/n)**2+1,sigmaV,n)/H
-#         dFNidRj = np.zeros((nComp,nComp))
-#         dFNidNS = np.zeros(nComp)
-#         
-#         #Derivative for energy ratio equations:
-#         dFRidNj = np.zeros((nComp,nComp))
-#         dFRidRj = np.zeros((nComp,nComp))
-#         dFRidNS = np.zeros(nComp)
-#         
-#         #Derivative for entropy equation:
-#         dFNSdNj = np.zeros(nComp)
-#         dFNSdRj = np.zeros(nComp)
-#         dFNSdNS = 0.
-# 
-#         # Full Jacobian:
-#         JAC = np.zeros((nComp*2+1,nComp*2+1))
-#         JAC[:nComp,:nComp] = dFNidNj
-#         JAC[:nComp,nComp:2*nComp] = dFNidRj
-#         JAC[:nComp,2*nComp] = dFNidNS
-#         
-#         JAC[3:2*nComp,:3] = dFRidNj
-#         JAC[3:2*nComp,3:2*nComp] = dFRidRj
-#         JAC[3:2*nComp,2*nComp] = dFRidNS
-#         
-#         JAC[2*nComp,:nComp] = dFNSdNj
-#         JAC[2*nComp,nComp:2*nComp] = dFNSdRj
-#         JAC[2*nComp,2*nComp] = dFNSdNS
-# 
-#         return JAC
-  
     def updateSolution(self,r):
         """
         Updates the solution in self.solutionDict if the
@@ -502,7 +383,6 @@ class BoltzSolution(object):
                 rho = n*r.y[icomp+self.ncomp,:]
             comp.n = np.hstack((comp.n,n))
             comp.rho = np.hstack((comp.rho,rho))
-
 
     def printSummary(self,outFile=None):
         printSummary(self, outFile)
