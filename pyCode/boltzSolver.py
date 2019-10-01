@@ -270,7 +270,7 @@ class BoltzSolution(object):
                 sigVij = compi.getCOSIGV(T,compj)
                 if not sigVij:
                     continue
-                RHS += (neq[i]*neq[j]-n[i]*n[j])*sigVij/H
+                RHS[i] += (neq[i]*neq[j]-n[i]*n[j])*sigVij/H
         # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
         for i,compi in enumerate(self.components):
             for j,compj in enumerate(self.components):
@@ -279,7 +279,7 @@ class BoltzSolution(object):
                 sigVjj = compi.getSIGVBSM(T,compj)
                 if not sigVjj:
                     continue
-                RHS += (rNeq[i,j]**2*n[j]**2-n[i]**2)*sigVjj/H
+                RHS[i] += (rNeq[i,j]**2*n[j]**2-n[i]**2)*sigVjj/H
         # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
         for i,compi in enumerate(self.components):
             for j,compj in enumerate(self.components):
@@ -288,14 +288,11 @@ class BoltzSolution(object):
                 cRate = compi.getConvertionRate(T,compj)
                 if not cRate:
                     continue
-                RHS += (rNeq[i,j]*n[j]-n[i])*cRate/H
+                RHS[i] += (rNeq[i,j]*n[j]-n[i])*cRate/H
         # j <-> i +SM (#NXYth[j,i] should be finite if j -> i +...)
         for i,compi in enumerate(self.components):
             for j,compj in enumerate(self.components):
                 if i == j or not compj.active:
-                    continue
-                cRate = compi.getConvertionRate(T,compj)
-                if not cRate:
                     continue
                 RHS += Beff[j,i]*widths[j]*masses[j]*(n[j]-NXYth[j,i])/(H*R[j])
         #Decay and inverse decay terms:
