@@ -203,6 +203,7 @@ class BoltzSolution(object):
         """
 
         isActive = self.active
+        isCoupled = self.thermalEQ
         logger.debug('Calling RHS with arguments:\n   x=%s,\n   y=%s\n and switches %s' %(x,y,isActive))
 
         #Store the number of components:
@@ -217,15 +218,18 @@ class BoltzSolution(object):
 
         #Get temperature from entropy and scale factor:
         T = getTemperature(x,NS,self.normS)
+
+        #Compute equilibrium densities:
+        neq = self.nEQ(T)
         
         logger.debug('RHS: Computing number and energy densities for %i components' %nComp)
         #Current number densities:
         n = self.norm*np.exp(Ni)
+        #Replace number densities by equilibrium value in the coupled regime:
+        n = np.where(isCoupled,neq,n)
+
         #Current energy densities:
         rho = n*Ri
-
-        #Compute equilibrium densities:
-        neq = self.nEQ(T)
 
         #Compute ratio of equilibrium densities
         #(helps with numerical instabilities)
@@ -273,6 +277,7 @@ class BoltzSolution(object):
         dN = np.zeros(nComp)
         #Expansion term:
         RHS = -3*n
+        
         #Decay term:
         RHS -= widths*masses*n/(H*Ri)
         #Inverse decay term:
