@@ -14,6 +14,7 @@ from pyCode.AuxFuncs import getFunctions
 from numpy import pi,sqrt,exp,log
 from numpy.polynomial.polynomial import polyval,polyder
 from scipy.special import kn as besselk
+from scipy.misc import derivative
 from scipy.special import zetac
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -42,8 +43,21 @@ def Tf(x,NS,S0=1.):
     else:    
         return float(Tfunc(xeff))
 
+#Define relevant derivatives:    
+# dTfdx = lambda x,NS,S0: derivative(Tf,x,args=(NS,S0),dx=1e-5)
+#Approximation (neglects variation in gSTARS):
+def dTfdx(x,NS,S0):
+    """
+    Returns the derivative of the temperature T
+    with respect to x, assuming that the variation of gSTARS is negligible.
+    """   
+
+    return -Tf(x,NS,S0)
+
 def nEQf(T,mass,dof):
-    """Returns the equilibrium number density at temperature T. Returns zero for non-thermal components"""
+    """
+    Returns the equilibrium number density at temperature T. Returns zero for non-thermal components
+    """
 
     x = T/mass
     if x < 0.1:
@@ -59,7 +73,7 @@ def nEQf(T,mass,dof):
 
     return neq
 
-def dnEQdTf(T,mass,dof):
+def dnEQfdT(T,mass,dof):
     """
     Returns the derivative of the equilibrium number density at temperature T
     with respect to T.

@@ -10,9 +10,8 @@
 """
 
 from pyCode.AuxDecays import DecayList
-from pyCode.EqFunctions import Tf,gSTAR,gSTARS,Pnf,rEQf,nEQf,rNeqf
+from pyCode.EqFunctions import Tf,gSTAR,gSTARS,Pnf,rEQf,nEQf,rNeqf,dnEQfdT
 import numpy as np
-from scipy.misc import derivative
 from scipy import integrate
 from types import FunctionType
 import logging
@@ -199,6 +198,53 @@ class Component(object):
         Nth *= neq/norm
 
         return Nth
+    
+    def getNXY2Th(self,T,n,rNeq,labelsDict,comp):
+        """
+        Computes the "second" effective thermal number density of second type at temperature T
+        for self -> comp +X decays.
+
+        :param T: temperature (allows for T-dependent BRs)
+        :param n: list of number densities
+        :param rNeq: list with ratios of number densities
+        :param labelsDict: Dictionary with the component label -> index in n,rNeq mapping
+        :param comp: Component object.
+
+        :return: Effective thermal number density at temperature T of second type for self -> comp (N_{XY}^{th})
+        """
+
+        norm = self.getTotalBRTo(T,comp)
+        #If self does not decay to comp, return zero
+        if not norm:
+            return 0.
+
+        #Compute BRs:
+        Nth = 0.
+        BRs = self.getBRs(T)
+        #Index for self:
+        i = labelsDict[self.label]
+        neq = self.nEQ(T)
+        #If the thermal equilibrium density of comp is zero,
+        #there is no inverse injection:
+        if not neq:
+            return 0.
+
+        for decay in BRs:
+            nprod = 1.
+            if not decay.br:
+                continue  #Ignore decays with zero BRs
+            if not comp.label in decay.fstateIDs:
+                continue #Ignore decays which do not include self
+            for label in decay.fstateIDs:
+                if label in labelsDict:
+                    j = labelsDict[label]
+                    nprod *= rNeq[i,j]*n[j]/neq
+
+            Nth += nprod*decay.br*(decay.fstateIDs.count(comp.label)**2)
+
+        Nth *= neq/norm
+
+        return Nth    
 
     def getSIGV(self,T):
         """
@@ -260,6 +306,17 @@ class Component(object):
         dof = self.dof
         
         return nEQf(T,mass,dof)  
+    
+    def dnEQdT(self,T):
+        """
+        Returns the derivative of the equilibrium number density at temperature T
+        with respect to T.
+        """
+        
+        mass = self.mass(T)
+        dof = self.dof
+        
+        return dnEQfdT(T,mass,dof)      
     
     def rNeq(self,T,other):
         """

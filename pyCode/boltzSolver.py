@@ -10,7 +10,7 @@
 
 """
 
-from pyCode.EqFunctions import gSTAR,gSTARS,Tf
+from pyCode.EqFunctions import gSTAR,gSTARS,Tf,dTfdx
 from pyCode.printerTools import printData,printSummary
 from numpy import pi,sqrt,log,exp
 import numpy as np
@@ -61,7 +61,7 @@ class BoltzSolution(object):
         #Guess initial values for the components (if not yet defined).
         #For simplicity assume radiation domination for checking thermal
         #equilibrium condition:
-        MP = 1.22*10**19
+        MP = 1.22e19
         H = np.sqrt(8.*np.pi**3*gSTAR(T0)/90.)*T0**2/MP
         sigV = self.getSIGV(T0)
         neq = self.nEQ(T0)
@@ -224,7 +224,7 @@ class BoltzSolution(object):
         logger.debug('RHS: Computing number and energy densities for %i components' %nComp)
         #Current number densities:
         n = self.norm*np.exp(Ni)
-        #Replace number densities by equilibrium value in the coupled regime:
+        #Replace number densities by equilibrium value for thermally coupled components:
         n = np.where(isCoupled,neq,n)
 
         #Current energy densities:
@@ -257,6 +257,10 @@ class BoltzSolution(object):
         #NXYth[i,j] = N^{th}_{ij}:
         NXYth = np.array([[compi.getNXYTh(T,n,rNeq,labelsDict,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
                           for compi in self.components])
+        #NXY2th[i,j] = N2^{th}_{ij}:
+        NXY2th = np.array([[compi.getNXY2Th(T,n,rNeq,labelsDict,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
+                          for compi in self.components])
+        
         #Effective branching ratio (Beff[i,j] = B^{eff}_{ij}:
         Beff = np.array([[compi.getTotalBRTo(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
                          for compi in self.components])
@@ -278,15 +282,14 @@ class BoltzSolution(object):
 
         #Derivatives for the Ni=log(ni/s0) variables:
         logger.debug('Computing Ni derivatives')
-        dN = np.zeros(nComp)
-        #Expansion term:
-        RHS = -3*n
         
+        #Expansion term:
+        RHS = -3*n        
         #Decay term:
         RHS -= widths*masses*n/(H*Ri)
         #Inverse decay term:
         RHS += widths*masses*NXth/(H*Ri) #NXth should be finite if i -> j +..
-        #Annihilation term:            
+        #Annihilation term:      
         RHS += sigmaV*(neq - n)*(neq + n)/H
         # i + j <-> SM + SM:
         sigVij = [[compi.getCOSIGV(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
@@ -307,18 +310,40 @@ class BoltzSolution(object):
             if not isActive[i] and RHS[i] > 0.:
                 logger.warning("Inactive component %s is being injected" %compi.label)
                 
-                
-        #Corrections for thermally coupled components:
+        #First order corrections for thermally coupled components (n ≃ neq(1 + Delta))
+        Deltai = np.where(isCoupled,np.zeros(nComp),y[:nComp])
+        #Inverse decay term:
+        RHS -= Deltai*widths*masses*NXth/(H*Ri)
+        #Annihilation term:
+        RHS -= neq*Deltai*(2*neq*sigmaV)/H
+        # i + j <-> SM + SM:
+        RHS -= neq*Deltai*np.einsum('ij,j->i',sigVij,neq)/H
+        # i+i <-> j+j
+        RHS -= neq*Deltai*np.einsum('ij,j->i',1+(n/neq)**2,sigVjj)/H
+        # i+SM <-> j+SM
+        RHS -= Deltai*np.einsum('ij,j,ij->i',rNeq,n,cRate)/H
+        # j <-> i +SM
+        RHS -= Deltai*(np.einsum('ji,j->i',Beff,masses*widths*n/Ri)
+                       -np.einsum('ji,j,ji->i',Beff,masses*widths/Ri,NXYth-NXY2th))/H
+        #Subtract expansion term for thermally coupled components:
+        dndT = self.dnEQdT(T)
+        dTdx = dTfdx(x,NS,self.normS)
+        RHS -= np.where(isCoupled,dTdx*dndT,np.zeros(nComp))
         
+        dN = np.zeros(nComp)
+        #Finally divide by n:
         np.divide(RHS,n,out=dN,where=isActive*(RHS != 0.))
 
-        RHS = np.zeros(nComp)
-        dR = np.zeros(nComp)
+
         #Derivatives for the rho/n variables (only for thermal components):
+        #Compute pressure/n:
+        Pn = np.array([comp.Pn(T,Ri[i]) if comp.active else 0. 
+                       for i,comp in enumerate(self.components)])
+        #Cooling term:
+        RHS = -3.*n*Pn
         for i,comp in enumerate(self.components):
             if not isActive[i]:
                 continue
-            RHS[i] = -3.*n[i]*comp.Pn(T,Ri[i])  #Cooling term
             for j, compj in enumerate(self.components):
                 if not isActive[j]:
                     continue
@@ -328,7 +353,10 @@ class BoltzSolution(object):
                 widthj = widths[j]
                 #Injection and inverse injection terms:
                 RHS[i] += widthj*Beff[j,i]*massj*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
+                #First order corrections for thermally coupled components (n ≃ neq(1 + Delta))
+                RHS[i] += #FIX
 
+        dR = np.zeros(nComp)
         np.divide(RHS,n,out=dR,where=isActive*(RHS != 0.))
 
         dy = np.hstack((dN,dR,[dNS]))
