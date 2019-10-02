@@ -10,16 +10,14 @@
 """
 
 from pyCode.AuxDecays import DecayList
-from scipy.special import kn,zetac
-from numpy import exp,sqrt,pi
-from  pyCode import AuxFuncs
+from pyCode.EqFunctions import Tf,gSTAR,gSTARS,Pnf,rEQf,nEQf,rNeqf
+import numpy as np
+from scipy.misc import derivative
+from scipy import integrate
 from types import FunctionType
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-MP = 1.22*10**19
-Zeta3 = zetac(3.) + 1.
 
 Types = ['thermal','CO', 'weakthermal']
 
@@ -40,8 +38,7 @@ class Component(object):
     
     def __init__(self,label,Type,dof,mass,decays=DecayList(),
                  sigmav = lambda x: 0., coSigmav = lambda x,y: 0.,
-                 convertionRate = lambda x,y: 0., sigmavBSM = lambda x,y: 0.,
-                 source = lambda x: 0., coherentAmplitute = lambda x: 0.):
+                 convertionRate = lambda x,y: 0., sigmavBSM = lambda x,y: 0.):
         self.label = label
         self.Type = Type
         self.active = True
@@ -53,8 +50,6 @@ class Component(object):
         self.coSigmav = coSigmav
         self.convertionRate = convertionRate
         self.sigmavBSM = sigmavBSM
-        self.source = source
-        self.coherentAmplitude = coherentAmplitute
 
         if not Type or type(Type) != type(str()) or not Type in Types:
             logger.error("Please define proper particle Type (not "+str(Type)+"). \n Possible Types are: "+str(Types))
@@ -117,8 +112,7 @@ class Component(object):
             if not comp.label in decay.fstateIDs: continue
             brTot += decay.fstateIDs.count(comp.label)*decay.br
         return brTot
-            
-
+    
     def getNXTh(self,T,n,rNeq,labelsDict):
         """        
         Computes the effective thermal number density of first type at temperature T:
@@ -214,7 +208,6 @@ class Component(object):
         
         return self.sigmav(T)
 
-
     def getCOSIGV(self,T,other):
         """
         Returns the thermally averaged co-annihilation cross-section self+other -> SM + SM
@@ -247,25 +240,27 @@ class Component(object):
             return 0.
         
         return self.sigmavBSM(T,other)
+    
+    def Pn(self,T,R):
+        """
+        Computes the ratio of pressure and number density
+        for a component given the ratio of its energy and number densities.
+        """
         
-    def nEQ(self,T):
-        """Returns the equilibrium number density at temperature T. Returns zero for non-thermal components"""
+        mass = self.mass(T)
         
-        if not 'thermal' in self.Type:
-            return 0.
-        
-        x = T/self.mass(T)
-        if x < 0.1:
-            neq = self.mass(T)**3*(x/(2*pi))**(3./2.)*exp(-1/x)*(1. + (15./8.)*x + (105./128.)*x**2) #Non-relativistic
-        elif x < 1.5:            
-            neq = self.mass(T)**3*x*kn(2,1/x)/(2*pi**2) #Non-relativistic/relativistic
-        else:
-            if self.dof > 0: neq = Zeta3*T**3/pi**2   #Relativistic Bosons
-            if self.dof < 0: neq = (3./4.)*Zeta3*T**3/pi**2   #Relativistic Fermions
+        return Pnf(R,mass)
             
-        neq = neq*abs(self.dof)
-        return neq
-
+    def nEQ(self,T):
+        """
+        Returns the equilibrium number density at temperature T.
+        """
+        
+        mass = self.mass(T)
+        dof = self.dof
+        
+        return nEQf(T,mass,dof)  
+    
     def rNeq(self,T,other):
         """
         Returns the ratio of equilibrium number densities at temperature T nEQ_self/nEQ_other.
@@ -274,72 +269,36 @@ class Component(object):
         since the Boltzmann suppression exponentials partially cancel.
         """
 
-        if not 'thermal' in self.Type:
-            return 0.
-
         if self is other:
             return 1.
-
-        x = T/self.mass(T)
-        y = T/other.mass(T)
-        if x < 0.1 and y < 0.1: #Both are non-relativistic
-            r = (self.mass(T)/other.mass(T))**3
-            r *= exp(1/y-1/x)
-            r *= (x/y)**(3./2.)
-            r *= (1. + (15./8.)*x + (105./128.)*x**2)/(1. + (15./8.)*y + (105./128.)*y**2)
-            r *= abs(self.dof)/abs(other.dof)
-        else:
-            neqA = self.nEQ(T)
-            neqB = other.nEQ(T)
-            if not neqB:
-                return None
-            r = neqA/neqB
-
-        return r
+        
+        massA = self.mass(T)
+        massB = other.mass(T)
+        dofA = self.dof
+        dofB = other.dof
+        
+        return rNeqf(T,massA,dofA,massB,dofB)
 
     def rEQ(self,T):
-        """Returns the ratio of equilibrium energy and number densities at temperature T,\
-        assuming chemical potential = 0."""
+        """
+        Returns the ratio of equilibrium energy and number densities at temperature T,
+        assuming chemical potential = 0.
+        """
 
-        x = T/self.mass(T)
-        if x > 1.675:   #Ultra relativistic
-            if self.dof < 0: return (7./6.)*pi**4*T/(30.*Zeta3)  #Fermions
-            else: return pi**4*T/(30.*Zeta3)    #Bosons
-        elif x > 1e-2:  #Non-relativistic/relativistic transition
-            return (kn(1,1/x)/kn(2,1/x))*self.mass(T) + 3.*T
-        else: #Non-relativistic
-            return (1.-3.*x/2+15.*x**2/8)*self.mass(T) + 3.*T #Non-relativistic limit of bessel function ratio
+        mass = self.mass(T)
+        dof = self.dof
     
-    def isOscillating(self,T,H):
-        """Checks if the component is coherent oscillating. If it is a thermal field,
-        it returns False. If it is a CO oscillating field and if
-        self.active AND 3*H(T) < self.mass, returns True."""
-        
-        if self.Type == 'CO' and self.active:
-            if H*3. < self.mass(T): return True
-            else: return False
-        else: return False
+        return rEQf(T,mass,dof)
 
-    def hasDecayed(self):
-        """Checks if the component has fully decayed"""
-        
-        return False   #!!!!FIX!!!!
-        
-        
-    def getOscAmplitute(self,T):
-        """Computes the oscillation amplitude for the component at temperature T.
-        If the component is of Type thermal, returns None."""
-        
-        if self.Type != 'CO': return None
-        else: return self.coherentAmplitute(T)
-        
     def guessInitialCond(self,T,components=[]):
         """
         Get initial conditions for component at temperature T, assuming the energy
         density is dominated by radiation.
         """
         
-        H = sqrt(8.*pi**3*AuxFuncs.gSTAR(T)/90.)*T**2/MP
+        MP = 1.22e19
+        
+        H = np.sqrt(8.*np.pi**3*gSTAR(T)/90.)*T**2/MP
         
         coannTerm = 0. #Co-annihilation term
         bsmScatter = 0. #2<->2 scattering between BSM components
@@ -361,4 +320,56 @@ class Component(object):
         else: #Particle starts coupled
             logger.info("Particle %s starting in thermal equilibrium" %self)
             return self.nEQ(T)
+           
+    def getOmega(self,rho,n,T):
+        """
+        Compute relic density today, given the component, number density and energy density
+        at temperature T.
+        """
+        
+        if self.Tdecay and self.Tdecay > T: return 0.
+        if not n or not rho: return 0.
+        
+        Ttoday = 2.3697*10**(-13)*2.725/2.75  #Temperature today
+        rhoh2 = 8.0992*10.**(-47)   # value of rho critic divided by h^2
+        dx = (1./3.)*np.log(gSTARS(T)/gSTARS(Ttoday)) + np.log(T/Ttoday)   #dx = log(R/R_today), where R is the scale factor
+        nToday = n*np.exp(-3.*dx)
+        s0 = (2*np.pi**2/45)*T**3
+        ns = 0.  #log(entropy) (constant) 
+        
+        
+        R0 = rho/n    
+        Rmin = R0*np.exp(-dx)    #Minimum value for rho/n(Ttoday) (happens if component is relativistic today)
+        Pmin = nToday*Pnf(Ttoday,Rmin)
+        
+        if abs(Pmin - Rmin*nToday/3.)/(Rmin*nToday/3.) < 0.01:
+            RToday = Rmin  #Relativistic component today
+        else:
+            def Rfunc(R,x):            
+                TF = Tf(x,ns,s0)                        
+                return -3*Pnf(TF,R)
+            RToday = integrate.odeint(Rfunc, R0, [0.,24.], atol = self.mass(Ttoday)/10.)[1][0]  #Solve decoupled ODE for R=rho/n
+       
+        return RToday*nToday/rhoh2
+    
+    def getDNeff(self,rho,n,T):
+        """
+        Computes the contribution from the component to the number of effective neutrinos at temperature T.
+        Gives zero if T > 1 MeV (where neutrinos are still coupled).
+        """
+    
+    #Ignore component if it has decayed before TF        
+        if self.Tdecay and self.Tdecay > T:
+            return 0.
+    #Get the number and energy densities of comp at T:
+        mass = self.mass(T)
+        if T > 10.**(-3):
+            return 0.    
+        if mass == 0. or (n and rho and rho/(n*mass) > 2.):
+            rhoRel = rho    
+        else:
+            rhoRel = 0.
+        DNeff = rhoRel/(((np.pi**2)/15)*(7./8.)*((4./11.)**(4./3.))*T**4)
+        
+        return DNeff    
         

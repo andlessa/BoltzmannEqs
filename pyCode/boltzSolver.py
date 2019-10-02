@@ -10,9 +10,9 @@
 
 """
 
-import sys
-from pyCode.AuxFuncs import gSTARS, gSTAR, getTemperature, getOmega, getDNeff, getPressure, Hfunc
-from numpy import log,pi,exp
+from pyCode.EqFunctions import gSTAR,gSTARS,Tf
+from pyCode.printerTools import printData,printSummary
+from numpy import pi,sqrt,log,exp
 import numpy as np
 from scipy import integrate
 import logging
@@ -117,7 +117,6 @@ class BoltzSolution(object):
             return np.array([getattr(comp, attr)(*args, **kw) for comp in self.components])
         return call
 
-
     def setInitialCond(self):
         """
         Use the last entries in the entrory and the components number and energy density values
@@ -160,7 +159,7 @@ class BoltzSolution(object):
         
         if r.status < 0:
             NS = r.y[-1][-1]
-            T = getTemperature(r.t[-1],NS,self.normS)
+            T = Tf(r.t[-1],NS,self.normS)
             logger.error("Solution failed at temperature %1.3g" %T)
             logger.error("Error message from solver: %s" %r.message)
             return False
@@ -190,7 +189,7 @@ class BoltzSolution(object):
                 logger.error(r.message)
                 return False
     
-        return True
+        return r
     
     
     def rhs(self,x,y):
@@ -217,7 +216,7 @@ class BoltzSolution(object):
         NS = y[-1]
 
         #Get temperature from entropy and scale factor:
-        T = getTemperature(x,NS,self.normS)
+        T = Tf(x,NS,self.normS)
 
         #Compute equilibrium densities:
         neq = self.nEQ(T)
@@ -241,7 +240,12 @@ class BoltzSolution(object):
         labelsDict = dict([[comp.label,i] for i,comp in enumerate(self.components)])
 
         #Compute Hubble factor:
-        H = Hfunc(T,rho,isActive)
+        rhoTot = np.sum(rho,where=isActive,initial=0)
+        rhoRad = (pi**2/30)*gSTAR(T)*T**4  # thermal bath's energy density    
+        rho = rhoRad+rhoTot
+        MP = 1.22e19
+        H = sqrt(8*pi*rho/3)/MP
+        
         logger.debug('RHS: Done computing component energy and number densities')
         logger.debug('n = %s, rho = %s, neq = %s' %(n,rho,neq))
 
@@ -302,6 +306,9 @@ class BoltzSolution(object):
         for i,compi in enumerate(self.components):
             if not isActive[i] and RHS[i] > 0.:
                 logger.warning("Inactive component %s is being injected" %compi.label)
+                
+                
+        #Corrections for thermally coupled components:
         
         np.divide(RHS,n,out=dN,where=isActive*(RHS != 0.))
 
@@ -311,8 +318,7 @@ class BoltzSolution(object):
         for i,comp in enumerate(self.components):
             if not isActive[i]:
                 continue
-            mass = masses[i]
-            RHS[i] = -3.*getPressure(mass,rho[i],n[i])  #Cooling term
+            RHS[i] = -3.*n[i]*comp.Pn(T,Ri[i])  #Cooling term
             for j, compj in enumerate(self.components):
                 if not isActive[j]:
                     continue
@@ -352,7 +358,7 @@ class BoltzSolution(object):
         self.S = np.hstack((self.S,S))        
         #Store T-values
         NSvalues = r.y[-1,:]
-        Tvalues = np.array([getTemperature(x,NSvalues[i],self.normS) for i,x in enumerate(r.t)])
+        Tvalues = np.array([Tf(x,NSvalues[i],self.normS) for i,x in enumerate(r.t)])
         self.T = np.hstack((self.T,Tvalues))
         
         #Store the number and energy densities for each component:
@@ -370,75 +376,11 @@ class BoltzSolution(object):
         """
         Prints basic summary of solutions.
         """
-        #Solution summary:
-        if outFile:
-            if hasattr(outFile,'write'):
-                f = outFile    
-            else:    
-                f = open(outFile,'a')
-        else:
-            f = sys.stdout
-            
-        T = self.T
-        TF = T[-1]
-        f.write('#-------------\n')
-        f.write('# Summary\n')
-        f.write('# TF=%1.2g\n' %TF)
-        for comp in self.components:
-            if comp.Tdecay:
-                Tlast = max(comp.Tdecay,TF)
-            else:
-                Tlast = TF
-            #Get point closest to Tlast    
-            i = (np.abs(T - Tlast)).argmin()                    
-            rhoF = comp.rho[i]
-            nF = comp.n[i]
-            Tfinal = T[i]
-            omega = getOmega(comp,rhoF,nF,Tfinal)        
-            if not comp.Tdecay:
-                tag = '(@TF)'
-            else:
-                tag = '(@decay)'
-            f.write('# %s: T(decouple)~= %s | T(decay)~= %s | Omega h^2 %s = %1.4g\n' %(comp.label,
-                                                                                          comp.Tdecouple,comp.Tdecay,tag,omega))
-            f.write('# \n')
-        
-        DNeff = 0.
-        for comp in self.components:
-            rho = comp.rho[-1]
-            n = comp.n[-1]
-            DNeff += getDNeff(comp, rho, n, TF)
-                    
-        f.write('# Delta Neff (T = %1.2g) = %1.2g \n' %(TF,DNeff))
-        f.write('#-------------\n')
-        f.close()
+        printSummary(self, outFile)
     
     def printData(self,outFile=None):
         """
         Prints the evolution of number and energy densities of the species to the outputFile 
         """
         
-        if outFile:
-            if hasattr(outFile,'write'):
-                f = outFile    
-            else:    
-                f = open(outFile,'a')
-            header = ['x','T','R','S']
-            values = [getattr(self,label) for label in header]
-            for comp in self.components:
-                header += ['n_%s' %comp.label,'rho_%s' %comp.label]
-                values.append(comp.n)
-                values.append(comp.rho)
-
-            maxLength = max([len(s) for s in header])
-            header = ' '.join(str(x).center(maxLength) for x in header)
-            if any(len(v) != len(values[0]) for v in values):
-                logger.error("Data has distinct lengths and can not be written to file.")
-                f.close()
-                return False
-            data = np.column_stack(values)
-            f.write('#--------------\n')
-            np.savetxt(f,data,delimiter=' ',header = header,fmt=('{:^%i}'%(maxLength-5)).format('%1.4E'))
-            f.write('#--------------\n')    
-            f.close()
-        
+        printData(self, outFile)
