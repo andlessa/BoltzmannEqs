@@ -38,8 +38,15 @@ class BoltzSolution(object):
                 self.events.append(lambda x,y: -1)
             else:
                 def fSuppressed(x,y,icomp=i):
-                    if self.components[icomp].active:
-                        return y[icomp]+100.
+                    comp = self.components[icomp]
+                    if comp.active:
+                        if comp.coupled:
+                            T = Tf(x,y[-1],self.normS)
+                            neq = comp.nEQ(T)
+                            Ln = np.tanh(neq*(1+y[icomp]))
+                        else:
+                            Ln = np.tanh(self.norm[icomp]*np.exp(y[icomp]))
+                        return Ln
                     else:
                         return 1.
                 def fEquilibrium(x,y,icomp=i):
