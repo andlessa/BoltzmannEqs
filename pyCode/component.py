@@ -10,7 +10,7 @@
 """
 
 from pyCode.AuxDecays import DecayList
-from pyCode.EqFunctions import Tf,gSTAR,gSTARS,Pnf,rEQf,nEQf,rNeqf,dnEQfdT
+from pyCode.EqFunctions import Tf,gSTAR,gSTARS,Pnf,rEQf,nEQf,rNeqf,dnEQfdT,dLnEQfdT
 import numpy as np
 from scipy import integrate
 from types import FunctionType
@@ -317,6 +317,17 @@ class Component(object):
         dof = self.dof
         
         return dnEQfdT(T,mass,dof)      
+
+    def dLnEQdT(self,T):
+        """
+        Returns the derivative of the equilibrium number density at temperature T
+        with respect to T divided by the equilibrium number density.
+        """
+        
+        mass = self.mass(T)
+        
+        return dLnEQfdT(T,mass)      
+
     
     def rNeq(self,T,other):
         """

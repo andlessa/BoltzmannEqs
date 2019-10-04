@@ -14,7 +14,6 @@ from pyCode.AuxFuncs import getFunctions
 from numpy import pi,sqrt,exp,log
 from numpy.polynomial.polynomial import polyval,polyder
 from scipy.special import kn as besselk
-from scipy.misc import derivative
 from scipy.special import zetac
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -59,9 +58,15 @@ def nEQf(T,mass,dof):
     Returns the equilibrium number density at temperature T. Returns zero for non-thermal components
     """
 
-    x = T/mass
+    a = 15./8.
+    b = 105./129.
+    if mass:
+        x = T/mass
+    else:
+        x = 1e3 #Use ultra relativistic limit for massless particles
+
     if x < 0.1:
-        neq = mass**3*(x/(2*pi))**(3./2.)*exp(-1/x)*(1. + (15./8.)*x + (105./128.)*x**2)
+        neq = mass**3*(x/(2*pi))**(3./2.)*exp(-1/x)*(1. + a*x + b*x**2) #Expansion at low x
     elif x < 1.5:
         neq = mass**3*x*besselk(2,1/x)/(2*pi**2)
     elif dof >= 0:
@@ -79,19 +84,54 @@ def dnEQfdT(T,mass,dof):
     with respect to T.
     """
 
-    x = T/mass
-    if x < 0.1:
-        neq = mass**2*exp(-1/x)*(256. + 3*x*(288. + 5*x*(94. + 49*x)))/(512*sqrt(2.*x)*pi**(3./2.))
-    elif x < 1.5:
-        neq = mass**2*(besselk(1,1/x) + 3*x*besselk(2,1/x))/(2*x*pi**2)
-    elif dof >= 0:
-        neq = 3*Zeta3*T**2/pi**2
+    a = 15./8.
+    b = 105./129.
+    if mass:
+        x = T/mass
     else:
-        neq = 3*(3./4.)*(Zeta3*T**2/pi**2)
+        x = 1e3 #Use ultra relativistic limit for massless particles    
+    
+    if not x:
+        return 0.   
+    if x < 0.1:
+        dneq = mass**2*exp(-1/x)*(2 + (3+2*a)*x + (5*a+2*b)*x**2 + 7*b*x**3)
+        dneq = dneq/(2*sqrt(x)*(2*pi)**(3/2))
+    elif x < 1.5:
+        dneq = mass**2*(besselk(1,1/x) + 3*x*besselk(2,1/x))/(2*x*pi**2)
+    elif dof >= 0:
+        dneq = 3*Zeta3*T**2/pi**2
+    else:
+        dneq = 3*(3./4.)*(Zeta3*T**2/pi**2)
         
-    neq = neq*abs(dof)
+    dneq = dneq*abs(dof)
 
-    return neq
+    return dneq
+
+def dLnEQfdT(T,mass):
+    """
+    Returns the derivative of the equilibrium number density at temperature T
+    with respect to T divided by the equilibrium number density.
+    """
+
+    a = 15./8.
+    b = 105./129.
+    if mass:
+        x = T/mass
+    else:
+        x = 1e3 #Use ultra relativistic limit for massless particles    
+
+    if not x or not T:
+        return 0.    
+    if x < 0.1:
+        dLneq = 1/x**2 + 3/(2*x) + (a+2*b*x)/(1+x*(a+b*x))
+        dLneq = dLneq/mass
+    elif x < 1.5:
+        dLneq = 3/x + (1/x**2)*besselk(1,1/x)/besselk(2,1/x)
+        dLneq = dLneq/mass
+    else:
+        dLneq = 3/T
+
+    return dLneq
 
 def Pnf(R,mass):
     """

@@ -150,7 +150,7 @@ class BoltzSolution(object):
         tvals = np.linspace(x0,xf,npoints)
         y0 = self.y0
         logger.info('Evolving from %1.3g to %1.3g with %i points' %(x0,xf,len(tvals)))
-        maxstep = np.inf
+        maxstep = 1e-2
         if dx:
             maxstep = (xf-x0)/dx
             
@@ -224,7 +224,8 @@ class BoltzSolution(object):
         
         logger.debug('RHS: Computing number and energy densities for %i components' %nComp)
         #Current number densities (replace number densities by equilibrium value for thermally coupled components)
-        n = np.where(isCoupled,neq,self.norm*np.exp(Ni))
+        n = np.array([nv if isCoupled[i] else self.norm[i]*np.exp(Ni[i]) 
+                      for i,nv in enumerate(neq)])
 
         #Current energy densities:
         rho = n*Ri
@@ -283,7 +284,7 @@ class BoltzSolution(object):
         logger.debug('Computing Ni derivatives')
         
         #Expansion term:
-        RHS = -3*n        
+        RHS = -3*n
         #Decay term:
         RHS -= widths*masses*n/(H*Ri)
         #Inverse decay term:
@@ -308,11 +309,9 @@ class BoltzSolution(object):
         for i,compi in enumerate(self.components):
             if not isActive[i] and RHS[i] > 0.:
                 logger.warning("Inactive component %s is being injected" %compi.label)
-                #         RHS -= np.where(isCoupled,-3*n,np.zeros(nComp))
+
         #First order corrections for thermally coupled components (n ≃ neq(1 + Delta))
-#         logger.debug('Zero order: %s' %str(RHS/n))        
         Deltai = np.where(isCoupled,y[:nComp],np.zeros(nComp))
-#         logger.debug('SigmaV = %s, Delta = %s' %(2*neq*sigmaV/H,Deltai))
         #Inverse decay term:
         RHS -= Deltai*widths*masses*NXth/(H*Ri)
         #Annihilation term:
@@ -327,14 +326,13 @@ class BoltzSolution(object):
         RHS -= Deltai*(np.einsum('ji,j->i',Beff,masses*widths*n/Ri)
                        -np.einsum('ji,j,ji->i',Beff,masses*widths/Ri,NXYth-NXY2th))/H
         #Subtract expansion term for thermally coupled components:
-        dndT = self.dnEQdT(T)
+        dLndT = self.dLnEQdT(T) #derivative of log of equilibrium density
         dTdx = dTfdx(x,NS,self.normS)
-        RHS -= np.where(isCoupled,dTdx*dndT,np.zeros(nComp))
+        RHS -= np.where(isCoupled,neq*dTdx*dLndT,np.zeros(nComp))
 #         logger.debug('First order: %s' %str(RHS/n))
         dN = np.zeros(nComp)
         #Finally divide by n:
         np.divide(RHS,n,out=dN,where=isActive*(RHS != 0.))
-
 
         #Derivatives for the rho/n variables (only for thermal components):
         #Compute pressure/n:
@@ -420,19 +418,10 @@ class BoltzSolution(object):
         
         coupled = self.coupled
         active = self.active
-        if not active[icomp] or not coupled[icomp]:
+        if not active[icomp]:
             return 1.0
         
-#         #Ni = log(n_i/ni0) or Ni = (n-neq)/neq for thermally coupled components
-#         Ni = np.array(y[:self.ncomp])
-#         #NS = log(S/S_0)
-#         NS = y[-1]
-#         #Get temperature from entropy and scale factor:
-#         T = Tf(x,NS,self.normS)
-#         neq = self.nEQ(T)
-#         n = np.where(coupled,neq*(1+Ni),self.norm*np.exp(Ni))
-#         Deltai = np.tanh(np.abs((n-neq)/neq-0.1))
         Delta = y[icomp]
     
                 
-        return Delta-1.0
+        return Delta-0.1
