@@ -202,32 +202,6 @@ def rNeqf(T,massA,dofA,massB,dofB):
             
     return r
 
-def drNeqdTf(T,massA,dofA,massB,dofB):
-    """
-    Returns the derivative of the ratio of equilibrium number densities
-    with respect to T.
-    If both species are Boltzmann suppressed (T << mass) and nearly degenerate,
-    it provides a better approximation than taking the ratio of equilibrium densities,
-    since the Boltzmann suppression exponentials partially cancel.
-    """
-
-    if massA == massB and dofA == dofB:
-        return 1.
-
-    x = T/massA
-    y = T/massB
-    if x < 0.1 and y < 0.1:
-        r = exp(1/y-1/x)*(x-y)*sqrt(x*y)
-        r *= (240*x*(-128+7*y*(y-16)) -128*(128 + 15*y*(16+7*y))+105*x**2*(-128 + y*(16+135*y)))
-        if r:
-            r = r/(T*x**3*(128+15*y*(16+7*y))**2)
-    else:
-        r = rNeqf(T,massA,dofA,massB,dofB) 
-        if r:
-            r *= dnEQdTf(T,massA,dofA)/nEQf(T,massA,dofA) - dnEQdTf(T,massB,dofB)/nEQf(T,massB,dofB)
-            
-    return r
-
 def rEQf(T,mass,dof):
     """
     Returns the ratio of equilibrium energy and number densities at temperature T,
@@ -242,9 +216,9 @@ def rEQf(T,mass,dof):
         else:
             return pi**4*T/(30.*Zeta3)    #Bosons
     elif x > 1e-2:  #Non-relativistic/relativistic transition
-        return (besselk(1,1/x)/besselk(2,1/x))*mass + 3.*x*mass
+        return mass*(besselk(1,1/x)/besselk(2,1/x) + 3.*x)
     else: #Non-relativistic
-        return (1.-3.*x/2+15.*x**2/8)*mass + 3.*x*mass #Non-relativistic limit of bessel function ratio
+        return mass*((1.-3.*x/2+15.*x**2/8) + 3.*x) #Non-relativistic limit of bessel function ratio
     
 def drEQdTf(T,mass,dof):
     """

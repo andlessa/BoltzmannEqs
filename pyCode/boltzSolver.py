@@ -346,7 +346,7 @@ class BoltzSolution(object):
         Pn = np.array([comp.Pn(T,Ri[i]) if comp.active else 0. 
                        for i,comp in enumerate(self.components)])
         #Cooling term:
-        RHS = -3.*n*Pn
+        RHS = -3*n*Pn
         for i,comp in enumerate(self.components):
             if not isActive[i]:
                 continue
