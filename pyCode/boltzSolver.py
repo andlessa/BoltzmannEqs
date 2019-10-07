@@ -183,6 +183,7 @@ class BoltzSolution(object):
 
 
         self.updateSolution(r)
+        logger.info("Solution computed in %1.2f s" %(time.time()-t0))        
         
         continueEvolution = False        
         for i,evt in enumerate(r.t_events):
@@ -201,7 +202,6 @@ class BoltzSolution(object):
         if continueEvolution and any(comp.active for comp in self.components):
             self.EvolveTo(TF, npoints-len(r.t), dx, atol, rtol)
         else:
-            logger.info("Solution computed in %1.2f s" %(time.time()-t0))                          
             if r.status < 0:
                 logger.error(r.message)
                 return False

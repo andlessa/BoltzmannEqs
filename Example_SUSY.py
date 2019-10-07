@@ -103,6 +103,11 @@ def main(parameterFile,outputFile,showPlot=True):
                    )
     compList = [dm,mediator]
     
+    #dm.n = np.array([dm.nEQ(25.)])
+    #mediator.n = np.array([mediator.nEQ(25.)])
+    #dm.rho = np.array([dm.nEQ(25.)*dm.rEQ(25.)])
+    #mediator.rho = np.array([mediator.nEQ(25.)*mediator.rEQ(25.)])
+    
     #Evolve the equations from TR to TF
     solution = BoltzSolution(compList,TRH)
     solved = solution.EvolveTo(TF,npoints=1000,atol=1e-10,rtol=1e-4)
