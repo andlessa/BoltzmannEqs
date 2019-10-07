@@ -224,6 +224,8 @@ class BoltzSolution(object):
 
         #Store the number of components:
         nComp = len(self.components)
+        #Auxiliar matrices:
+        zeros = np.zeros(nComp)
 
         #Ni = log(n_i/s_0)
         Ni = np.array(y[:nComp])
@@ -244,7 +246,7 @@ class BoltzSolution(object):
                       for i,nv in enumerate(neq)])
 
         #Set number densities to zero if component is not active
-        n = np.where(isActive,n,np.zeros(nComp))
+        n = np.where(isActive,n,zeros)
 
         #Current energy densities:
         rho = n*Ri
@@ -269,26 +271,35 @@ class BoltzSolution(object):
         logger.debug('n = %s, rho = %s, neq = %s' %(n,rho,neq))
 
         #Auxiliary weights:
-        logger.debug('RHS: Computing weights')
-        #Effective equilibrium densities and BRs:
-        #NXth[i] = N^{th}_i:
-        NXth = self.getNXTh(T,n,rNeq,labelsDict)
-        #NXYth[i,j] = N^{th}_{ij}:
-        NXYth = np.array([[compi.getNXYTh(T,n,rNeq,labelsDict,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                          for compi in self.components])
-        #NXY2th[i,j] = N2^{th}_{ij}:
-        NXY2th = np.array([[compi.getNXY2Th(T,n,rNeq,labelsDict,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                          for compi in self.components])
+        logger.debug('RHS: Computing process rates and weights')
         
-        #Effective branching ratio (Beff[i,j] = B^{eff}_{ij}:
-        Beff = np.array([[compi.getTotalBRTo(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                         for compi in self.components])
-        logger.debug('Done computing weights')
-
         widths = self.width(T)
         masses = self.mass(T)
         BRX = self.getBRX(T)
-        sigmaV = self.getSIGV(T)
+        #Process rates:
+        sigmaV = self.getSIGV(T) #Annihilation (i+i ->SM+SM)
+        sigVij = np.zeros((nComp,nComp)) #Co-annihilation (i+j ->SM+SM)
+        sigVjj = np.zeros((nComp,nComp)) #BSM conversion rate (j+j ->i+i)
+        cRate = np.zeros((nComp,nComp)) #conversion rate (j+SM ->i+SM)
+        #Auxiliary weights:
+        NXth = self.getNXTh(T,n,rNeq,labelsDict) #NXth[i] = N^{th}_{i}
+        NXYth = np.zeros((nComp,nComp)) #NXYth[i,j] = N^{th}_{ij}
+        NXY2th = np.zeros((nComp,nComp)) #NXY2th[i,j] = N2^{th}_{ij}
+        Beff = np.zeros((nComp,nComp)) #Beff[i,j] = B^{eff}_{ij}       
+        for i,compi in enumerate(self.components):
+            for j,compj in enumerate(self.components):
+                if i == j:
+                    continue
+                if compi.active and compj.active:
+                    sigVij[i,j] = compi.getCOSIGV(T,compj)
+                    sigVjj[i,j] = compi.getSIGVBSM(T,compj)
+                    cRate[i,j] = compi.getConvertionRate(T,compj)
+                if compi.active:
+                    NXYth[i,j] = compi.getNXYTh(T,n,rNeq,labelsDict,compj)
+                    NXY2th[i,j] = compi.getNXY2Th(T,n,rNeq,labelsDict,compj)
+                    Beff[i,j] = compi.getTotalBRTo(T,compj)        
+
+        logger.debug('Done computing process rates and weights')
 
         # Derivative for entropy:
         logger.debug('Computing entropy derivative')     
@@ -310,44 +321,43 @@ class BoltzSolution(object):
         RHS += widths*masses*NXth/(H*Ri) #NXth should be finite if i -> j +..
         #Annihilation term:      
         RHS += sigmaV*(neq - n)*(neq + n)/H
-        # i + j <-> SM + SM:
-        sigVij = [[compi.getCOSIGV(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                  for compi in self.components]
-        RHS += np.einsum('ij,ij->i',sigVij,np.outer(neq,neq)-np.outer(n,n))/H
-        # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
-        sigVjj = [[compi.getSIGVBSM(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                  for compi in self.components]
-        RHS += (np.einsum('ij,j,ij->i',rNeq**2,n**2,sigVjj)-n**2*np.einsum('ij->i',sigVjj))/H
-        # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
-        cRate = [[compi.getConvertionRate(T,compj) if not compj is compi and compj.active else 0. for compj in self.components] 
-                 for compi in self.components]
-        RHS += (np.einsum('ij,j,ij->i',rNeq,n,cRate)-n*np.einsum('ij->i',cRate))/H
-        # j <-> i +SM (#NXYth[j,i] should be finite if j -> i +...)
-        RHS += (np.einsum('ji,j,j,j->i',Beff,masses/Ri,widths,n)-np.einsum('ji,j,j,ji->i',Beff,masses/Ri,widths,NXYth))/H
-
         for i,compi in enumerate(self.components):
-            if not isActive[i] and RHS[i] > 0.:
-                logger.warning("Inactive component %s is being injected" %compi.label)
+            for j,compj in enumerate(self.components):
+                if i == j: continue
+                # i + j <-> SM + SM:
+                RHS[i] += (neq[i]*neq[j]-n[i]*n[j])*sigVij[i,j]/H
+                # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
+                RHS[i] += (rNeq[i,j]**2*n[j]**2-n[i]**2)*sigVjj[i,j]/H
+                # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
+                RHS[i] += (rNeq[i,j]*n[j]-n[i])*cRate[i,j]/H
+                # j <-> i +SM (#NXYth[j,i] should be finite if j -> i +...)
+                RHS[i] += Beff[j,i]*widths[j]*(masses[j]/Ri[j])*(n[j] - NXYth[j,i])/H
+
+#         for i,compi in enumerate(self.components):
+#             if not isActive[i] and RHS[i] > 0.:
+#                 logger.warning("Inactive component %s is being injected" %compi.label)
 
         #First order corrections for thermally coupled components (n ≃ neq(1 + Delta))
-        Deltai = np.where(isCoupled,y[:nComp],np.zeros(nComp))
+        Deltai = np.where(isCoupled,y[:nComp],zeros)
         #Inverse decay term:
         RHS -= Deltai*widths*masses*NXth/(H*Ri)
         #Annihilation term:
         RHS -= neq*Deltai*(2*neq*sigmaV)/H
-        # i + j <-> SM + SM:
-        RHS -= neq*Deltai*np.einsum('ij,j->i',sigVij,neq)/H
-        # i+i <-> j+j
-        RHS -= neq*Deltai*np.einsum('j,ij->i',1+(n/neq)**2,sigVjj)/H
-        # i+SM <-> j+SM
-        RHS -= Deltai*np.einsum('ij,j,ij->i',rNeq,n,cRate)/H
-        # j <-> i +SM
-        RHS -= Deltai*(np.einsum('ji,j->i',Beff,masses*widths*n/Ri)
-                       -np.einsum('ji,j,ji->i',Beff,masses*widths/Ri,NXYth-NXY2th))/H
+        for i,compi in enumerate(self.components):
+            for j,compj in enumerate(self.components):
+                if i == j or not Deltai[i]: continue
+                # i + j <-> SM + SM:
+                RHS[i] -= neq[i]*Deltai[i]*neq[j]*sigVij[i,j]/H
+                # i+i <-> j+j
+                RHS[i] -= neq[i]*Deltai[i]*(1+(n[j]/neq[j])**2)*sigVjj[i,j]/H
+                # i+SM <-> j+SM
+                RHS[i] -= Deltai[i]*rNeq[i,j]*n[j]*cRate[i,j]/H
+                # j <-> i +SM
+                RHS[i] -= Deltai[i]*Beff[j,i]*widths[j]*(masses[j]/Ri[j])*(n[j]-NXYth[j,i]+NXY2th[j,i])/H
         #Subtract expansion term for thermally coupled components:
         dLndT = self.dLnEQdT(T) #derivative of log of equilibrium density
         dTdx = dTfdx(x,NS,self.normS)
-        RHS -= np.where(isCoupled,neq*dTdx*dLndT,np.zeros(nComp))
+        RHS -= np.where(isCoupled,neq*dTdx*dLndT,zeros)
 
         dN = np.zeros(nComp)
         #Finally divide by n:
@@ -367,12 +377,10 @@ class BoltzSolution(object):
                     continue
                 if j == i:
                     continue
-                massj = masses[j]
-                widthj = widths[j]
                 #Injection and inverse injection terms:
-                RHS[i] += Beff[j,i]*widthj*massj*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
+                RHS[i] += Beff[j,i]*widths[j]*masses[j]*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
                 #First order corrections for thermally coupled components (n ≃ neq(1 + Delta))
-                RHS[i] -= Deltai[i]*Beff[j,i]*widthj*massj*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i] + NXY2th[j,i])/H
+                RHS[i] -= Deltai[i]*Beff[j,i]*widths[j]*masses[j]*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i] + NXY2th[j,i])/H
 
         dR = np.zeros(nComp)
         np.divide(RHS,n,out=dR,where=isActive*(RHS != 0.))

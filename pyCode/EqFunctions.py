@@ -191,9 +191,11 @@ def rNeqf(T,massA,dofA,massB,dofB):
 
     x = T/massA
     y = T/massB
+    a = 15./8.
+    b = 105./129.    
     if x < 0.1 and y < 0.1:
         r = (y/x)**(3./2.)*exp(1/y-1/x)
-        r *= (1. + (15./8.)*x + (105./128.)*x**2)/(1. + (15./8.)*y + (105./128.)*y**2)
+        r *= (1 + a*x + b*x**2)/(1 + a*y + b*y**2)
         r *= abs(dofA)/abs(dofB)
     else:
         r = nEQf(T,massA,dofA)

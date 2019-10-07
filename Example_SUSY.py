@@ -40,7 +40,7 @@ def main(parameterFile,outputFile,showPlot=True):
 
     #Get the model parameters (or define them here):
     TRH = 1e4
-    TF = 1e-2
+    TF = 1.0
     
     def nEQbottom(T):
         Zeta3 = 1.20206
@@ -105,7 +105,7 @@ def main(parameterFile,outputFile,showPlot=True):
     
     #Evolve the equations from TR to TF
     solution = BoltzSolution(compList,TRH)
-    solved = solution.EvolveTo(TF,npoints=500,atol=1e-6,rtol=1e-3)
+    solved = solution.EvolveTo(TF,npoints=1000,atol=1e-10,rtol=1e-4)
     if not solved:
         logger.error("Error solving Boltzmann equations.")
         return
