@@ -43,9 +43,9 @@ class BoltzSolution(object):
                         if comp.coupled:
                             T = Tf(x,y[-1],self.normS)
                             neq = comp.nEQ(T)
-                            Ln = np.tanh(neq*(1+y[icomp]))
+                            Ln = np.log(neq*(1+y[icomp])/self.norm[icomp])+100
                         else:
-                            Ln = np.tanh(self.norm[icomp]*np.exp(y[icomp]))
+                            Ln = y[icomp]+100
                         return Ln
                     else:
                         return 1.
@@ -131,7 +131,9 @@ class BoltzSolution(object):
         """
 
         Ni0 = np.zeros(self.ncomp) #Initial conditions for Ni = log(ni/ni0) or (ni-neq)/neq for coupled components
-        Ri0 = self.rho[:,-1]/self.n[:,-1] #Initial conditions for Ri = rhoi/ni
+        #Initial conditions for Ri = rhoi/ni (set to 1, if component is not active)
+        Ri0 = np.where(self.active,self.rho[:,-1]/self.n[:,-1],
+                       np.full(self.ncomp,1.))
         NS0 = 0. #Initial condition for NS = log(S/S0)
         self.y0 = np.hstack((Ni0,Ri0,[NS0])).tolist()
         self.norm = self.n[:,-1] #Set normalization (ni0) for each component
@@ -160,6 +162,13 @@ class BoltzSolution(object):
         maxstep = 1e-2
         if dx:
             maxstep = (xf-x0)/dx
+
+        try:
+            self.rhs(x0,y0)
+        except Exception as e:
+            logger.error("Failed to evaluate equations at first point (x0 = %1.3g)." %x0)
+            logger.error("Error: %s" %str(e))
+            return False
             
         r = integrate.solve_ivp(self.rhs,t_span=(x0,xf),y0=y0,atol=atol,rtol=rtol,
                                 t_eval=tvals,method='BDF',dense_output=True,
@@ -217,9 +226,9 @@ class BoltzSolution(object):
         nComp = len(self.components)
 
         #Ni = log(n_i/s_0)
-        Ni = y[:nComp]
+        Ni = np.array(y[:nComp])
         #R = rho_i/n_i
-        Ri = y[nComp:2*nComp]
+        Ri = np.array(y[nComp:2*nComp])
         #NS = log(S/S_0)
         NS = y[-1]
 
@@ -233,6 +242,9 @@ class BoltzSolution(object):
         #Current number densities (replace number densities by equilibrium value for thermally coupled components)
         n = np.array([nv if isCoupled[i] else self.norm[i]*np.exp(Ni[i]) 
                       for i,nv in enumerate(neq)])
+
+        #Set number densities to zero if component is not active
+        n = np.where(isActive,n,np.zeros(nComp))
 
         #Current energy densities:
         rho = n*Ri
@@ -336,7 +348,7 @@ class BoltzSolution(object):
         dLndT = self.dLnEQdT(T) #derivative of log of equilibrium density
         dTdx = dTfdx(x,NS,self.normS)
         RHS -= np.where(isCoupled,neq*dTdx*dLndT,np.zeros(nComp))
-#         logger.debug('First order: %s' %str(RHS/n))
+
         dN = np.zeros(nComp)
         #Finally divide by n:
         np.divide(RHS,n,out=dN,where=isActive*(RHS != 0.))
