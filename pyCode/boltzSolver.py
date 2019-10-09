@@ -242,7 +242,7 @@ class BoltzSolution(object):
         
         logger.debug('RHS: Computing number and energy densities for %i components' %nComp)
         #Current number densities (replace number densities by equilibrium value for thermally coupled components)
-        n = np.array([nv if isCoupled[i] else self.norm[i]*np.exp(Ni[i]) 
+        n = np.array([nv*(1+Ni[i]) if isCoupled[i] else self.norm[i]*np.exp(Ni[i]) 
                       for i,nv in enumerate(neq)])
 
         #Set number densities to zero if component is not active
@@ -296,7 +296,6 @@ class BoltzSolution(object):
                     cRate[i,j] = compi.getConvertionRate(T,compj)
                 if compi.active:
                     NXYth[i,j] = compi.getNXYTh(T,n,rNeq,labelsDict,compj)
-                    NXY2th[i,j] = compi.getNXY2Th(T,n,rNeq,labelsDict,compj)
                     Beff[i,j] = compi.getTotalBRTo(T,compj)        
 
         logger.debug('Done computing process rates and weights')
@@ -312,6 +311,27 @@ class BoltzSolution(object):
 
         #Derivatives for the Ni=log(ni/s0) variables:
         logger.debug('Computing Ni derivatives')
+        RHS = -3
+        #Decay term:
+        RHS -= widths*masses/(H*Ri)        
+        for i,compi in enumerate(self.components):
+            if not compi.active:
+                continue
+            Rii = Ri[i]
+            mi = masses[i]
+            wi = widths[i]
+            if compi.coupled:
+                ni = neq[i]
+            else:
+                ni = n[i]
+            #Inverse decay term:
+            RHS[i] += wi*mi*NXth[i]/(H*Rii*ni)
+            if not compi.coupled:
+                RHS[i] += sigmaV*(neq - n)*(neq + n)/(H*n)
+
+            for j,compj in enumerate(self.components):
+                if i == j: continue
+        
         
         #Expansion term:
         RHS = -3*n
@@ -321,9 +341,6 @@ class BoltzSolution(object):
         RHS += widths*masses*NXth/(H*Ri) #NXth should be finite if i -> j +..
         #Annihilation term:      
         RHS += sigmaV*(neq - n)*(neq + n)/H
-        for i,compi in enumerate(self.components):
-            for j,compj in enumerate(self.components):
-                if i == j: continue
                 # i + j <-> SM + SM:
                 RHS[i] += (neq[i]*neq[j]-n[i]*n[j])*sigVij[i,j]/H
                 # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
