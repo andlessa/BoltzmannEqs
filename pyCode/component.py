@@ -407,7 +407,6 @@ class Component(object):
         s0 = (2*np.pi**2/45)*T**3
         ns = 0.  #log(entropy) (constant) 
         
-        
         R0 = rho/n
         Rmin = R0*np.exp(-xToday)    #Minimum value for rho/n(Ttoday) (happens if component is relativistic today)
         Pmin = nToday*Pnf(Ttoday,Rmin)
@@ -417,7 +416,7 @@ class Component(object):
         else:
             def Rfunc(R,x):
                 TF = Tf(x,ns,s0)                        
-                return -3*Pnf(TF,R)
+                return -3*self.Pn(TF,R)
             RToday = integrate.odeint(Rfunc, R0, [0.,xToday], atol = self.mass(Ttoday)/10.)[1][0]  #Solve decoupled ODE for R=rho/n
        
         return RToday*nToday/rhoh2
