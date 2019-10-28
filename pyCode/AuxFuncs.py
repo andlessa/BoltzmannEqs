@@ -139,7 +139,7 @@ def getOmega(comp,rho,n,T):
     """
     
     if comp.Tdecay and comp.Tdecay > T: return 0.
-    
+
     Ttoday = 2.3697*10**(-13)*2.725/2.75  #Temperature today
     rhoh2 = 8.0992*10.**(-47)   # value of rho critic divided by h^2
     dx = (1./3.)*log(gSTARS(T)/gSTARS(Ttoday)) + log(T/Ttoday)   #dx = log(R/R_today), where R is the scale factor
@@ -163,7 +163,7 @@ def getOmega(comp,rho,n,T):
             rhoF = R*nF         #Energy density at x                        
             return -3*getPressure(comp.mass(TF),rhoF,nF)/nF
         RToday = integrate.odeint(Rfunc, R0, [0.,24.], atol = comp.mass(Ttoday)/10.)[1][0]  #Solve decoupled ODE for R=rho/n
-   
+
     return RToday*nToday/rhoh2
 
 def getDNeff(comp,rho,n,T):

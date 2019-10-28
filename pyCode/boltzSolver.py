@@ -316,7 +316,8 @@ class BoltzSolution(object):
                 massj = masses[j]
                 widthj = widths[j]
                 #Injection and inverse injection terms:
-                RHS[i] += widthj*Beff[j,i]*massj*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
+                eInjection = (1./2.)*(1+masses[i]**2/masses[j]**2) #Estimate for energy injection from decays
+                RHS[i] += widthj*Beff[j,i]*massj*(eInjection - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
 
         np.divide(RHS,n,out=dR,where=isActive*(RHS != 0.))
 
