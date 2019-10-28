@@ -395,11 +395,13 @@ class Component(object):
         at temperature T.
         """
         
-        if self.Tdecay and self.Tdecay > T: return 0.
-        if not n or not rho: return 0.
+        if self.Tdecay and self.Tdecay > T:
+            return 0.
+        if not n or not rho:
+            return 0.
         
-        Ttoday = 2.3697*10**(-13)*2.725/2.75  #Temperature today
-        rhoh2 = 8.0992*10.**(-47)   # value of rho critic divided by h^2
+        Ttoday = 2.3697e-13*2.725/2.75  #Temperature today
+        rhoh2 = 8.0992e-47   # value of rho critic divided by h^2
         dx = (1./3.)*np.log(gSTARS(T)/gSTARS(Ttoday)) + np.log(T/Ttoday)   #dx = log(R/R_today), where R is the scale factor
         nToday = n*np.exp(-3.*dx)
         s0 = (2*np.pi**2/45)*T**3

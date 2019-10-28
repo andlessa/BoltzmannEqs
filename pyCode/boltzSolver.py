@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 random.seed('myseed')
-
+np.set_printoptions(formatter={'float': '{: 1.3g}'.format})
 
 class BoltzSolution(object):
     
@@ -220,7 +220,7 @@ class BoltzSolution(object):
 
         isActive = self.active
         isCoupled = self.coupled
-        logger.debug('Calling RHS with arguments:\n   x=%s,\n   y=%s\n and switches %s, %s' %(x,y,isActive,isCoupled))
+        logger.debug('Calling RHS with arguments:\n   x=%s,\n   y=%s\n and isActive = %s, isCoupled = %s' %(x,y,isActive,isCoupled))
 
         #Store the number of components:
         nComp = len(self.components)
@@ -250,14 +250,15 @@ class BoltzSolution(object):
         
         #Make sure Ri is never below the component's mass:
         masses = self.mass(T)
-        Ri = np.where(Ri > masses,Ri,masses) 
+        Ri = np.maximum(Ri,masses)
         
         #Define the quantities:
         #   Delta_i = n_i - neq_i, delta_i = 0, for decoupled components
         #   Delta_i = 0, delta_i = n_i/neq_i-1 = y_i, for coupled components
-        Di = np.where((not isCoupled)*isActive,n-neq,0.)
+        Di = np.where(np.invert(isCoupled)*isActive,n-neq,0.)
+
         di = np.where(isCoupled*isActive,Ni,0.)
-        #Auxilar equilibrium density:
+        #Auxiliar density:
         nT = np.where(isActive,Di+neq,0.)
 
         #Current energy densities:
@@ -275,9 +276,9 @@ class BoltzSolution(object):
         #Compute Hubble factor:
         rhoTot = np.sum(rho,where=isActive,initial=0)
         rhoRad = (pi**2/30)*gSTAR(T)*T**4  # thermal bath's energy density    
-        rho = rhoRad+rhoTot
+        rhoTot += rhoRad
         MP = 1.22e19
-        H = sqrt(8*pi*rho/3)/MP
+        H = sqrt(8*pi*rhoTot/3)/MP
         
         logger.debug('RHS: Done computing component energy and number densities')
         logger.debug('n = %s, rho = %s, neq = %s' %(n,rho,neq))
@@ -359,9 +360,9 @@ class BoltzSolution(object):
         RHS0 = np.zeros(nComp) 
         np.divide(allTerms,nT*H,where=(allTerms != 0.),out=RHS0)
 
-        logger.debug('DNi (Zero order): expTerm = %1.2g, decTerm = %1.2g, invDecTerm = %1.2g' %(expTerm/(nT*H),decTerm,invDecTerm))
-        logger.debug('\t\t annTerm = %1.2g, coAnnTerm = %1.2g, convTerm = %1.2g' %(annTerm,coAnnTerm,convTerm))
-        logger.debug('\t\t cRateTerm = %1.2g, injectionTerm = %1.2g' %(cRateTerm,injectionTerm))
+        logger.debug('DNi (Zero order): expTerm = %s, decTerm = %s, invDecTerm = %s' %(expTerm,decTerm,invDecTerm))
+        logger.debug('\t\t annTerm = %s, coAnnTerm = %s, convTerm = %s' %(annTerm,coAnnTerm,convTerm))
+        logger.debug('\t\t cRateTerm = %s, injectionTerm = %s' %(cRateTerm,injectionTerm))
         
         
         #First order terms for coupled components only:
@@ -369,7 +370,7 @@ class BoltzSolution(object):
         #(must be subtracted from the evolution of delta_i for coupled components)
         dLndT = self.dLnEQdT(T) #derivative of log of equilibrium density
         dTdx = dTfdx(x,NS,self.normS)
-        expTerm = -(isCoupled*neq*H*dTdx*dLndT)        
+        expTerm = -(isCoupled*neq*H*dTdx*dLndT)
         #Inverse decay term:
         invDecTerm = -di*widths*masses*NXth/Ri
         #Annihilation term:
@@ -384,7 +385,7 @@ class BoltzSolution(object):
                     continue
                 if not compi.active or not compj.active:
                     continue
-                # i + j <-> SM + SM:                 
+                # i + j <-> SM + SM:          
                 coAnnTerm[i] += -di[i]*neq[i]*neq[j]*sigVij[i,j]
                 coAnnTerm[i] += -di[j]*neq[i]*neq[j]*sigVij[i,j]
                 # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
@@ -399,9 +400,9 @@ class BoltzSolution(object):
 
 
 
-        logger.debug('DNi (First): invDecTerm = %1.2g' %(invDecTerm))
-        logger.debug('\t\t annTerm = %1.2g, coAnnTerm = %1.2g, convTerm = %1.2g' %(annTerm,coAnnTerm,convTerm))
-        logger.debug('\t\t cRateTerm = %1.2g, injectionTerm = %1.2g, thermalExp = %1.2g' %(cRateTerm,injectionTerm,expTerm))
+        logger.debug('DNi (First): invDecTerm = %s' %(invDecTerm))
+        logger.debug('\t\t annTerm = %s, coAnnTerm = %s, convTerm = %s' %(annTerm,coAnnTerm,convTerm))
+        logger.debug('\t\t cRateTerm = %s, injectionTerm = %s, thermalExp = %s' %(cRateTerm,injectionTerm,expTerm))
 
         #Add all contributions
         allTerms = expTerm+invDecTerm+annTerm
@@ -421,50 +422,30 @@ class BoltzSolution(object):
         
         #Terms for decoupled components/zero order terms for coupled components:
         #Expansion/cooling term
-        expTerm = -3*(nT*H)*Pn
+        expTerm = -3*n*Pn
         injectionTerm =np.zeros(nComp)
-        for i,comp in enumerate(self.components):
+        for i,compi in enumerate(self.components):
+            if not isActive[i]:
+                continue            
             for j,compj in enumerate(self.components):            
                 if i == j:
                     continue
-                if not compi.active or not compj.active:
+                if not isActive[j]:
                     continue
                 #Injection and inverse injection terms:
-                injectionTerm[i] += Beff[j,i]*widths[j]*masses[j]*(1./2. - Ri[i]/Ri[j])*(nT[j] - NXYth[j,i]) #NXth[j,i] should finite if j -> i+..
+                injectionTerm[i] += Beff[j,i]*widths[j]*masses[j]*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
 
         #Add all contributions
         allTerms = expTerm+injectionTerm
         #Make sure non-active components do not evolve:
         allTerms *= isActive
-        RHS0 = np.zeros(nComp) 
-        np.divide(allTerms,nT*H,where=(allTerms != 0.),out=RHS0)
-
-
-        #First order terms for coupled components only:
-        injectionTerm =np.zeros(nComp)
-        for i,comp in enumerate(self.components):
-            for j,compj in enumerate(self.components):            
-                if i == j:
-                    continue
-                if not compi.active or not compj.active:
-                    continue
-                #Injection and inverse injection terms:
-                injectionTerm[i] += di[j]*Beff[j,i]*widths[j]*masses[j]*(1./2. - Ri[i]/Ri[j])*neq[j]
-                injectionTerm[i] += -di[i]*Beff[j,i]*widths[j]*masses[j]*(1./2. - Ri[i]/Ri[j])*(nT[i]/neq[i])*(nT[j] - NXYth[j,i])
-
-        #Add all contributions
-        allTerms = injectionTerm
-        #Make sure non-active components do not evolve:
-        allTerms *= isActive
-        RHS1 = np.zeros(nComp) 
-        np.divide(allTerms,nT*H,where=(allTerms != 0.),out=RHS1)
-
-
-        #Add all contributions:
-        dR = RHS0+RHS1
+        dR = np.zeros(nComp) 
+        np.divide(allTerms,n,where=(allTerms != 0.),out=dR)
+        
+        logger.debug('DRi: expTerm = %s, injectionTerm = %s' %(-3*Pn,injectionTerm))
 
         dy = np.hstack((dN,dR,[dNS]))
-        logger.debug('T = %1.23g, dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(T,str(dN),str(dR),str(dNS)))
+        logger.debug('T = %1.3g, H = %1.3g, dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(T,H,dN,dR,dNS))
 
         return dy
 
@@ -484,7 +465,7 @@ class BoltzSolution(object):
         self.R = np.hstack((self.R,np.exp(r.t)))
         #Store the entropy values:
         S = self.normS*exp(r.y[-1,:])
-        self.S = np.hstack((self.S,S))        
+        self.S = np.hstack((self.S,S))  
         #Store T-values
         NSvalues = r.y[-1,:]
         Tvalues = np.array([Tf(x,NSvalues[i],self.normS) for i,x in enumerate(r.t)])
