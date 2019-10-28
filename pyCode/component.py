@@ -402,23 +402,23 @@ class Component(object):
         
         Ttoday = 2.3697e-13*2.725/2.75  #Temperature today
         rhoh2 = 8.0992e-47   # value of rho critic divided by h^2
-        dx = (1./3.)*np.log(gSTARS(T)/gSTARS(Ttoday)) + np.log(T/Ttoday)   #dx = log(R/R_today), where R is the scale factor
-        nToday = n*np.exp(-3.*dx)
+        xToday = (1./3.)*np.log(gSTARS(T)/gSTARS(Ttoday)) + np.log(T/Ttoday)   #dx = log(R/R_today), where R is the scale factor
+        nToday = n*np.exp(-3.*xToday)
         s0 = (2*np.pi**2/45)*T**3
         ns = 0.  #log(entropy) (constant) 
         
         
-        R0 = rho/n    
-        Rmin = R0*np.exp(-dx)    #Minimum value for rho/n(Ttoday) (happens if component is relativistic today)
+        R0 = rho/n
+        Rmin = R0*np.exp(-xToday)    #Minimum value for rho/n(Ttoday) (happens if component is relativistic today)
         Pmin = nToday*Pnf(Ttoday,Rmin)
         
         if abs(Pmin - Rmin*nToday/3.)/(Rmin*nToday/3.) < 0.01:
             RToday = Rmin  #Relativistic component today
         else:
-            def Rfunc(R,x):            
+            def Rfunc(R,x):
                 TF = Tf(x,ns,s0)                        
                 return -3*Pnf(TF,R)
-            RToday = integrate.odeint(Rfunc, R0, [0.,24.], atol = self.mass(Ttoday)/10.)[1][0]  #Solve decoupled ODE for R=rho/n
+            RToday = integrate.odeint(Rfunc, R0, [0.,xToday], atol = self.mass(Ttoday)/10.)[1][0]  #Solve decoupled ODE for R=rho/n
        
         return RToday*nToday/rhoh2
     

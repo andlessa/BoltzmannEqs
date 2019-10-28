@@ -57,7 +57,7 @@
 \newcommand\drv[2]{\frac{\partial #1}{\partial #2}}
 \newcommand\Drv[2]{\frac{d #1}{d #2}}
 
-\title{Boltzmann Equations for the PQMSSM (v3.0)}
+\title{Boltzmann Equations (v3.0)}
 \author{Andre Lessa}
 \abstract{}
 
@@ -352,10 +352,11 @@ where $\mathcal{B}_{ib\ldots} \equiv BR(a \to i + b + \ldots)$, $\mathcal{B}_i
 For $\alpha = 1$, the integral in Eq.(\ref{eq:prod2}) does not take a simple
 form. In order to compute it, we assume:
 \begin{equation}
-E_i \simeq \frac{E_a}{2}
+E_i \simeq \frac{m_a^2 + m_i^2}{2 m_a} \simeq \frac{E_a}{2}\left(1+\frac{m_i^2}{m_a^2}\right) \equiv e_{inj} E_a,
 \end{equation}
-The above expression is only exact for 2-body decays and $m_a \gg
-m_i,m_b$. For the remaining cases, it is only an estimate.
+where $e_{inj}$ is the fraction of energy injected into the $i$-species.
+The above expression is only exact for 2-body decays and $m_a,m_i \gg
+m_b$. For the remaining cases, it is only an estimate.
 \begin{eqnarray}
 \int \frac{dp}{2 \pi^2} p^2 C_{prod}(p) E_i & \simeq & 
 \Gamma_a \mathcal{B}_{i}  \frac{m_a}{2} \int \frac{d^3 p_a}{(2
@@ -364,7 +365,7 @@ m_i,m_b$. For the remaining cases, it is only an estimate.
  \frac{n_i n_b \ldots}{\bar{n}_i \bar{n}_b \ldots} \right)
 \nonumber
 \\
-& = & \Gamma_a \mathcal{B}_{i}  \frac{m_a}{2} \left( n_a -
+& = & \Gamma_a \mathcal{B}_{i}  e_{inj} m_a \left( n_a -
 \bar{n}_a \sum_b \frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}} \frac{n_i n_b
 \ldots}{\bar{n}_i \bar{n}_b \ldots} \right)
 \end{eqnarray}
@@ -378,7 +379,7 @@ Combining the results for $\alpha = 0$ and 1, we have:
 \ldots}{\bar{n}_i
 \bar{n}_b \ldots} \right) \left\{ \begin{array}{ll}  \frac{n_a}{\rho_a}  & \mbox{, for $\alpha = 0$} 
 \\
- \frac{1}{2}  & \mbox{, for $\alpha = 1$}
+ e_{inj}  & \mbox{, for $\alpha = 1$}
 \end{array} \right. \label{eq:prodfin}
 \end{equation}
 
@@ -403,7 +404,7 @@ i\ldots} \frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}} \frac{n_i n_b \ldots}{\b
 v \rangle_{ii} + \frac{\rho_i}{n_i}  \left( \bar{n}_i \bar{n}_j - n_i n_j \right) \langle \sigma
 v \rangle_{ij} + \frac{\rho_i}{n_i} \left(\frac{\bar{n}_i^2}{\bar{n}_j^2} n_j^2  - n_i^2 \right) \langle \sigma v \rangle_{jj} \nonumber
 \\
-& + &\frac{\rho_i}{n_i}  \left(\frac{\bar{n}_i}{\bar{n}_j} n_j  - n_i\right)  \tilde{\Gamma}_{ijSM} - \sum_a \Gamma_a  \mathcal{B}_i \frac{m_a}{2} \left( n_a -
+& + &\frac{\rho_i}{n_i}  \left(\frac{\bar{n}_i}{\bar{n}_j} n_j  - n_i\right)  \tilde{\Gamma}_{ijSM} - \sum_a \Gamma_a  \mathcal{B}_i e_{inj} m_a \left( n_a -
  \bar{n}_a \sum_{a \to i\ldots}  \frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}} \frac{n_i
  n_b..}{\bar{n}_i \bar{n}_b..} \right) \nonumber
 \\
@@ -420,7 +421,7 @@ It is also convenient to use the above results to obtain a simpler equation for
 $\rho_i/n_i$:
 \begin{equation}
 \Drv{\rho_i/n_i}{t} \equiv \Drv{R_i}{t} = -3 H \frac{P_i}{n_i} + \sum_{a}
-\mathcal{B}_{i} \frac{\Gamma_a m_a}{n_i} \left( \frac{1}{2} - \frac{n_a}{\rho_a} \frac{\rho_i}{n_i} \right) \left(n_a -
+\mathcal{B}_{i} \frac{\Gamma_a m_a}{n_i} \left( e_{inj} - \frac{n_a}{\rho_a} \frac{\rho_i}{n_i} \right) \left(n_a -
 \bar{n}_a \sum_{a \to i\ldots} \frac{\mathcal{B}_{ib\ldots}}{\mathcal{B}_{i}} \frac{n_i
  n_b..}{\bar{n}_i \bar{n}_b..}\right) \label{eq:Rieq}
 \end{equation}
@@ -478,7 +479,7 @@ N_i' & = & -3
   \right)
  \\
 R_i' & = &  -3 \frac{P_i}{n_i} + \sum_{a} \mathcal{B}_{ai}^{eff}
-\frac{\Gamma_a}{H} m_a \left( \frac{1}{2} - \frac{R_i}{R_a} \right) \left(\frac{n_a}{n_i} -
+\frac{\Gamma_a}{H} m_a \left( e_{inj} - \frac{R_i}{R_a} \right) \left(\frac{n_a}{n_i} -
 \frac{\mathcal{N}_{ai}^{th}}{n_i} \right)
 \label{Nieq}
 \end{eqnarray}
@@ -515,7 +516,7 @@ N_i'& = & -3
   \right) \nonumber
  \\
 R_i' & = &  -3 \frac{P_i}{n_i} + \sum_{a} \mathcal{B}_{ai}^{eff}
-\frac{\Gamma_a}{H} m_a \left( \frac{1}{2} - \frac{R_i}{R_a} \right) \left(\frac{n_a}{n_i} -
+\frac{\Gamma_a}{H} m_a \left( e_{inj} - \frac{R_i}{R_a} \right) \left(\frac{n_a}{n_i} -
 \frac{\mathcal{N}_{ai}^{th}}{n_i} \right)
 \end{eqnarray}
 \item Coherent Oscillating fields:

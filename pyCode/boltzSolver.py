@@ -433,7 +433,8 @@ class BoltzSolution(object):
                 if not isActive[j]:
                     continue
                 #Injection and inverse injection terms:
-                injectionTerm[i] += Beff[j,i]*widths[j]*masses[j]*(1./2. - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
+                eInjection = (1./2.)*(1+masses[i]**2/masses[j]**2) #Estimate for energy injection from decays
+                injectionTerm[i] += Beff[j,i]*widths[j]*masses[j]*(eInjection - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
 
         #Add all contributions
         allTerms = expTerm+injectionTerm
