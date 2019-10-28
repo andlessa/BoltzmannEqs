@@ -179,13 +179,6 @@ class BoltzSolution(object):
             T = Tf(r.t[-1],NS,self.normS)
             logger.error("Solution failed at temperature %1.3g" %T)
             logger.error("Error message from solver: %s" %r.message)
-
-
-            rhoRad = (pi**2/30)*gSTAR(T)*T**4  # thermal bath's energy density    
-            MP = 1.22e19
-            H = sqrt(8*pi*rhoRad/3)/MP            
-            print('sigmav*neq/H=',self.getSIGV(T)*self.nEQ(T)/H)
-            
             return False
 
 
@@ -337,7 +330,7 @@ class BoltzSolution(object):
         #Inverse decay term:
         invDecTerm = widths*masses*NXth/Ri
         #Annihilation term:
-        annTerm = Di*(nT+neq)*sigmaV
+        annTerm = -Di*(nT+neq)*sigmaV
         coAnnTerm = np.zeros(nComp)
         convTerm = np.zeros(nComp)
         cRateTerm = np.zeros(nComp)
@@ -365,21 +358,22 @@ class BoltzSolution(object):
         allTerms *= isActive
         RHS0 = np.zeros(nComp) 
         np.divide(allTerms,nT*H,where=(allTerms != 0.),out=RHS0)
-        #Subtract expansion term for thermally coupled components:
-        dLndT = self.dLnEQdT(T) #derivative of log of equilibrium density
-        dTdx = dTfdx(x,NS,self.normS)
-        RHS0 -= np.where(isCoupled,dTdx*dLndT,zeros)
 
         logger.debug('DNi (Zero order): expTerm = %1.2g, decTerm = %1.2g, invDecTerm = %1.2g' %(expTerm/(nT*H),decTerm,invDecTerm))
         logger.debug('\t\t annTerm = %1.2g, coAnnTerm = %1.2g, convTerm = %1.2g' %(annTerm,coAnnTerm,convTerm))
-        logger.debug('\t\t cRateTerm = %1.2g, injectionTerm = %1.2g, thermalExp = %1.2g' %(cRateTerm,injectionTerm,dTdx*dLndT*isCoupled))
+        logger.debug('\t\t cRateTerm = %1.2g, injectionTerm = %1.2g' %(cRateTerm,injectionTerm))
         
         
         #First order terms for coupled components only:
+        #Expansion term for the equilibrium number density 
+        #(must be subtracted from the evolution of delta_i for coupled components)
+        dLndT = self.dLnEQdT(T) #derivative of log of equilibrium density
+        dTdx = dTfdx(x,NS,self.normS)
+        expTerm = -(isCoupled*neq*H*dTdx*dLndT)        
         #Inverse decay term:
-        invDecTerm = di*widths*masses*NXth/Ri
+        invDecTerm = -di*widths*masses*NXth/Ri
         #Annihilation term:
-        annTerm = di*2*neq**2*sigmaV
+        annTerm = -di*2*neq**2*sigmaV
         coAnnTerm = np.zeros(nComp)
         convTerm = np.zeros(nComp)
         cRateTerm = np.zeros(nComp)
@@ -395,20 +389,22 @@ class BoltzSolution(object):
                 coAnnTerm[i] += -di[j]*neq[i]*neq[j]*sigVij[i,j]
                 # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
                 convTerm[i] += -di[i]*rNeq[i,j]**2*(nT[j]**2 + neq[j]**2)*sigVjj[i,j]
-                convTerm[i] += di[j]*2*neq[i]**3*sigVjj[i,j]/nT[i]
+                convTerm[i] +=  di[j]*2*neq[i]**3*sigVjj[i,j]/nT[i]
                 # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
                 cRateTerm[i] += -di[i]*nT[j]*rNeq[i,j]*cRate[i,j]
-                cRateTerm[i] += di[j]*neq[i]**2*cRate[i,j]/nT[i]
+                cRateTerm[i] +=  di[j]*neq[i]**2*cRate[i,j]/nT[i]
                 # j <-> i +SM (#NXYth[j,i] should be finite if j -> i +...)
                 injectionTerm[i] += -di[i]*Beff[j,i]*widths[j]*(masses[j]/Ri[j])*(nT[j] - NXYth[j,i])
-                injectionTerm[i] += di[j]*Beff[j,i]*widths[j]*(masses[j]/Ri[j])*neq[i]*neq[j]/nT[i]
+                injectionTerm[i] +=  di[j]*Beff[j,i]*widths[j]*(masses[j]/Ri[j])*neq[i]*neq[j]/nT[i]
+
+
 
         logger.debug('DNi (First): invDecTerm = %1.2g' %(invDecTerm))
         logger.debug('\t\t annTerm = %1.2g, coAnnTerm = %1.2g, convTerm = %1.2g' %(annTerm,coAnnTerm,convTerm))
-        logger.debug('\t\t cRateTerm = %1.2g, injectionTerm = %1.2g' %(cRateTerm,injectionTerm))
+        logger.debug('\t\t cRateTerm = %1.2g, injectionTerm = %1.2g, thermalExp = %1.2g' %(cRateTerm,injectionTerm,expTerm))
 
         #Add all contributions
-        allTerms = invDecTerm+annTerm
+        allTerms = expTerm+invDecTerm+annTerm
         allTerms += coAnnTerm+convTerm+cRateTerm+injectionTerm
         #Make sure non-active components do not evolve:
         allTerms *= isActive
