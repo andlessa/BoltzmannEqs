@@ -342,15 +342,19 @@ class BoltzSolution(object):
                     continue
                 if not compi.active or not compj.active:
                     continue
-                # i + j <-> SM + SM:                 
-                coAnnTerm[i] += (neq[i]*neq[j]-nT[i]*nT[j])*sigVij[i,j]  
+                # i + j <-> SM + SM:
+                if sigVij[i,j]:
+                    coAnnTerm[i] += (neq[i]*neq[j]-nT[i]*nT[j])*sigVij[i,j]
                 # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
-                convTerm[i] += (Di[j]*rNeq[i,j]*(2*neq[i] + Di[j]*rNeq[i,j])
+                if sigVij[i,j]:
+                    convTerm[i] += (Di[j]*rNeq[i,j]*(2*neq[i] + Di[j]*rNeq[i,j])
                                 - Di[i]*(2*neq[i]+Di[i]))*sigVjj[i,j]
                 # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
-                cRateTerm[i] += (Di[j]*rNeq[i,j] - Di[i])*cRate[i,j]
+                if cRate[i,j]:
+                    cRateTerm[i] += (Di[j]*rNeq[i,j] - Di[i])*cRate[i,j]
                 # j <-> i +SM (#NXYth[j,i] should be finite if j -> i +...)
-                injectionTerm[i] += Beff[j,i]*widths[j]*(masses[j]/Ri[j])*(nT[j] - NXYth[j,i])
+                if Beff[j,i]*widths[j]:
+                    injectionTerm[i] += Beff[j,i]*widths[j]*(masses[j]/Ri[j])*(nT[j] - NXYth[j,i])
         
         #Add all contributions
         allTerms = expTerm+decTerm+invDecTerm+annTerm
@@ -385,18 +389,22 @@ class BoltzSolution(object):
                     continue
                 if not compi.active or not compj.active:
                     continue
-                # i + j <-> SM + SM:          
-                coAnnTerm[i] += -di[i]*neq[i]*neq[j]*sigVij[i,j]
-                coAnnTerm[i] += -di[j]*neq[i]*neq[j]*sigVij[i,j]
-                # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
-                convTerm[i] += -di[i]*rNeq[i,j]**2*(nT[j]**2 + neq[j]**2)*sigVjj[i,j]
-                convTerm[i] +=  di[j]*2*neq[i]**3*sigVjj[i,j]/nT[i]
+                # i + j <-> SM + SM:
+                if sigVij[i,j]:
+                    coAnnTerm[i] += -di[i]*neq[i]*neq[j]*sigVij[i,j]
+                    coAnnTerm[i] += -di[j]*neq[i]*neq[j]*sigVij[i,j]
+                # i+i <-> j+j (sigVjj*rNeq[i,j] should be finite)
+                if sigVjj[i,j]:
+                    convTerm[i] += -di[i]*((nT[j]*rNeq[i,j])**2 + (neq[j]*rNeq[i,j])**2)*sigVjj[i,j]
+                    convTerm[i] +=  di[j]*2*neq[i]**3*sigVjj[i,j]/nT[i]
                 # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
-                cRateTerm[i] += -di[i]*nT[j]*rNeq[i,j]*cRate[i,j]
-                cRateTerm[i] +=  di[j]*neq[i]**2*cRate[i,j]/nT[i]
+                if cRate[i,j]:
+                    cRateTerm[i] += -di[i]*nT[j]*rNeq[i,j]*cRate[i,j]
+                    cRateTerm[i] +=  di[j]*neq[i]**2*cRate[i,j]/nT[i]
                 # j <-> i +SM (#NXYth[j,i] should be finite if j -> i +...)
-                injectionTerm[i] += -di[i]*Beff[j,i]*widths[j]*(masses[j]/Ri[j])*(nT[j] - NXYth[j,i])
-                injectionTerm[i] +=  di[j]*Beff[j,i]*widths[j]*(masses[j]/Ri[j])*neq[i]*neq[j]/nT[i]
+                if Beff[j,i]*widths[j]:
+                    injectionTerm[i] += -di[i]*Beff[j,i]*widths[j]*(masses[j]/Ri[j])*(nT[j] - NXYth[j,i])
+                    injectionTerm[i] +=  di[j]*Beff[j,i]*widths[j]*(masses[j]/Ri[j])*neq[i]*neq[j]/nT[i]
 
 
 

@@ -134,9 +134,14 @@ class Component(object):
         #there is no inverse decay:
         if not neq:
             return 0.
+        #Catch overflow if neq << 1 (in this case inverse decay should be zero):
+        try:
+            norm = 1/neq
+        except RuntimeWarning:
+            return 0.
         for decay in BRs:
             nprod = 1.
-            norm = 1.
+            norm = 1./neq
             if not decay.br:
                 continue  #Ignore decays with zero BRs
             for label in decay.fstateIDs:
@@ -147,8 +152,6 @@ class Component(object):
             if not norm:
                 return 0.
             Nth += nprod*decay.br/norm
-
-        Nth *= neq
 
         return Nth
 
@@ -166,9 +169,9 @@ class Component(object):
         :return: Effective thermal number density at temperature T of second type for self -> comp (N_{XY}^{th})
         """
 
-        norm = self.getTotalBRTo(T,comp)
+        Beff = self.getTotalBRTo(T,comp)
         #If self does not decay to comp, return zero
-        if not norm:
+        if not Beff:
             return 0.
 
         #Compute BRs:
@@ -181,9 +184,14 @@ class Component(object):
         #there is no inverse injection:
         if not neq:
             return 0.
+        try:
+            norm = 1/neq
+        except RuntimeWarning:
+            return 0.
 
         for decay in BRs:
             nprod = 1.
+            norm = 1/neq
             if not decay.br:
                 continue  #Ignore decays with zero BRs
             if not comp.label in decay.fstateIDs:
@@ -191,11 +199,15 @@ class Component(object):
             for label in decay.fstateIDs:
                 if label in labelsDict:
                     j = labelsDict[label]
-                    nprod *= rNeq[i,j]*n[j]/neq
+                    nprod *= rNeq[i,j]*n[j]
+                    norm *= neq
 
-            Nth += nprod*decay.br*decay.fstateIDs.count(comp.label)
+            if not norm:
+                return 0.
 
-        Nth *= neq/norm
+            Nth += nprod*decay.br*decay.fstateIDs.count(comp.label)/norm
+
+        Nth *= 1./Beff
 
         return Nth
     
