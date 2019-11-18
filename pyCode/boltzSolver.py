@@ -13,8 +13,8 @@
 from pyCode.EqFunctions import gSTAR,gSTARS,Tf,dTfdx
 from pyCode.printerTools import printData,printSummary
 from numpy import pi,sqrt,log,exp
-import numpy as np
 from scipy import integrate
+import numpy as np
 import logging
 import random, time
 logging.basicConfig(level=logging.DEBUG)
@@ -146,6 +146,11 @@ class BoltzSolution(object):
         The solution is stored in self.solutionDict.
         Returns True/False if the integration was successful (failed)    
         """
+
+        #Check if evolution is forward:
+        if TF > self.T[-1]:
+            logger.error("Final temperature is smaller than initial temperature.")
+            return None
         
         #Set initial conditions for equations:
         self.setInitialCond()
@@ -173,7 +178,7 @@ class BoltzSolution(object):
         r = integrate.solve_ivp(self.rhs,t_span=(x0,xf),y0=y0,atol=atol,rtol=rtol,
                                 t_eval=tvals,method='BDF',dense_output=True,
                                 events=self.events,max_step=maxstep)
-        
+
         if r.status < 0:
             NS = r.y[-1][-1]
             T = Tf(r.t[-1],NS,self.normS)
@@ -198,13 +203,14 @@ class BoltzSolution(object):
                     logger.info("Integration restarted because the number density for %s became too small at x=%s (T = %1.3g GeV)" %(comp.label,str(evt),self.T[-1]))
                     comp.Tdecay = self.T[-1]
                     comp.active = False
-        
         if continueEvolution and any(comp.active for comp in self.components):
             self.EvolveTo(TF, npoints-len(r.t), dx, atol, rtol)
-        else:
-            if r.status < 0:
-                logger.error(r.message)
-                return False
+        elif all(not comp.active for comp in self.components):
+            logger.info("Evolution stopping since all components are inactive.")
+        
+        if r.status < 0:
+            logger.error(r.message)
+            return False
     
         return r
     
@@ -259,7 +265,8 @@ class BoltzSolution(object):
 
         di = np.where(isCoupled*isActive,Ni,0.)
         #Auxiliar density:
-        nT = np.where(isActive,Di+neq,0.)
+        nT = np.where(isCoupled,neq,n)
+        nT = np.where(isActive,nT,0.)
 
         #Current energy densities:
         rho = n*Ri
@@ -281,7 +288,7 @@ class BoltzSolution(object):
         H = sqrt(8*pi*rhoTot/3)/MP
         
         logger.debug('RHS: Done computing component energy and number densities')
-        logger.debug('n = %s, rho = %s, neq = %s' %(n,rho,neq))
+        logger.debug('n = %s, rho = %s, neq = %s, nT = %s' %(n,rho,neq,nT))
 
         #Auxiliary weights:
         logger.debug('RHS: Computing process rates and weights')
