@@ -7,8 +7,9 @@
 import os
 import logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
-
+logging.basicConfig(level=logging.INFO)
+import sys
+sys.path.insert(0,os.path.abspath('../')) 
 
 
 
@@ -26,43 +27,33 @@ def main(parameterFile,outputFile,showPlot=True):
     from pyCode.component import Component
     from pyCode.boltzSolver import BoltzSolution
     from pyCode.AuxDecays import DecayList, Decay
+    from pyCode.EqFunctions import rNeqf
     import numpy as np
     from scipy.interpolate import interp1d
-    
-    lamb = 2.6e-7
-#     lamb = 0.17
+
+
     decays = DecayList()
     decayToDM = Decay(instate='Mediator',fstates=['DM','radiation'],br=1.)
     decays.addDecay(decayToDM)
-    decays.Xfraction = 0.1
-    decays.width = 2.49e-15*(lamb/4.3e-7)**2
+    decays.Xfraction = 0.
+    decays.width =1e-10
     
 
     #Get the model parameters (or define them here):
     TRH = 1e4
-    TF = 1e-3
+    TF = 1e-1
     
-    def nEQbottom(T):
-        Zeta3 = 1.20206
-        return 3*2*(3./4.)*Zeta3*T**3/np.pi**2
-
-    def nEQgluon(T):
-        Zeta3 = 1.20206
-        return 8*2*Zeta3*T**3/np.pi**2
-    
+   
     #Annihilation rate for mediator
     data = np.genfromtxt('./width_and_medxs.dat',skip_header=5)
-    dataR = np.genfromtxt('./sigmav_conversion_bchi-sbotg_500_510_1.dat',skip_header=6,usecols=(0,4))
     conv = 0.8579e17
 
     sLog = lambda x: interp1d(data[:,0],np.log(data[:,1]*conv),
                         fill_value='extrapolate',bounds_error=False)(x)
-    cRateLog = lambda x: interp1d(dataR[:,0],np.log(dataR[:,1]*conv*(lamb)**2),
-                        fill_value='extrapolate',bounds_error=False)(x)
 
     #Conversion rates for DM and mediator: 
     dofDM = -2 #Number of DM degrees of freedom (Majorana fermion)
-    dofMed = 6 #Number of Mediator degrees of freedom (complex colored scalar)
+    dofMed = 6 #Number of Mediator degrees of freedom (complex colored scalar)    
 
     @np.vectorize
     def sigmaVJan(T):
@@ -71,42 +62,27 @@ def main(parameterFile,outputFile,showPlot=True):
             return 0.
         sF = sLog(x)
         return np.exp(sF)
-
-    @np.vectorize
-    def cRateDMJan(T):
-        x = 500./T
-        if x > dataR[:,0].max():
-            return 0.
-        sF = cRateLog(x)
-        return 2*nEQbottom(T)*np.exp(sF)
-
-    @np.vectorize
-    def cRateMedJan(T):
-        x = 510./T
-        if x > dataR[:,0].max():
-            return 0.
-        sF = cRateLog(x)
-        return 2*nEQgluon(T)*np.exp(sF)*abs(dofMed/dofDM)*np.exp((510.-500.)/T)
-
     
     #Define the components to be evolved and their properties:    
     dm = Component(label='DM',Type='thermal',dof=dofDM,
-                   mass=500.
-                    ,coSigmav=lambda T,other: 1e-10*sigmaVJan(T)
-                    ,sigmav=lambda T: 1e-10*sigmaVJan(T)
-                    ,convertionRate=lambda T,other: cRateDMJan(T)
-                   )
+                   mass=500., sigmav=lambda T: sigmaVJan(T)*rNeqf(T,500.,dofDM,510.,dofMed))
     mediator = Component(label='Mediator',Type='thermal',dof=dofMed,
-                   mass=510.,decays=decays,
-                   sigmav=sigmaVJan
-                    ,convertionRate=lambda T,other: cRateMedJan(T)
-                   )
+                   mass=510., sigmav=lambda T: sigmaVJan(T),
+                   decays=decays)
+    
+    
     compList = [dm,mediator]
+    
+    #dm.n = np.array([dm.nEQ(25.)])
+    #mediator.n = np.array([mediator.nEQ(25.)])
+    #dm.rho = np.array([dm.nEQ(25.)*dm.rEQ(25.)])
+    #mediator.rho = np.array([mediator.nEQ(25.)*mediator.rEQ(25.)])
     
     #Evolve the equations from TR to TF
     solution = BoltzSolution(compList,TRH)
     solved = solution.EvolveTo(TF,npoints=5000)
     if not solved:
+        logger.error("Error solving Boltzmann equations.")
         return
     
     #Print summary

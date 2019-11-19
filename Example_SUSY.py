@@ -7,7 +7,7 @@
 import os
 import logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 
@@ -29,8 +29,8 @@ def main(parameterFile,outputFile,showPlot=True):
     import numpy as np
     from scipy.interpolate import interp1d
     
-    lamb = 2.6e-7
-#     lamb = 0.17
+#     lamb = 2.6e-7
+    lamb = 0.17
     decays = DecayList()
     decayToDM = Decay(instate='Mediator',fstates=['DM','radiation'],br=1.)
     decays.addDecay(decayToDM)
@@ -40,7 +40,7 @@ def main(parameterFile,outputFile,showPlot=True):
 
     #Get the model parameters (or define them here):
     TRH = 1e4
-    TF = 1e-3
+    TF = 1.0
     
     def nEQbottom(T):
         Zeta3 = 1.20206
@@ -103,10 +103,16 @@ def main(parameterFile,outputFile,showPlot=True):
                    )
     compList = [dm,mediator]
     
+    #dm.n = np.array([dm.nEQ(25.)])
+    #mediator.n = np.array([mediator.nEQ(25.)])
+    #dm.rho = np.array([dm.nEQ(25.)*dm.rEQ(25.)])
+    #mediator.rho = np.array([mediator.nEQ(25.)*mediator.rEQ(25.)])
+    
     #Evolve the equations from TR to TF
     solution = BoltzSolution(compList,TRH)
-    solved = solution.EvolveTo(TF,npoints=5000)
+    solved = solution.EvolveTo(TF,npoints=1000,atol=1e-10,rtol=1e-4)
     if not solved:
+        logger.error("Error solving Boltzmann equations.")
         return
     
     #Print summary
