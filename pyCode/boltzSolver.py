@@ -457,16 +457,11 @@ class BoltzSolution(object):
         MP = 1.22e19
         H = sqrt(8*pi*rhoTot/3)/MP
         
-        logger.debug('RHS: Done computing component energy and number densities')
         logger.debug('n = %s, rho = %s, neq = %s, Req = %s' %(n,rho,neq,Req))
         
-        #Auxiliary weights:
-        logger.debug('RHS: Computing process rates and weights')
-
         # Derivative for entropy:
         logger.debug('Computing entropy derivative')     
         dNS = self.dNSdx(T, x, n, NS, H)
-        logger.debug('Done computing entropy derivative')
 
         #Derivatives for the Ni=log(ni/s0) variables:
         logger.debug('Computing Ni derivatives')
@@ -475,6 +470,7 @@ class BoltzSolution(object):
         dN = np.where(allTerms*isActive*np.invert(isCoupled),allTerms/n,0.)
 
         #Derivatives for the rho/n variables:
+        logger.debug('Computing Ri derivatives')
         dR = self.dRidx(T, n, Ri, H)
         #Make sure non-active and coupled components do not evolve:
         dR *= isActive*np.invert(isCoupled)
@@ -567,11 +563,10 @@ class BoltzSolution(object):
         
         #Compute all contributions which might lead to thermal decoupling
         allTermsNonEq = self.dnidx(T,n,Ri,neq,H,order=0)[icomp]
-        
 
         #Consider as softly coupled when non-equilibrium contributions 
         #are 1% of the thermal equilibrium ones
-        r = 1. - 100*allTermsNonEq/allTermsEq
+        r = 1. - 100*abs(allTermsNonEq/allTermsEq)
         
         return r
     
