@@ -10,7 +10,7 @@
 
 """
 
-from pyCode.EqFunctions import gSTAR,gSTARS,Tf,dTfdx
+from pyCode.EqFunctions import gSTAR,gSTARS,Tf
 from pyCode.printerTools import printData,printSummary
 from numpy import pi,sqrt,log,exp
 from scipy import integrate
@@ -43,7 +43,7 @@ class BoltzSolution(object):
                         if comp.coupled:
                             T = Tf(x,y[-1],self.normS)
                             neq = comp.nEQ(T)
-                            Ln = np.log(neq*(1+y[icomp])/self.norm[icomp])+100
+                            Ln = np.log(neq/self.norm[icomp])+100
                         else:
                             Ln = y[icomp]+100
                         return Ln
@@ -65,24 +65,26 @@ class BoltzSolution(object):
         self.R = np.array([1.])
                 
         #Guess initial values for the components (if not yet defined).
-        #For simplicity assume radiation domination for checking thermal
-        #equilibrium condition:
+        #For simplicity assume radiation domination when checking for thermal
+        #equilibrium:
         MP = 1.22e19
-        H = np.sqrt(8.*np.pi**3*gSTAR(T0)/90.)*T0**2/MP
-        sigV = self.getSIGV(T0)
-        neq = self.nEQ(T0)
-        #Thermal equilibrium condition (if >1 particle is in thermal equilibrium):
-        thermalEQ = neq*sigV/H
+        T = self.T[-1]
+        H = np.sqrt(8.*np.pi**3*gSTAR(T)/90.)*T**2/MP
+        n = neq = self.nEQ(T)
+        Ri = self.rEQ(T)
+        #Compute all contributions which enforce thermal coupling
+        thermalEQ = self.dnidx(T, n, Ri, neq, H, order=1)/neq
         for i,comp in enumerate(self.components):
             comp.active = True
             if not hasattr(comp,'n') or not len(comp.n):
+                logger.info("Guessing initial condition for particle %s" %comp)
                 if thermalEQ[i] > 1:
                     comp.n = np.array([neq[i]])
                     comp.coupled = True
                 else:
                     comp.n = np.array([1e-20*neq[i]])
                     comp.coupled = False
-                comp.rho = comp.n*comp.rEQ(T0)
+                comp.rho = comp.n*Ri[i]
             else: #Remove all entries from components except the last
                 if len(comp.n) > 1:
                     logger.info("Resetting %s's number and energy densities to last value")
@@ -90,7 +92,6 @@ class BoltzSolution(object):
                 comp.rho = comp.rho[-1:]
 
         #Set thermal equilibrium flags:
-        neq = self.nEQ(self.T[-1])
         for i,comp in enumerate(self.components):        
             if comp.n[-1] != neq[i] and abs(comp.n[-1]-neq[i])/neq[i] > 1e-4:
                 logger.info("Particle %s starting decoupled" %comp)
@@ -214,24 +215,13 @@ class BoltzSolution(object):
     
         return r
     
-    
-    def rhs(self,x,y):
-        """
-        Defines the derivatives of the y variables at point x = log(R/R0).
-        active = [True/False,...] is a list of switches to activate/deactivate components
-        If a component is not active it does not evolve and its decay and
-        energy density does not contribute to the other components.
-        For simplicity we set  R0 = s0 = 1 (with respect to the notes).
-        """
-
+    def getVariables(self,x,y):
+        
         isActive = self.active
         isCoupled = self.coupled
-        logger.debug('Calling RHS with arguments:\n   x=%s,\n   y=%s\n and isActive = %s, isCoupled = %s' %(x,y,isActive,isCoupled))
 
         #Store the number of components:
         nComp = len(self.components)
-        #Auxiliar matrices:
-        zeros = np.zeros(nComp)
 
         #Ni = log(n_i/s_0)
         Ni = np.array(y[:nComp])
@@ -245,61 +235,50 @@ class BoltzSolution(object):
 
         #Compute equilibrium densities:
         neq = self.nEQ(T)
+        Req = self.rEQ(T)
         
-        logger.debug('RHS: Computing number and energy densities for %i components' %nComp)
         #Current number densities (replace number densities by equilibrium value for thermally coupled components)
-        n = np.array([nv*(1+Ni[i]) if isCoupled[i] else self.norm[i]*np.exp(Ni[i]) 
-                      for i,nv in enumerate(neq)])
-
+        n = np.where(isCoupled,neq,self.norm*np.exp(Ni))
         #Set number densities to zero if component is not active
-        n = np.where(isActive,n,zeros)
+        n = np.where(isActive,n,0.)
         
+        #Set energy density ratio to equilibrium value for thermally coupled components:
+        Ri = np.where(isCoupled,Req,Ri)
         #Make sure Ri is never below the component's mass:
         masses = self.mass(T)
         Ri = np.maximum(Ri,masses)
         
-        #Define the quantities:
-        #   Delta_i = n_i - neq_i, delta_i = 0, for decoupled components
-        #   Delta_i = 0, delta_i = n_i/neq_i-1 = y_i, for coupled components
-        Di = np.where(np.invert(isCoupled)*isActive,n-neq,0.)
+        variables = np.array([T,n,Ri,NS,neq,Req])
 
-        di = np.where(isCoupled*isActive,Ni,0.)
-        #Auxiliar density:
-        nT = np.where(isCoupled,neq,n)
-        nT = np.where(isActive,nT,0.)
-
-        #Current energy densities:
-        rho = n*Ri
-
-        #Compute ratio of equilibrium densities
-        #(helps with numerical instabilities)
-        #rNeq[i,j] = neq[i]/neq[j]
-        rNeq = np.array([[compi.rNeq(T,compj) if compi.active and compj.active else 0. for compj in self.components] 
-                         for compi in self.components])
-
-        #Dictionary with label:index mapping:
-        labelsDict = dict([[comp.label,i] for i,comp in enumerate(self.components)])
-
-        #Compute Hubble factor:
-        rhoTot = np.sum(rho,where=isActive,initial=0)
-        rhoRad = (pi**2/30)*gSTAR(T)*T**4  # thermal bath's energy density    
-        rhoTot += rhoRad
-        MP = 1.22e19
-        H = sqrt(8*pi*rhoTot/3)/MP
+        return variables
+    
+    def getRates(self,T):
         
-        logger.debug('RHS: Done computing component energy and number densities')
-        logger.debug('n = %s, rho = %s, neq = %s, nT = %s' %(n,rho,neq,nT))
-
-        #Auxiliary weights:
-        logger.debug('RHS: Computing process rates and weights')
-        
-        widths = self.width(T)
-        BRX = self.getBRX(T)
+        #Store the number of components:
+        nComp = len(self.components)
+                
         #Process rates:
-        sigmaV = self.getSIGV(T) #Annihilation (i+i ->SM+SM)
+        sigVii = self.sigVii(T) #Annihilation (i+i ->SM+SM)
         sigVij = np.zeros((nComp,nComp)) #Co-annihilation (i+j ->SM+SM)
         sigVjj = np.zeros((nComp,nComp)) #BSM conversion rate (j+j ->i+i)
         cRate = np.zeros((nComp,nComp)) #conversion rate (j+SM ->i+SM)
+        
+        for i,compi in enumerate(self.components):
+            for j,compj in enumerate(self.components):
+                if i == j:
+                    continue
+                if compi.active and compj.active:
+                    sigVij[i,j] = compi.sigVij(T,compj)
+                    sigVjj[i,j] = compi.sigVjj(T,compj)
+                    cRate[i,j] = compi.cRate(T,compj)
+       
+        return sigVii,sigVij,sigVjj,cRate
+    
+    def getAuxNumbers(self,T,n,rNeq,labelsDict):
+        
+        #Store the number of components:
+        nComp = len(self.components)
+        
         #Auxiliary weights:
         NXth = self.getNXTh(T,n,rNeq,labelsDict) #NXth[i] = N^{th}_{i}
         NXYth = np.zeros((nComp,nComp)) #NXYth[i,j] = N^{th}_{ij}
@@ -308,158 +287,198 @@ class BoltzSolution(object):
             for j,compj in enumerate(self.components):
                 if i == j:
                     continue
-                if compi.active and compj.active:
-                    sigVij[i,j] = compi.getCOSIGV(T,compj)
-                    sigVjj[i,j] = compi.getSIGVBSM(T,compj)
-                    cRate[i,j] = compi.getConvertionRate(T,compj)
                 if compi.active:
                     NXYth[i,j] = compi.getNXYTh(T,n,rNeq,labelsDict,compj)
                     Beff[i,j] = compi.getTotalBRTo(T,compj)        
+        
+        return NXth,NXYth,Beff
+    
+    def dNSdx(self,T,x,n,NS,H):
+        """
+        Compute derivatives for the log of total entropy.
+        """
 
-        logger.debug('Done computing process rates and weights')
-
+        isActive = self.active
+        rNeq = np.array([[compi.rNeq(T,compj) if compi.active and compj.active else 0. 
+                          for compj in self.components] for compi in self.components])
+        labelsDict = dict([[comp.label,i] for i,comp in enumerate(self.components)])
+        
+        BRX = self.getBRX(T)
+        masses = self.mass(T)
+        widths = self.width(T)
+        NXth,_,_ = self.getAuxNumbers(T,n,rNeq,labelsDict)        
+        
         # Derivative for entropy:
-        logger.debug('Computing entropy derivative')     
         dNS = np.sum(isActive*BRX*widths*masses*(n-NXth))*exp(3.*x - NS)/(H*T*self.normS)
         if np.isinf(dNS):
             logger.warning("Infinity found in dNS at T=%1.2g. Will be replaced by a large number" %(T))
             dNS = np.nan_to_num(dNS)
+            
+        return dNS
 
-        logger.debug('Done computing entropy derivative')
-
-        #Derivatives for the Ni=log(ni/s0) variables:
-        logger.debug('Computing Ni derivatives')
+    def dnidx(self,T,n,Ri,neq,H,order=0):
+        """
+        Compute derivatives for the number density.
+        """
         
-        #Terms for decoupled components/zero order terms for coupled components:
-        #Expansion term:
-        expTerm = -3*(nT*H)
-        #Decay term:
-        decTerm = -widths*masses*nT/Ri
-        #Inverse decay term:
-        invDecTerm = widths*masses*NXth/Ri
-        #Annihilation term:
-        annTerm = -Di*(nT+neq)*sigmaV
-        coAnnTerm = np.zeros(nComp)
-        convTerm = np.zeros(nComp)
-        cRateTerm = np.zeros(nComp)
-        injectionTerm =np.zeros(nComp)
-        for i,compi in enumerate(self.components):
-            for j,compj in enumerate(self.components):
-                if i == j:
-                    continue
-                if not compi.active or not compj.active:
-                    continue
-                # i + j <-> SM + SM:
-                if sigVij[i,j]:
-                    coAnnTerm[i] += (neq[i]*neq[j]-nT[i]*nT[j])*sigVij[i,j]
-                # i+i <-> j+j (sigVjj*rNeq[i,j]**2 should be finite)
-                if sigVij[i,j]:
-                    convTerm[i] += (Di[j]*rNeq[i,j]*(2*neq[i] + Di[j]*rNeq[i,j])
-                                - Di[i]*(2*neq[i]+Di[i]))*sigVjj[i,j]
-                # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
-                if cRate[i,j]:
-                    cRateTerm[i] += (Di[j]*rNeq[i,j] - Di[i])*cRate[i,j]
-                # j <-> i +SM (#NXYth[j,i] should be finite if j -> i +...)
-                if Beff[j,i]*widths[j]:
-                    injectionTerm[i] += Beff[j,i]*widths[j]*(masses[j]/Ri[j])*(nT[j] - NXYth[j,i])
-        
-        #Add all contributions
-        allTerms = expTerm+decTerm+invDecTerm+annTerm
-        allTerms += coAnnTerm+convTerm+cRateTerm+injectionTerm
-        #Make sure non-active components do not evolve:
-        allTerms *= isActive
-        RHS0 = np.zeros(nComp) 
-        np.divide(allTerms,nT*H,where=(allTerms != 0.),out=RHS0)
+        isActive = self.active
+        #Store the number of components:
+        nComp = len(self.components)
+        rNeq = np.array([[compi.rNeq(T,compj) if compi.active and compj.active else 0. 
+                          for compj in self.components] for compi in self.components])
+        labelsDict = dict([[comp.label,i] for i,comp in enumerate(self.components)])  
 
-        logger.debug('DNi (Zero order): expTerm = %s, decTerm = %s, invDecTerm = %s' %(expTerm,decTerm,invDecTerm))
+        masses = self.mass(T)
+        widths = self.width(T)
+        sigVii,sigVij,sigVjj,cRate = self.getRates(T)
+        NXth,NXYth,Beff =  self.getAuxNumbers(T,n,rNeq,labelsDict)
+        isActiveM = np.outer(isActive,isActive)
+        diagM = np.identity(nComp)
+        offM = np.ones((nComp,nComp))-diagM
+        neqMatrix = np.outer(neq,neq)
+        nMatrix = np.outer(n,n)
+
+        if order == 0: #Compute all terms contributing to dni/dx:
+            #Expansion term:
+            expTerm = -3*n
+            #Decay term:
+            decTerm = -widths*masses*n/(H*Ri)
+            #Inverse decay term:
+            invDecTerm = widths*masses*NXth/(H*Ri)
+            #Annihilation term (i +i <-> SM + SM):
+            annTerm = np.where(sigVii*isActive,sigVii*(neq - n)*(neq + n)/H,0.)
+            #Co-annihilation term (i + j <-> SM + SM):
+            coAnnTerm = np.where(sigVij*isActiveM*offM,(neqMatrix-nMatrix)*sigVij,0.)
+            coAnnTerm = np.sum(coAnnTerm,axis=1)/H
+            #Conversion annilihation (i+i <-> j+j) (sigVjj*rNeq[i,j]**2 should be finite)
+            convTerm = np.where(sigVjj*isActiveM*offM,(rNeq**2*n**2-n[:,np.newaxis]**2)*sigVjj,0.)
+            convTerm = np.sum(convTerm,axis=1)/H
+            #Conversion rate (i+SM <-> j+SM) (cRate*rNeq[i,j] should be finite)
+            cRateTerm = np.where(cRate*isActiveM*offM,(rNeq*n-n[:,np.newaxis])*cRate,0.) 
+            cRateTerm = np.sum(cRateTerm,axis=1)/H
+            #Injection term (j <-> i +SM) (#NXYth[j,i] should be finite if j -> i +...)
+            injectionTerm = np.where(Beff.T*widths*isActiveM*offM,Beff.T*widths*(masses/Ri)*(n-NXYth.T),0.)
+            injectionTerm = np.sum(injectionTerm,axis=1)/H
+            
+            #Add all contributions
+            allTerms = expTerm+decTerm+invDecTerm+annTerm
+            allTerms += coAnnTerm+convTerm+cRateTerm+injectionTerm
+            
+        elif order == 1: #Compute all terms in dnidx which are first order in delta_i = (n/neq)-1
+            expTerm = decTerm = 0.
+            annTerm = 2*neq**2*sigVii/H
+            invDecTerm = widths*masses*NXth/(H*Ri)
+            coAnnTerm =  neq*sigVij.dot(neq)/H
+            convTerm = (sigVjj*rNeq**2).dot(n**2 + neq**2)/H
+            cRateTerm = (cRate*rNeq).dot(n)/H
+            injectionTerm = np.where(Beff.T*widths*isActiveM*offM,Beff.T*widths*(masses/Ri)*(n-NXYth.T),0.)
+            injectionTerm = np.sum(injectionTerm,axis=1)/H
+            
+            #Add all contributions which enforce thermal equilibrium
+            allTerms = invDecTerm+annTerm
+            allTerms += coAnnTerm+convTerm+cRateTerm+injectionTerm
+        
+        else:
+            logger.error("Order must either be zero or one (not %s)" %order)
+            return None
+
+        logger.debug('DNi: expTerm = %s, decTerm = %s, invDecTerm = %s' %(expTerm,decTerm,invDecTerm))
         logger.debug('\t\t annTerm = %s, coAnnTerm = %s, convTerm = %s' %(annTerm,coAnnTerm,convTerm))
         logger.debug('\t\t cRateTerm = %s, injectionTerm = %s' %(cRateTerm,injectionTerm))
+           
+        return allTerms
+ 
+    def dRidx(self,T,n,Ri,H):
+        """
+        Compute derivatives for the ratio of energy and number densities.
+        """
         
+        isActive = self.active
+        #Store the number of components:
+        nComp = len(self.components)
+        rNeq = np.array([[compi.rNeq(T,compj) if compi.active and compj.active else 0. 
+                          for compj in self.components] for compi in self.components])
+        labelsDict = dict([[comp.label,i] for i,comp in enumerate(self.components)])  
+
+        masses = self.mass(T)
+        widths = self.width(T)
+        _,NXYth,Beff =  self.getAuxNumbers(T,n,rNeq,labelsDict)
+        isActiveM = np.outer(isActive,isActive)
+        diagM = np.identity(nComp)
+        offM = np.ones((nComp,nComp))-diagM
         
-        #First order terms for coupled components only:
-        #Expansion term for the equilibrium number density 
-        #(must be subtracted from the evolution of delta_i for coupled components)
-        dLndT = self.dLnEQdT(T) #derivative of log of equilibrium density
-        dTdx = dTfdx(x,NS,self.normS)
-        expTerm = -(isCoupled*neq*H*dTdx*dLndT)
-        #Inverse decay term:
-        invDecTerm = -di*widths*masses*NXth/Ri
-        #Annihilation term:
-        annTerm = -di*2*neq**2*sigmaV
-        coAnnTerm = np.zeros(nComp)
-        convTerm = np.zeros(nComp)
-        cRateTerm = np.zeros(nComp)
-        injectionTerm =np.zeros(nComp)
-        for i,compi in enumerate(self.components):
-            for j,compj in enumerate(self.components):
-                if i == j:
-                    continue
-                if not compi.active or not compj.active:
-                    continue
-                # i + j <-> SM + SM:
-                if sigVij[i,j]:
-                    coAnnTerm[i] += -di[i]*neq[i]*neq[j]*sigVij[i,j]
-                    coAnnTerm[i] += -di[j]*neq[i]*neq[j]*sigVij[i,j]
-                # i+i <-> j+j (sigVjj*rNeq[i,j] should be finite)
-                if sigVjj[i,j]:
-                    convTerm[i] += -di[i]*((nT[j]*rNeq[i,j])**2 + (neq[j]*rNeq[i,j])**2)*sigVjj[i,j]
-                    convTerm[i] +=  di[j]*2*neq[i]**3*sigVjj[i,j]/nT[i]
-                # i+SM <-> j+SM (cRate*rNeq[i,j] should be finite)
-                if cRate[i,j]:
-                    cRateTerm[i] += -di[i]*nT[j]*rNeq[i,j]*cRate[i,j]
-                    cRateTerm[i] +=  di[j]*neq[i]**2*cRate[i,j]/nT[i]
-                # j <-> i +SM (#NXYth[j,i] should be finite if j -> i +...)
-                if Beff[j,i]*widths[j]:
-                    injectionTerm[i] += -di[i]*Beff[j,i]*widths[j]*(masses[j]/Ri[j])*(nT[j] - NXYth[j,i])
-                    injectionTerm[i] +=  di[j]*Beff[j,i]*widths[j]*(masses[j]/Ri[j])*neq[i]*neq[j]/nT[i]
-
-
-
-        logger.debug('DNi (First): invDecTerm = %s' %(invDecTerm))
-        logger.debug('\t\t annTerm = %s, coAnnTerm = %s, convTerm = %s' %(annTerm,coAnnTerm,convTerm))
-        logger.debug('\t\t cRateTerm = %s, injectionTerm = %s, thermalExp = %s' %(cRateTerm,injectionTerm,expTerm))
-
-        #Add all contributions
-        allTerms = expTerm+invDecTerm+annTerm
-        allTerms += coAnnTerm+convTerm+cRateTerm+injectionTerm
-        #Make sure non-active components do not evolve:
-        allTerms *= isActive
-        RHS1 = np.zeros(nComp) 
-        np.divide(allTerms,neq*H,where=(allTerms != 0.),out=RHS1)
-
-        #Add all contributions:
-        dN = RHS0+RHS1
-
-        #Derivatives for the rho/n variables (only for thermal components):
         #Compute pressure/n:
         Pn = np.array([comp.Pn(T,Ri[i]) if comp.active else 0. 
                        for i,comp in enumerate(self.components)])
         
-        #Terms for decoupled components/zero order terms for coupled components:
         #Expansion/cooling term
-        expTerm = -3*n*Pn
-        injectionTerm =np.zeros(nComp)
-        for i,compi in enumerate(self.components):
-            if not isActive[i]:
-                continue            
-            for j,compj in enumerate(self.components):            
-                if i == j:
-                    continue
-                if not isActive[j]:
-                    continue
-                #Injection and inverse injection terms:
-                eInjection = (1./2.)*(1+masses[i]**2/masses[j]**2) #Estimate for energy injection from decays
-                injectionTerm[i] += Beff[j,i]*widths[j]*masses[j]*(eInjection - Ri[i]/Ri[j])*(n[j] - NXYth[j,i])/H #NXth[j,i] should finite if j -> i+..
-
+        expTerm = -3*Pn*n
+        #Approximate energy injection (matrix):
+        eInjectionM = (1./2.)*(1+np.outer(masses**2,1/masses**2))
+        rMatrix = np.outer(Ri,1/Ri)
+        injectionTerm = np.where(Beff.T*widths*isActiveM*offM,
+                                 Beff.T*widths*masses*(eInjectionM-rMatrix)*(n-NXYth.T),
+                                 0.)
+        injectionTerm = np.sum(injectionTerm,axis=1)/H
         #Add all contributions
         allTerms = expTerm+injectionTerm
-        #Make sure non-active components do not evolve:
-        allTerms *= isActive
-        dR = np.zeros(nComp) 
-        np.divide(allTerms,n,where=(allTerms != 0.),out=dR)
+        #Make sure non-active and coupled components do not evolve:
+        dR = np.where(allTerms*isActive,allTerms/n,0.)
+                
+        logger.debug('DRi: expTerm = %s, injectionTerm = %s' %(expTerm,injectionTerm))
         
-        logger.debug('DRi: expTerm = %s, injectionTerm = %s' %(-3*Pn,injectionTerm))
+        return dR
 
+    def rhs(self,x,y):
+        """
+        Get the derivatives of the y variables at point x = log(R/R0).
+        active = [True/False,...] is a list of switches to activate/deactivate components
+        If a component is not active it does not evolve and its decay and
+        energy density does not contribute to the other components.
+        For simplicity we set  R0 = s0 = 1 (with respect to the notes).
+        """
+
+        isActive = self.active
+        isCoupled = self.coupled
+        logger.debug('Calling RHS with arguments:\n   x=%s,\n   y=%s\n and isActive = %s, isCoupled = %s' %(x,y,isActive,isCoupled))
+
+        #Store the number of components:
+        nComp = len(self.components)
+        
+        logger.debug('RHS: Computing number and energy densities for %i components' %nComp)
+        
+        T,n,Ri,NS,neq,Req = self.getVariables(x, y)
+
+        #Compute Hubble factor:
+        rho = n*Ri
+        rhoTot = np.sum(rho,where=isActive,initial=0)
+        rhoRad = (pi**2/30)*gSTAR(T)*T**4  # thermal bath's energy density    
+        rhoTot += rhoRad
+        MP = 1.22e19
+        H = sqrt(8*pi*rhoTot/3)/MP
+        
+        logger.debug('RHS: Done computing component energy and number densities')
+        logger.debug('n = %s, rho = %s, neq = %s, Req = %s' %(n,rho,neq,Req))
+        
+        #Auxiliary weights:
+        logger.debug('RHS: Computing process rates and weights')
+
+        # Derivative for entropy:
+        logger.debug('Computing entropy derivative')     
+        dNS = self.dNSdx(T, x, n, NS, H)
+        logger.debug('Done computing entropy derivative')
+
+        #Derivatives for the Ni=log(ni/s0) variables:
+        logger.debug('Computing Ni derivatives')
+        allTerms = self.dnidx(T, n, Ri, neq, H)
+        #Make sure non-active and coupled components do not evolve:
+        dN = np.where(allTerms*isActive*np.invert(isCoupled),allTerms/n,0.)
+
+        #Derivatives for the rho/n variables:
+        dR = self.dRidx(T, n, Ri, H)
+        #Make sure non-active and coupled components do not evolve:
+        dR *= isActive*np.invert(isCoupled)
+        
         dy = np.hstack((dN,dR,[dNS]))
         logger.debug('T = %1.3g, H = %1.3g, dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(T,H,dN,dR,dNS))
 
@@ -487,6 +506,7 @@ class BoltzSolution(object):
         Tvalues = np.array([Tf(x,NSvalues[i],self.normS) for i,x in enumerate(r.t)])
         self.T = np.hstack((self.T,Tvalues))
         neq = np.array([self.nEQ(T) for T in Tvalues])
+        Req = np.array([self.rEQ(T) for T in Tvalues])
         
         #Store the number and energy densities for each component:
         for icomp,comp in enumerate(self.components):
@@ -496,9 +516,11 @@ class BoltzSolution(object):
             else:
                 if not comp.coupled:
                     n = exp(r.y[icomp,:])*self.norm[icomp]
+                    rho = n*r.y[icomp+self.ncomp,:]
                 else:
-                    n = (1+r.y[icomp,:])*neq[:,icomp]
-                rho = n*r.y[icomp+self.ncomp,:]
+                    n = neq[:,icomp]
+                    rho = n*Req[:,icomp]
+                
             comp.n = np.hstack((comp.n,n))
             comp.rho = np.hstack((comp.rho,rho))
 
@@ -515,12 +537,41 @@ class BoltzSolution(object):
         
         printData(self, outFile)
 
-
     def checkThermalEQ(self,x,y,icomp):
+        """
+        Check if component icomp is leaving thermal equilibrium.
+        """
         
-        Delta = y[icomp]
-        Delta *= self.components[icomp].active
-        Delta *= self.components[icomp].coupled
+        isActive = self.active
+        isCoupled = self.coupled
+        
+        if not isActive[icomp]*isCoupled[icomp]:
+            return 1.0
+        
+        #Store the number of components:
+        T,n,Ri,_,neq,_ = self.getVariables(x, y)
+        
+        #Compute Hubble factor:
+        rho = n*Ri
+        rhoTot = np.sum(rho,where=isActive,initial=0)
+        rhoRad = (pi**2/30)*gSTAR(T)*T**4  # thermal bath's energy density    
+        rhoTot += rhoRad
+        MP = 1.22e19
+        H = sqrt(8*pi*rhoTot/3)/MP
+        
+
+        #Compute all contributions which enforce thermal coupling
+        allTermsEq = self.dnidx(T,n,Ri,neq,H,order=1)[icomp]
+        if not allTermsEq:
+            return 0.
+        
+        #Compute all contributions which might lead to thermal decoupling
+        allTermsNonEq = self.dnidx(T,n,Ri,neq,H,order=0)[icomp]
+        
+
+        #Consider as softly coupled when non-equilibrium contributions 
+        #are 1% of the thermal equilibrium ones
+        r = 1. - 100*allTermsNonEq/allTermsEq
+        
+        return r
     
-                
-        return Delta-0.1

@@ -10,7 +10,7 @@
 """
 
 from pyCode.AuxDecays import DecayList
-from pyCode.EqFunctions import Tf,gSTAR,gSTARS,Pnf,rEQf,nEQf,rNeqf,dnEQfdT,dLnEQfdT
+from pyCode.EqFunctions import Tf,gSTAR,gSTARS,Pnf,rEQf,nEQf,rNeqf
 import numpy as np
 from scipy import integrate
 from types import FunctionType
@@ -36,8 +36,8 @@ class Component(object):
     """
     
     def __init__(self,label,Type,dof,mass,decays=DecayList(),
-                 sigmav = lambda x: 0., coSigmav = lambda x,y: 0.,
-                 convertionRate = lambda x,y: 0., sigmavBSM = lambda x,y: 0.):
+                 sigVii = lambda x: 0., sigVij = lambda x,y: 0.,
+                 cRate = lambda x,y: 0., sigVjj = lambda x,y: 0.):
         self.label = label
         self.Type = Type
         self.active = True
@@ -45,10 +45,10 @@ class Component(object):
         self.Tdecay = None
         self.Tosc = None
         self.Tdecouple = None
-        self.sigmav = sigmav
-        self.coSigmav = coSigmav
-        self.convertionRate = convertionRate
-        self.sigmavBSM = sigmavBSM
+        self.sigVii = sigVii
+        self.sigVij = sigVij
+        self.cRate = cRate
+        self.sigVjj = sigVjj
 
         if not Type or type(Type) != type(str()) or not Type in Types:
             logger.error("Please define proper particle Type (not "+str(Type)+"). \n Possible Types are: "+str(Types))
@@ -76,26 +76,20 @@ class Component(object):
         
         return self.label
 
-    def getBRs(self,T):
-        """
-        Get the decays for a given temperature T
-        """
-
-        return self.decays(T) 
 
     def getBRX(self,T):
         """
         Returns the fraction of energy injected in the thermal bath by the component decay at temperature T
         """ 
        
-        return self.getBRs(T).Xfraction
+        return self.decays(T).Xfraction
     
     def width(self,T):
         """
         Returns the component width at temperature T.
         """
           
-        return self.getBRs(T).width
+        return self.decays(T).width
     
     def getTotalBRTo(self,T,comp):
         """
@@ -107,7 +101,7 @@ class Component(object):
             return 0.
 
         brTot = 0.
-        for decay in self.getBRs(T):
+        for decay in self.decays(T):
             if not comp.label in decay.fstateIDs: continue
             brTot += decay.fstateIDs.count(comp.label)*decay.br
         return brTot
@@ -126,7 +120,7 @@ class Component(object):
 
         #Compute BRs:
         Nth = 0.
-        BRs = self.getBRs(T)
+        BRs = self.decays(T)
         #Index for self:
         i = labelsDict[self.label]
         neq = self.nEQ(T)
@@ -176,7 +170,7 @@ class Component(object):
 
         #Compute BRs:
         Nth = 0.
-        BRs = self.getBRs(T)
+        BRs = self.decays(T)
         #Index for self:
         i = labelsDict[self.label]
         neq = self.nEQ(T)
@@ -211,93 +205,6 @@ class Component(object):
 
         return Nth
     
-    def getNXY2Th(self,T,n,rNeq,labelsDict,comp):
-        """
-        Computes the "second" effective thermal number density of second type at temperature T
-        for self -> comp +X decays.
-
-        :param T: temperature (allows for T-dependent BRs)
-        :param n: list of number densities
-        :param rNeq: list with ratios of number densities
-        :param labelsDict: Dictionary with the component label -> index in n,rNeq mapping
-        :param comp: Component object.
-
-        :return: Effective thermal number density at temperature T of second type for self -> comp (N_{XY}^{th})
-        """
-
-        norm = self.getTotalBRTo(T,comp)
-        #If self does not decay to comp, return zero
-        if not norm:
-            return 0.
-
-        #Compute BRs:
-        Nth = 0.
-        BRs = self.getBRs(T)
-        #Index for self:
-        i = labelsDict[self.label]
-        neq = self.nEQ(T)
-        #If the thermal equilibrium density of comp is zero,
-        #there is no inverse injection:
-        if not neq:
-            return 0.
-
-        for decay in BRs:
-            nprod = 1.
-            if not decay.br:
-                continue  #Ignore decays with zero BRs
-            if not comp.label in decay.fstateIDs:
-                continue #Ignore decays which do not include self
-            for label in decay.fstateIDs:
-                if label in labelsDict:
-                    j = labelsDict[label]
-                    nprod *= rNeq[i,j]*n[j]/neq
-
-            Nth += nprod*decay.br*(decay.fstateIDs.count(comp.label)**2)
-
-        Nth *= neq/norm
-
-        return Nth    
-
-    def getSIGV(self,T):
-        """
-        Returns the thermally averaged annihilation cross-section self+self -> SM + SM
-        at temperature T
-        """
-        
-        return self.sigmav(T)
-
-    def getCOSIGV(self,T,other):
-        """
-        Returns the thermally averaged co-annihilation cross-section self+other -> SM + SM
-        at temperature T
-        """
-        
-        if other is self:
-            return 0.
-
-        return self.coSigmav(T,other)
-
-    def getConvertionRate(self,T,other):
-        """
-        Returns the thermally averaged annihilation rate self+SM -> other+SM
-        at temperature T
-        """
-
-        if other is self:
-            return 0.
-
-        return self.convertionRate(T,other)
-
-    def getSIGVBSM(self,T,other):
-        """
-        Returns the thermally averaged annihilation rate self+self -> other+other
-        at temperature T
-        """
-        
-        if other is self:
-            return 0.
-        
-        return self.sigmavBSM(T,other)
     
     def Pn(self,T,R):
         """
@@ -319,27 +226,6 @@ class Component(object):
         
         return nEQf(T,mass,dof)  
     
-    def dnEQdT(self,T):
-        """
-        Returns the derivative of the equilibrium number density at temperature T
-        with respect to T.
-        """
-        
-        mass = self.mass(T)
-        dof = self.dof
-        
-        return dnEQfdT(T,mass,dof)      
-
-    def dLnEQdT(self,T):
-        """
-        Returns the derivative of the equilibrium number density at temperature T
-        with respect to T divided by the equilibrium number density.
-        """
-        
-        mass = self.mass(T)
-        
-        return dLnEQfdT(T,mass)      
-
     
     def rNeq(self,T,other):
         """

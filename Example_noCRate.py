@@ -91,13 +91,13 @@ def main(parameterFile,outputFile,showPlot=True):
     #Define the components to be evolved and their properties:    
     dm = Component(label='DM',Type='thermal',dof=dofDM,
                    mass=500.
-                    ,coSigmav=lambda T,other: 1e-10*sigmaVJan(T)
-                    ,sigmav=lambda T: 1e-10*sigmaVJan(T)
+                    ,sigVij=lambda T,other: 1e-10*sigmaVJan(T)
+                    ,sigVii=lambda T: 1e-10*sigmaVJan(T)
 #                     ,convertionRate=lambda T,other: cRateDMJan(T)
                    )
     mediator = Component(label='Mediator',Type='thermal',dof=dofMed,
                    mass=510.,decays=decays,
-                   sigmav=sigmaVJan
+                   sigVii=sigmaVJan
 #                     ,convertionRate=lambda T,other: cRateMedJan(T)
                    )
     compList = [dm,mediator]

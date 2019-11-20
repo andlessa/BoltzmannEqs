@@ -54,7 +54,7 @@ def main(parameterFile,outputFile,showPlot=True):
     
     #Define the components to be evolved and their properties:    
     dm = Component(label='DM',Type='thermal',dof=dofDM,
-                   mass=500., sigmav=lambda T: 1.5e-1*sigmaVJan(T))
+                   mass=500., sigVii=lambda T: 1.5e-1*sigmaVJan(T))
     compList = [dm]
     
     #dm.n = np.array([dm.nEQ(25.)])
