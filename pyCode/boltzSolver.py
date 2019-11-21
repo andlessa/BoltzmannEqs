@@ -10,7 +10,7 @@
 
 """
 
-from pyCode.EqFunctions import gSTAR,gSTARS,Tf
+from pyCode.EqFunctions import gSTAR,gSTARS,Tf,dTfdx
 from pyCode.printerTools import printData,printSummary
 from numpy import pi,sqrt,log,exp
 from scipy import integrate
@@ -80,14 +80,12 @@ class BoltzSolution(object):
                 logger.info("Guessing initial condition for particle %s" %comp)
                 if thermalEQ[i] > 1:
                     comp.n = np.array([neq[i]])
-                    comp.coupled = True
                 else:
                     comp.n = np.array([1e-20*neq[i]])
-                    comp.coupled = False
                 comp.rho = comp.n*Ri[i]
             else: #Remove all entries from components except the last
                 if len(comp.n) > 1:
-                    logger.info("Resetting %s's number and energy densities to last value")
+                    logger.info("Resetting %s number and energy densities to last value" %comp)
                 comp.n = comp.n[-1:] 
                 comp.rho = comp.rho[-1:]
 
@@ -169,6 +167,7 @@ class BoltzSolution(object):
         if dx:
             maxstep = (xf-x0)/dx
 
+        self.rhs(x0,y0)
         try:
             self.rhs(x0,y0)
         except Exception as e:
@@ -238,12 +237,14 @@ class BoltzSolution(object):
         Req = self.rEQ(T)
         
         #Current number densities (replace number densities by equilibrium value for thermally coupled components)
-        n = np.where(isCoupled,neq,self.norm*np.exp(Ni))
+        n = np.zeros(nComp)
+        n[isCoupled] = neq[isCoupled]
+        n[~isCoupled] = self.norm[~isCoupled]*np.exp(Ni[~isCoupled])
         #Set number densities to zero if component is not active
         n = np.where(isActive,n,0.)
         
         #Set energy density ratio to equilibrium value for thermally coupled components:
-        Ri = np.where(isCoupled,Req,Ri)
+        Ri[isCoupled] = Req[isCoupled]
         #Make sure Ri is never below the component's mass:
         masses = self.mass(T)
         Ri = np.maximum(Ri,masses)
@@ -342,7 +343,7 @@ class BoltzSolution(object):
             #Expansion term:
             expTerm = -3*n
             #Decay term:
-            decTerm = -widths*masses*n/(H*Ri)
+            decTerm = (-widths*masses*n/(H*Ri))
             #Inverse decay term:
             invDecTerm = widths*masses*NXth/(H*Ri)
             #Annihilation term (i +i <-> SM + SM):
@@ -423,7 +424,9 @@ class BoltzSolution(object):
         #Add all contributions
         allTerms = expTerm+injectionTerm
         #Make sure non-active and coupled components do not evolve:
-        dR = np.where(allTerms*isActive,allTerms/n,0.)
+        dR = np.zeros(nComp)
+        cond =  (allTerms != 0.)*isActive
+        dR[cond] = allTerms[cond]/n[cond]
                 
         logger.debug('DRi: expTerm = %s, injectionTerm = %s' %(expTerm,injectionTerm))
         
@@ -466,14 +469,27 @@ class BoltzSolution(object):
         #Derivatives for the Ni=log(ni/s0) variables:
         logger.debug('Computing Ni derivatives')
         allTerms = self.dnidx(T, n, Ri, neq, H)
-        #Make sure non-active and coupled components do not evolve:
-        dN = np.where(allTerms*isActive*np.invert(isCoupled),allTerms/n,0.)
+        allTerms *= isActive
+
+        dN = np.zeros(nComp)
+        #Store derivatives of decoupled components:
+        cond = (~isCoupled)*(allTerms != 0.)
+        dN[cond] = allTerms[cond]/n[cond]
+        #Store derivatives of coupled components:
+        dTdx = dTfdx(x,NS,self.normS)
+        dLndx = self.dLnEQdT(T)*dTdx #derivative of log of equilibrium density
+        dN[isCoupled] = dLndx[isCoupled]*isActive[isCoupled]
 
         #Derivatives for the rho/n variables:
         logger.debug('Computing Ri derivatives')
-        dR = self.dRidx(T, n, Ri, H)
-        #Make sure non-active and coupled components do not evolve:
-        dR *= isActive*np.invert(isCoupled)
+        dR = np.zeros(nComp)
+        #Store derivatives of decoupled components:
+        dR[~isCoupled] = self.dRidx(T, n, Ri, H)[~isCoupled]
+        #Store derivatives of coupled components:
+        drEQdx = self.drEQdT(T)*dTdx
+        dR[isCoupled] *= drEQdx[isCoupled]
+        #Make sure inactive components do not evolve:
+        dR *= isActive
         
         dy = np.hstack((dN,dR,[dNS]))
         logger.debug('T = %1.3g, H = %1.3g, dNi/dx = %s, dRi/dx = %s, dNS/dx = %s' %(T,H,dN,dR,dNS))
@@ -566,7 +582,10 @@ class BoltzSolution(object):
 
         #Consider as softly coupled when non-equilibrium contributions 
         #are 1% of the thermal equilibrium ones
-        r = 1. - 100*abs(allTermsNonEq/allTermsEq)
+        r = 1. - 1e2*abs(allTermsNonEq/allTermsEq)
+        
+        logger.debug('Coupling condition for %s = %1.2g \n\t thermalEQ = %1.3g, nonThemal = %1.3g' 
+                     %(self.components[icomp],r,allTermsEq,allTermsNonEq))
         
         return r
     
